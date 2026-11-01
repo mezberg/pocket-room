@@ -27,6 +27,7 @@ export const api = {
   plan: (body) => call("POST", "/plan", body),                  // { roomId, piece, room? } → plans (designer/)
   advice: (body) => call("POST", "/advice", body),              // { roomId, findings, room? } → { ranked } (designer/)
   fixes: (body) => call("POST", "/fixes", body),                // { roomId, piece?, replaces?, room?, finding } (fix-state.js fixBody)
+  relayout: (body) => call("POST", "/relayout", body),          // { roomId, piece?, room?, finding? } → plans (relayout/)
   render: (roomId, view, prompt) => call("POST", "/render", { roomId, view, prompt }),
 };
 

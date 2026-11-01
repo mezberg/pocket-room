@@ -8,6 +8,7 @@ import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "
 import { fixBody, applyFix, undoStack, withFixed, previewMoves } from "./fix-state.js";
 import { rankFindings, fold } from "./advice.js";
 import { planMoves, planToFix, placementOf } from "./plan-state.js";
+import { relayoutBody, planCard as relayoutCard, appliedWords } from "./relayout-state.js";
 import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS, seenShare, spotUnseen } from "./new-room.js";
 
 const $ = (id) => document.getElementById(id);
@@ -41,7 +42,7 @@ async function withRoom(call) {
 const desktop = matchMedia("(min-width: 900px)");
 
 const fixCache = new Map(), undo = undoStack();   // tap an issue → fixes, and what Apply changed
-const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null, moreOpen: false, plan: null, planSel: null };
+const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null, moreOpen: false, plan: null, planSel: null, relayout: null };
 
 await firstPaint();
 const viewer = new Viewer($("view"), $("labels"));
@@ -174,7 +175,7 @@ async function loadRoom(id, { fresh } = {}) {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null, moreOpen: false, plan: null, planSel: null });
+  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null, moreOpen: false, plan: null, planSel: null, relayout: null });
   closeFix(); undo.clear();
   $("verdict-building").hidden = true;
   $("verdict-dot").hidden = true;
@@ -638,9 +639,12 @@ function fixPanel(f, i) {
     return box;
   }
   if (!res.options.length) {
-    box.innerHTML = `<p class="fix-none"></p><div class="row"><button class="btn small">Close</button></div>`;
-    box.querySelector(".fix-none").textContent = res.none;
-    box.querySelector("button").onclick = () => { closeFix(); renderVerdict(); };
+    // no small fix: offer the bigger plan, the whole room rearranged around this problem (relayout/)
+    const movable = !state.piece && f.kind === "model";
+    box.innerHTML = `<p class="fix-none"></p><div class="row">${movable ? `<button class="btn primary small" data-act="relayout">Rearrange the room</button>` : ""}<button class="btn small" data-act="close">Close</button></div>`;
+    box.querySelector(".fix-none").textContent = movable ? `${res.none.replace(/^No easy fix:\s*/, "No small fix: ")} A bigger change can: move whole zones, take something out, or a smaller piece.` : res.none;
+    box.querySelector('[data-act="close"]').onclick = () => { closeFix(); renderVerdict(); };
+    if (movable) box.querySelector('[data-act="relayout"]').onclick = () => { closeFix(); startRelayout(f); };
     return box;
   }
   const list = document.createElement("div");
@@ -678,6 +682,78 @@ function fixPanel(f, i) {
   row.querySelector('[data-act="cancel"]').onclick = () => { closeFix(); renderVerdict(); };
   box.append(list, row);
   return box;
+}
+
+// ---------------------------------------------------------------- Rearrange my room (relayout/, POST /api/relayout)
+// The whole room: zones moved as one (the sofa with its coffee table and TV, the dining set, the desk), something
+// taken out, or a smaller piece. Plans preview like fixes (ghosts and arrows) and Apply / Undo the same way.
+$("btn-relayout").onclick = () => startRelayout(null);
+async function startRelayout(focus) {
+  const run = state.run;
+  state.relayout = { run, focus, loading: true };
+  renderVerdict();
+  $("relayout-card").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  try {
+    const res = await withRoom(() => api.relayout(relayoutBody(state.room, null, null, focus, { saved: state.saved })));
+    if (state.relayout?.run !== run || run !== state.run) return;
+    Object.assign(state.relayout, { loading: false, res });
+    const best = res.plans.find((p) => p.best) ?? res.plans[0];
+    if (best) selectRelayout(best.id); else renderVerdict();
+  } catch (err) {
+    if (state.relayout?.run === run) { Object.assign(state.relayout, { loading: false, err: plain(err) }); renderVerdict(); }
+  }
+}
+function selectRelayout(id) {
+  const R = state.relayout;
+  R.sel = id;
+  const p = R.res.plans.find((x) => x.id === id);
+  renderVerdict();
+  if (p?.steps.length) viewer.previewFix(previewMoves(state.room, p));
+}
+function closeRelayout() { state.relayout = null; viewer.clearPreview(); renderVerdict(); }
+function relayoutPanel() {
+  const R = state.relayout?.run === state.run ? state.relayout : null;
+  const card = $("relayout-card");
+  $("btn-relayout").hidden = !!R || !!state.piece || !state.findings.some((f) => !f.pass && f.kind === "model");
+  card.hidden = !R;
+  if (!R) return;
+  const head = `<h3>Rearrange my room${R.focus ? ": around this problem" : ""}</h3>`;
+  if (R.loading) { card.innerHTML = `${head}<p class="meta"><span class="spin small"></span> Trying whole-room layouts: moving zones, measuring every walkway…</p>`; return; }
+  if (R.err) { card.innerHTML = `${head}<p class="meta"></p>`; card.lastChild.textContent = R.err; return; }
+  const { res } = R;
+  card.innerHTML = head;
+  if (!res.plans.length) {
+    const p = document.createElement("p"); p.className = "fix-none";
+    p.textContent = res.none ?? "This room already works: no layout we tried does better.";
+    card.append(p);
+  }
+  const list = document.createElement("div");
+  list.className = "fix-opts";
+  list.setAttribute("role", "radiogroup");
+  for (const plan of res.plans) {
+    const c = relayoutCard(plan, res.before, res.decision);
+    const b = document.createElement("button");
+    b.className = "fix-opt";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(plan.id === R.sel));
+    b.innerHTML = `${c.tag ? "<em></em>" : ""}<span></span><ol></ol><small></small>`;
+    if (c.tag) b.querySelector("em").textContent = c.tag;
+    b.querySelector("span").textContent = c.say;
+    b.querySelector("ol").replaceChildren(...c.steps.map((t) => { const li = document.createElement("li"); li.textContent = t; return li; }));
+    b.querySelector("small").textContent = c.numbers;
+    b.onclick = () => selectRelayout(plan.id);
+    list.append(b);
+  }
+  if (res.none && res.plans.length) { const p = document.createElement("p"); p.className = "meta"; p.textContent = res.none; card.append(p); }
+  const sel = res.plans.find((p) => p.id === R.sel);
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `<button class="btn primary small" data-act="apply">Apply the plan</button>${sel?.shop ? `<button class="btn small" data-act="shop">Find one that fits</button>` : ""}<button class="btn small" data-act="cancel">Cancel</button>`;
+  row.querySelector('[data-act="apply"]').disabled = !sel?.steps.length;
+  row.querySelector('[data-act="apply"]').onclick = () => { const plan = sel; state.relayout = null; applyOption(null, { steps: plan.steps, say: appliedWords(plan) }).catch((err) => toast(plain(err))); };
+  if (sel?.shop) row.querySelector('[data-act="shop"]').onclick = () => { const [w, d] = sel.shop.size; closeRelayout(); findFor(`a ${sel.shop.name} about ${Math.round(w * 100)} × ${Math.round(d * 100)} cm`, { designer: true, replace: sel.swaps ?? null }); };
+  row.querySelector('[data-act="cancel"]').onclick = closeRelayout;
+  card.append(list, row);
 }
 
 // Apply: the room changes in 3D, the room is checked again (and the piece's verdict), Undo for 8 s.
@@ -800,6 +876,7 @@ function renderVerdict() {
     $("btn-next").hidden = $("btn-remove").hidden = true;
   }
   planCard();
+  relayoutPanel();
   const ranked = state.findings.some((f) => f.rank);
   $("advice-head").hidden = !ranked;
   $("advice-head").textContent = state.piece && state.placement ? "What's wrong with it in" : "What's wrong with your room";
