@@ -242,3 +242,13 @@ label.btn { display: inline-flex; align-items: center; }
 .btn.small { padding: 8px 14px; font-size: 13.5px; }
 .toast-act { margin-left: 12px; border: 0; background: none; color: var(--bg); font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; }
 .tag.marker.fixed { background: var(--green); }
+
+/* ---------------------------------------------------------------- what's wrong: the top three first */
+.advice-head { margin: 16px 0 0; font: 700 11px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+.findings li.first b { box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 28%, transparent); }
+.btn.more { margin-top: 8px; }
+.advice-teaser { display: grid; gap: 2px; width: 100%; margin-top: 12px; text-align: left; padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line)); background: color-mix(in srgb, var(--red) 6%, var(--card)); }
+.advice-teaser b { color: var(--red); font-size: 14px; }
+.advice-teaser span { font-size: 14px; }
+.advice-teaser small { color: var(--mut); font-size: 12px; }

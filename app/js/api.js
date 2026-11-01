@@ -23,6 +23,7 @@ export const api = {
   find: (body) => call("POST", "/agent/find", body),            // { roomId, query, wall?, room? }
   place: (body) => call("POST", "/place", body),                // { roomId, piece, room? } (scene-state.js placeBody)
   analyse: (body) => call("POST", "/analyse", body),            // { roomId, piece?, replaces?, room? } (analyseBody)
+  advice: (body) => call("POST", "/advice", body),              // { roomId, findings, room? } → { ranked } (designer/)
   fixes: (body) => call("POST", "/fixes", body),                // { roomId, piece?, replaces?, room?, finding } (fix-state.js fixBody)
   render: (roomId, view, prompt) => call("POST", "/render", { roomId, view, prompt }),
 };

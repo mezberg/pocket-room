@@ -8,6 +8,7 @@ import agent from "./routes/agent.mjs";       // lane G
 import place from "./routes/place.mjs";       // lanes D + E
 import render from "./routes/render.mjs";     // lane F
 import fixes from "./routes/fixes.mjs";       // tap an issue → fixes
+import designer from "./routes/designer.mjs"; // the designer: advice (and plans for a piece)
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const app = express();
@@ -25,6 +26,7 @@ app.use("/api/agent", agent);
 app.use("/api", place);                       // /api/place, /api/analyse
 app.use("/api/render", render);
 app.use("/api/fixes", fixes);
+app.use("/api", designer);                    // /api/advice
 
 app.use("/room", express.static(join(root, "room")));
 app.use("/contract", express.static(join(root, "contract")));

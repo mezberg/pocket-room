@@ -6,6 +6,7 @@ import { api, untilBuilt, imageToDataURL, fileAsDataURL } from "./api.js";
 import { roomStats } from "./room3d.js";
 import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "./scene-state.js";
 import { fixBody, applyFix, undoStack, withFixed, previewMoves } from "./fix-state.js";
+import { rankFindings, fold } from "./advice.js";
 import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS, seenShare, spotUnseen } from "./new-room.js";
 
 const $ = (id) => document.getElementById(id);
@@ -39,7 +40,7 @@ async function withRoom(call) {
 const desktop = matchMedia("(min-width: 900px)");
 
 const fixCache = new Map(), undo = undoStack();   // tap an issue → fixes, and what Apply changed
-const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null };
+const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null, moreOpen: false };
 
 await firstPaint();
 const viewer = new Viewer($("view"), $("labels"));
@@ -172,7 +173,7 @@ async function loadRoom(id, { fresh } = {}) {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null });
+  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null, moreOpen: false });
   closeFix(); undo.clear();
   $("verdict-building").hidden = true;
   $("verdict-dot").hidden = true;
@@ -233,7 +234,14 @@ async function checkRoom() {
     const spot = state.piece ? spotOf(state.placement, state.spot) : null;
     const { findings } = await withRoom(() => api.analyse(analyseBody(state.room, state.piece, spot, { saved: state.saved })));
     if (run !== state.run) return;   // the piece or spot changed meanwhile
-    setFindings(withFixed(findings, state.fixed?.finding, state.fixed?.option));
+    setFindings(rankFindings(withFixed(findings, state.fixed?.finding, state.fixed?.option)));
+    // what's wrong, most important first: blocking rules, then the Decisions API's order (designer/advice.mjs)
+    try {
+      const advice = await withRoom(() => api.advice({ ...analyseBody(state.room, state.piece, spot, { saved: state.saved }), findings: state.findings }));
+      if (run !== state.run) return;
+      if (state.fixOpen != null) closeFix();
+      setFindings(rankFindings(state.findings, advice));
+    } catch (err) { console.warn("advice failed", err); }
     prefetchFixes(run);
   } finally {
     $("findings-busy").hidden = true;
@@ -430,6 +438,21 @@ function renderCards(out) {
 function setFindings(findings) {
   state.findings = findings ?? [];
   viewer.showFindings(state.findings, (f, i) => focusFinding(i));
+  roomAdvice();
+}
+
+// My room: the first thing to fix, one tap from its marker and fixes
+function roomAdvice() {
+  const el = $("room-advice");
+  const bad = state.findings.filter((f) => !f.pass);
+  const first = state.findings.findIndex((f) => f.rank === 1);
+  el.hidden = !bad.length || state.piece != null;
+  if (el.hidden) return;
+  el.innerHTML = `<b></b><span></span><small></small>`;
+  el.querySelector("b").textContent = `${bad.length} thing${bad.length > 1 ? "s" : ""} to fix`;
+  el.querySelector("span").textContent = first >= 0 ? `First: ${state.findings[first].say}` : "";
+  el.querySelector("small").textContent = "See what's wrong and how to fix it";
+  el.onclick = () => (first >= 0 ? focusFinding(first) : show("verdict"));
 }
 
 function focusFinding(i) {
@@ -464,6 +487,7 @@ async function prefetchFixes(run) {
 function openFix(i) {
   const f = state.findings[i];
   state.fixOpen = i;
+  if (fold(state.findings).more.includes(i)) state.moreOpen = true;
   state.fixSel = null;
   renderVerdict();
   if (f.at) viewer.focus(f.at, 1.4);
@@ -640,6 +664,14 @@ function renderVerdict() {
     $("verdict-piece").textContent = "";
     $("btn-next").hidden = $("btn-remove").hidden = true;
   }
+  const ranked = state.findings.some((f) => f.rank);
+  $("advice-head").hidden = !ranked;
+  $("advice-head").textContent = state.piece && state.placement ? "What's wrong with it in" : "What's wrong with your room";
+  const { more } = fold(state.findings);
+  const moreBtn = $("findings-more");
+  moreBtn.hidden = !ranked || !more.length;
+  moreBtn.textContent = state.moreOpen ? "Fewer" : `More (${more.length})`;
+  moreBtn.onclick = () => { state.moreOpen = !state.moreOpen; renderVerdict(); };
   const ol = $("findings");
   ol.replaceChildren(...state.findings.map((f, i) => {
     const li = document.createElement("li");
@@ -648,7 +680,9 @@ function renderVerdict() {
     li.querySelector("span").textContent = f.say;
     const small = document.createElement("small");
     const chance = chanceWords(f);
-    small.textContent = f.fixed ? "Fixed · tap Undo to put it back" : `${f.kind === "design" ? "Design" : "Rule"}${chance ? ` · ${chance}` : ""}${f.pass ? "" : " · tap for a fix"}`;
+    small.textContent = f.fixed ? "Fixed · tap Undo to put it back" : `${f.rank ? `Fix first #${f.rank} · ` : ""}${f.kind === "design" ? "Design" : "Rule"}${chance ? ` · ${chance}` : ""}${f.pass ? "" : " · tap for a fix"}`;
+    if (f.rank) li.classList.add("first");
+    if (ranked && !state.moreOpen && more.includes(i)) li.hidden = true;
     li.querySelector("span").append(small);
     li.onclick = () => (state.fixOpen === i ? (closeFix(), renderVerdict()) : focusFinding(i));
     if (state.fixOpen === i) { li.classList.add("on", "open"); li.querySelector("span").append(fixPanel(f, i)); }

@@ -80,6 +80,7 @@
       <button class="btn" id="btn-photo">Photo view</button>
       <button class="btn" id="btn-new-room"><svg viewBox="0 0 24 24" class="small"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New room</button>
     </div>
+      <button class="advice-teaser" id="room-advice" hidden></button>
     <img class="still" id="still" alt="A photo-like view of the room" hidden>
   </div>
 
@@ -200,7 +201,9 @@
       <p class="meta" id="verdict-piece"></p>
       <p class="unseen-warn" id="verdict-unseen" hidden></p>
       <p class="building" id="verdict-building" hidden><span class="spin small"></span><span>Showing a stand-in. Building the real 3D model…</span></p>
+      <h2 class="advice-head" id="advice-head" hidden>What's wrong with your room</h2>
       <ol class="findings" id="findings"></ol>
+      <button class="btn small more" id="findings-more" hidden></button>
       <p class="meta" id="findings-busy" hidden><span class="spin small"></span> Checking the room with it in…</p>
       <div class="row">
         <button class="btn" id="btn-next" hidden>Next spot</button>
