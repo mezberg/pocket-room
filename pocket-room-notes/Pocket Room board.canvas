@@ -540,7 +540,7 @@
 			"width": 400,
 			"height": 170,
 			"text": "**B · Furniture** (part 2)\nVision read · DB match · image → 3D · normalise.\n⚠ Test the 3D vendor on day 1: slowest, riskiest lane",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_C",
@@ -550,7 +550,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**C · App** (part 3)\nViewer loads GLB + room.json · camera / upload / share target · backend with the key · deploy",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_D",
@@ -570,7 +570,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**E · Decisions** (parts 4 + 5b)\nVerdict + best wall · design-grade question set (light, flow, proportion, style) · tuned on fixtures",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_G",
@@ -580,7 +580,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**G · Agent finds furniture** (part 2)\nAgent searches shops for pieces that fit the free spot and the room's style → product image + dims → piece.json, same path as B",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_F",
@@ -590,7 +590,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**F · Render** (part 7, stretch)\ngpt-image edit from a screenshot + room photo. Needs nothing else: anyone free can start it",
-			"color": "6"
+			"color": "2"
 		},
 		{
 			"id": "dev_note",
@@ -671,6 +671,158 @@
 			"height": 170,
 			"text": "**Critical path**\ncontract → C viewer + A export → D placement → add-a-piece loop → demo.\nB runs beside it; if image → 3D fails, DB match carries the demo",
 			"color": "1"
+		},
+		{
+			"id": "prog_group",
+			"type": "group",
+			"label": "Progress with screenshots",
+			"x": 0,
+			"y": 3396,
+			"width": 1820,
+			"height": 1924
+		},
+		{
+			"id": "prog_head",
+			"type": "text",
+			"x": 40,
+			"y": 3456,
+			"width": 1400,
+			"height": 110,
+			"color": "5",
+			"text": "## Progress · 1 Nov, 13:20\n🟧 done on its branch, not yet tested · 🟨 still working · 🟩 tested and works (after the test pass). Nothing merged into main yet."
+		},
+		{
+			"id": "prog_B",
+			"type": "text",
+			"x": 40,
+			"y": 3596,
+			"width": 400,
+			"height": 274,
+			"color": "2",
+			"text": "**B · Furniture: image → 3D works through OpenAI** 🟧\n`gpt-6-astra` reads the photo and returns 3D parts; our code builds the GLB. 15–35 s, clean low-poly, right shape and colours, untextured.\nAll 3 test pictures pass (photo, shop tag, Instagram screenshot).\nBranch `claude/lane-b-furniture-fc4f26`"
+		},
+		{
+			"id": "prog_B_img0",
+			"type": "file",
+			"file": "attachments/laneB_chesterfield_3d.jpg",
+			"x": 480,
+			"y": 3596,
+			"width": 280,
+			"height": 300
+		},
+		{
+			"id": "prog_B_img1",
+			"type": "file",
+			"file": "attachments/laneB_sideboard_3d.jpg",
+			"x": 790,
+			"y": 3596,
+			"width": 280,
+			"height": 300
+		},
+		{
+			"id": "prog_C",
+			"type": "text",
+			"x": 40,
+			"y": 3936,
+			"width": 400,
+			"height": 222,
+			"color": "2",
+			"text": "**C · App: phone viewer runs end to end on the stubs** 🟧\nRoom in 3D with sun and shadows, Add piece flow, verdict markers, PWA share target.\nVercel preview not deployed (needs your OK to create a project).\nBranch `claude/lane-c-app-9d1714`"
+		},
+		{
+			"id": "prog_C_img0",
+			"type": "file",
+			"file": "attachments/laneC_my_room.jpg",
+			"x": 480,
+			"y": 3936,
+			"width": 280,
+			"height": 300
+		},
+		{
+			"id": "prog_C_img1",
+			"type": "file",
+			"file": "attachments/laneC_verdict.jpg",
+			"x": 790,
+			"y": 3936,
+			"width": 280,
+			"height": 300
+		},
+		{
+			"id": "prog_E",
+			"type": "text",
+			"x": 40,
+			"y": 4276,
+			"width": 400,
+			"height": 196,
+			"color": "2",
+			"text": "**E · Decisions API works with our key** 🟧\n`gpt-6-luna`, no fallback needed. Best spot with a reason, 6 design findings on the fixture room, voice routing.\n12 tests + live smoke pass.\nBranch `claude/lane-e-decisions-790a42`"
+		},
+		{
+			"id": "prog_F",
+			"type": "text",
+			"x": 40,
+			"y": 4512,
+			"width": 400,
+			"height": 170,
+			"color": "2",
+			"text": "**F · Render: 3D view → photo in ~15 s** 🟧\n`gpt-image-2.5-flare` won on quality and speed. 5 tests pass.\nNeeds `OPENAI_MODEL_RENDER` in `.env`.\nBranch `lane-f-render`"
+		},
+		{
+			"id": "prog_F_img0",
+			"type": "file",
+			"file": "attachments/laneF_input_view.jpg",
+			"x": 480,
+			"y": 4512,
+			"width": 400,
+			"height": 300
+		},
+		{
+			"id": "prog_F_img1",
+			"type": "file",
+			"file": "attachments/laneF_living_sunday.jpg",
+			"x": 910,
+			"y": 4512,
+			"width": 400,
+			"height": 300
+		},
+		{
+			"id": "prog_F_img2",
+			"type": "file",
+			"file": "attachments/laneF_chesterfield_sunday.jpg",
+			"x": 1340,
+			"y": 4512,
+			"width": 400,
+			"height": 300
+		},
+		{
+			"id": "prog_G",
+			"type": "text",
+			"x": 40,
+			"y": 4852,
+			"width": 400,
+			"height": 170,
+			"color": "2",
+			"text": "**G · Agent finds 3 real UK products that fit** 🟧\nLinks checked (200), sizes copied from the product pages. 15 tests pass.\nBranch `claude/lane-g-agent-985b31`"
+		},
+		{
+			"id": "prog_A",
+			"type": "text",
+			"x": 40,
+			"y": 5062,
+			"width": 400,
+			"height": 92,
+			"color": "3",
+			"text": "**A · Room** 🟨 still working\n(pushed: fire-plan shortcut so far)"
+		},
+		{
+			"id": "prog_D",
+			"type": "text",
+			"x": 40,
+			"y": 5194,
+			"width": 400,
+			"height": 66,
+			"color": "3",
+			"text": "**D · Rules** 🟨 still working"
 		}
 	],
 	"edges": [
