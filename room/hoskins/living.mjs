@@ -70,7 +70,9 @@ export function livingRoom() {
       item("coffee_table", "Coffee table", "table", 270, { h: 0.45 }),     // long side to the sofa
       item("tv_bench", "TV bench", "tv", 270, { h: 0.44 }),                // on the east wall, faces west
       item("bamboo", "Bamboo", "plant", 270, { onFloor: false }),   // on the TV bench
-      item("fern", "Fern", "plant", 270, { onFloor: false }),       // on the TV bench
+      // on the TV bench. Its manifest box (fronds, 0.74 m across) pokes 14 cm through the east wall face;
+      // pulled in so the fronds stop at the wall (east face x = X(603), half depth 0.37, 1 cm gap).
+      item("fern", "Fern", "plant", 270, { onFloor: false, at: [X(603) - 0.38, -3.372] }),
       item("dining_table", "Dining table", "table", 0, { h: 0.747 }),
       chair(1, 60), chair(2, 125), chair(3, 215), chair(4, 320),
       item("clothes_airer", "Clothes airer", "other", 270),   // against the east wall

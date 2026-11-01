@@ -11,6 +11,9 @@ const under = (c, t) => TUCK.has(c.category) && UNDER.has(t.category) && t.size[
 const tucked = (a, b) => under(a, b) || under(b, a);
 const P2 = (p) => [r2(p[0]), r2(p[1])];
 const sentence = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// The grid samples clearance at 4 cm cell centres, so a corridor reads up to ~1 cm narrower than it is.
+// A way that measures within that of 60 cm is tight, not closed.
+const CLOSED = WALK_MIN - 0.01;
 
 export function analyse(room) {
   const O = outline(room);
@@ -77,6 +80,9 @@ function bounds(ctx) {
       out.push({ id: "too_tall", kind: "model", pass: false, severity: "fail", at: P2(it.at), items: [it.id],
         say: `${sentence(label(it))} is ${cm(it.size[2])} tall; the ceiling is ${cm(ctx.room.height)}.` });
     }
+    // Things off the floor (a plant on a bench, a lamp on a table) may overhang the wall face with their
+    // leaves or shade; only floor-standing pieces and wall-hung radiators are checked against the walls.
+    if (it.on_floor === false && it.category !== "radiator") continue;
     const pen = outside(ctx.O, R);
     if (pen <= 0.03) continue;
     const cs = corners(R);
@@ -197,13 +203,13 @@ function walkways(ctx) {
 
   // A closed place counts once: from the door that gets closest to it (door to door either way round).
   const closed = new Map();
-  for (const r of base.filter((r) => r.width < WALK_MIN && r.at)) {
+  for (const r of base.filter((r) => r.width < CLOSED && r.at)) {
     const k = r.type === "door" ? [r.from, r.to].sort().join("|") : r.to;
     if (!closed.has(k) || closed.get(k).width < r.width) closed.set(k, r);
   }
   const groups = [];
-  for (const r of [...closed.values(), ...base.filter((r) => r.width >= WALK_MIN && r.width < WALK_OK && r.at)]) {
-    if (r.width < WALK_MIN) {
+  for (const r of [...closed.values(), ...base.filter((r) => r.width >= CLOSED && r.width < WALK_OK && r.at)]) {
+    if (r.width < CLOSED) {
       const k = [partOf(r.from), partOf(r.to)].sort().join("|");
       const g = groups.find((g) => g.closed && (g.key === k || g.routes.some((x) => Math.hypot(x.at[0] - r.at[0], x.at[1] - r.at[1]) < 0.35)));
       if (g) g.routes.push(r); else groups.push({ key: k, closed: true, routes: [r] });
@@ -229,7 +235,9 @@ function walkways(ctx) {
   for (const g of groups) for (const r of g.routes) {
     if (!r.path || r.width <= 0) continue;
     const half = Math.max(0, (r.width - G.res / 2) / 2);
-    const pts = r.path.filter((p) => clearanceAt(G, p) <= half + 0.03);
+    // Only points at the bottleneck itself (within a quarter cell): a wider stretch elsewhere on the way,
+    // say a 60 cm corridor before a 49 cm gap, must not take the marker away from the real pinch.
+    const pts = r.path.filter((p) => clearanceAt(G, p) <= half + G.res / 4);
     const two = pts.find((p) => pinch(p, clearanceAt(G, p)) >= 2);
     if (two) r.at = two;
   }
@@ -243,7 +251,7 @@ function walkways(ctx) {
     const onlyWindows = g.routes.every((x) => x.type === "window");
     const near = ctx.items.filter(blocksFloor).map((it) => ({ it, d: sdRect(footprint(it), r.at) }))
       .filter((x) => x.d < Math.max(r.width / 2, 0) + 0.1).sort((a, b) => a.d - b.d);
-    const walls = O.walls.filter((w) => dist(r.at, w) < Math.max(r.width / 2, 0) + 0.1).map((w) => `the ${w.id} wall`);
+    const walls = O.walls.filter((w) => dist(r.at, w) < Math.max(r.width / 2, 0) + 0.1).map((w) => `the ${w.id.replace(/_/g, " ")} wall`);
     const names = [...near.slice(0, 2).map((x) => label(x.it)), ...walls].slice(0, 2);
     const by = names.length ? `, by ${names.join(" and ")}` : "";
     let say;
