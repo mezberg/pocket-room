@@ -1,34 +1,19 @@
 // Lane A. Rooms: the prebuilt Hoskins Street export, and rooms built from photos.
 import { Router } from "express";
-import { readFileSync, readdirSync } from "node:fs";
-import { room as livingFixture } from "../fixtures.mjs";
 import { readRoom } from "../../room/photo/read.mjs";
 import { roomFromReading } from "../../room/photo/build.mjs";
 import { savePlan, runPipeline } from "../../room/fireplan/run.mjs";
 import { roomFromPlan } from "../../room/fireplan/convert.mjs";
-
-const HOSKINS = new URL("../../room/hoskins/rooms/", import.meta.url);
-const prebuilt = () => {
-  const out = { "hoskins-living": livingFixture() };
-  let files = [];
-  try { files = readdirSync(HOSKINS).filter((f) => f.endsWith(".room.json")); } catch {}
-  for (const f of files) {
-    const room = JSON.parse(readFileSync(new URL(f, HOSKINS)));
-    out[room.id] ??= room;
-  }
-  return out;
-};
-const built = new Map();   // rooms made from photos this session
+import { getRoom, saveRoom, listRooms } from "../rooms-store.mjs";
 
 const r = Router();
 
 r.get("/", (req, res) => {
-  const all = { ...prebuilt(), ...Object.fromEntries(built) };
-  res.json({ rooms: Object.values(all).map(({ id, name, source }) => ({ id, name, source })) });
+  res.json({ rooms: listRooms() });
 });
 
 r.get("/:id", (req, res) => {
-  const room = built.get(req.params.id) ?? prebuilt()[req.params.id];
+  const room = getRoom(req.params.id);
   if (!room) return res.status(404).json({ error: `no room ${req.params.id}` });
   res.json(room);
 });
@@ -44,7 +29,7 @@ r.post("/from-photo", async (req, res, next) => {
     const known = typeof hint === "object" && hint ? hint : {};
     const reading = await readRoom(images, text);
     const room = roomFromReading(reading, { name, known });
-    built.set(room.id, room);
+    saveRoom(room);
     res.json(room);
   } catch (e) { next(e); }
 });
@@ -58,7 +43,7 @@ r.post("/from-plan", async (req, res, next) => {
     try { file = savePlan(image); } catch (e) { return res.status(400).json({ error: e.message }); }
     const { graph, rings } = await runPipeline(file);
     const room = roomFromPlan(graph, rings, { room: pick, px_per_m, height_m, name });
-    built.set(room.id, room);
+    saveRoom(room);
     res.json(room);
   } catch (e) { next(e); }
 });
