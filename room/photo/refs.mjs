@@ -31,7 +31,7 @@ export const REF_KINDS = Object.keys(REFS);
 // Default footprints [width, depth, height] by category. A length the model reads replaces the width.
 // Columns run floor to ceiling (height null = the room height) and become fixtures.
 export const DEFAULT_SIZE = {
-  sofa: [2.0, 0.9, 0.8], armchair: [0.9, 0.85, 0.8], table: [1.6, 0.8, 0.74], chair: [0.45, 0.5, 0.85],
+  sofa: [2.0, 0.9, 0.8], armchair: [0.9, 0.85, 0.8], table: [1.2, 0.8, 0.74], chair: [0.45, 0.5, 0.85],
   desk: [1.4, 0.7, 0.74], bed: [1.5, 2.0, 0.5], rug: [2.0, 1.4, 0.01], shelf: [0.8, 0.35, 1.8],
   lamp: [0.4, 0.4, 1.6], plant: [0.5, 0.5, 1.2], radiator: [1.0, 0.1, 0.6], cupboard: [1.0, 0.6, 2.0],
   tv: [1.2, 0.4, 0.5], column: [0.4, 0.4, null], other: [0.6, 0.6, 0.8],

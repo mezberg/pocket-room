@@ -1117,6 +1117,34 @@
 			"y": 9797,
 			"width": 157,
 			"height": 340
+		},
+		{
+			"id": "demo_group",
+			"type": "group",
+			"label": "Demo video · 1 Nov",
+			"x": 0,
+			"y": -1460,
+			"width": 1600,
+			"height": 760
+		},
+		{
+			"id": "demo_txt",
+			"type": "text",
+			"x": 40,
+			"y": -1400,
+			"width": 460,
+			"height": 620,
+			"color": "4",
+			"text": "## Demo video 🟩 on main\nThe real app with live models, 69 s (waits sped up, real times captioned), 0 console errors.\n1. Your room in 3D\n2. Check my room: findings as markers\n3. The red Chesterfield from your photo → 3D → placed, verdict\n4. Find for me → a real product placed\n5. Photo view (photoreal)\n6. End card: OpenAI pieces\n\nFiles: `docs/demo/pocket-room-demo-desktop.mp4`, `…-phone.mp4`, stills; script `scripts/demo/` to re-record.\n\n⚠ Seen in the video: the sofa found online stays a stand-in, not built from its picture → being fixed (session: Found-online pieces)."
+		},
+		{
+			"id": "demo_vid",
+			"type": "file",
+			"file": "attachments/demo-desktop.mp4",
+			"x": 540,
+			"y": -1400,
+			"width": 1000,
+			"height": 625
 		}
 	],
 	"edges": [

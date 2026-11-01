@@ -78,7 +78,7 @@ export const READING_SCHEMA = {
       type: "array", description: "Big things on the floor (furniture, cabinets, columns). Up to 20.",
       items: {
         type: "object", additionalProperties: false,
-        required: ["name", "category", "x", "y", "facing", "length", "count"],
+        required: ["name", "category", "x", "y", "facing", "length", "depth", "height", "color", "count"],
         properties: {
           name: { type: "string" },
           category: { type: "string", enum: CATEGORIES },
@@ -86,6 +86,9 @@ export const READING_SCHEMA = {
           y: { ...frac, description: "Centre, camera wall (0) to far wall (1)" },
           facing: { type: "string", enum: ["camera", "away", "left", "right"], description: "Which way its front / seat faces" },
           length: { anyOf: [measure, { type: "null" }], description: "Its longest side, if you can compare it" },
+          depth: { anyOf: [measure, { type: "null" }], description: "Front to back, if you can compare it" },
+          height: { anyOf: [measure, { type: "null" }], description: "Floor to its top (a low TV unit, a coffee table, a kitchen worktop), if you can compare it" },
+          color: { type: ["string", "null"], description: "Its main colour as #rrggbb, sampled from the photo (the upholstery, the cabinet fronts)" },
           count: { type: "integer", description: "1 unless it is a row of identical things (then one entry for the row's centre)" },
         },
       },
@@ -109,7 +112,10 @@ things standing in a row towards the far wall (tables, chairs, sofas, floor tile
 a door or a banner even when the ceiling is out of frame (then the span is the part you see).
 Say which part of the floor and which stretches of each wall are actually in view (seen); be strict: a wall
 that runs out of frame is seen only as far as the frame shows it.
-List doors, windows and big floor objects with positions as fractions of the room. Keep it to what is visible.`;
+List doors, windows and big floor objects with positions as fractions of the room, with their main colour
+and, for cupboards, units and tables, their height (low TV units and coffee tables are often under half a metre).
+Each reference means exactly what it names: table_height is a dining table or desk (74 cm), never a coffee table;
+chair_width is a dining chair seat. Keep it to what is visible.`;
 
 // Added when there are several photos: they go round the room from corner to corner.
 export const MULTI = (n) => `

@@ -1,0 +1,13 @@
+{
+  "name": "pocket-room-demo",
+  "private": true,
+  "type": "module",
+  "description": "Records the Pocket Room demo video (record.mjs drives the app, compose.mjs cuts it). Uses the installed Google Chrome and ffmpeg.",
+  "scripts": {
+    "record:desktop": "node record.mjs desktop /tmp/pocket-room-demo-desktop",
+    "record:phone": "node record.mjs phone /tmp/pocket-room-demo-phone"
+  },
+  "dependencies": {
+    "playwright-core": "^1.48.2"
+  }
+}
