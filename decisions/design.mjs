@@ -2,6 +2,9 @@
 // judges them all; each answer becomes a `finding` (contract/api.md) with kind "design" and a probability.
 // A check whose things aren't in the room (no TV, no coffee table, no new piece) is skipped.
 import { decide, messages } from "./client.mjs";
+import { outline as ruleOutline, footprint as ruleFootprint, sdRect } from "../rules/geom.mjs";
+import { obstacles as ruleObstacles, buildGrid, routes as ruleRoutes, label as ruleLabel } from "../rules/grid.mjs";
+import { WALK_OK, WALK_MIN } from "../rules/place.mjs";
 import { r2, dist, front, footprint, frontCentre, polyDist, outline, inRoom, floorArea, openings, isGlazed, isDoor, openingDist, obstacles, byCategory } from "./geom.mjs";
 
 const cm = (m) => `${Math.round(m * 100)} cm`;
@@ -158,23 +161,42 @@ export function widestRoute(room, from, to) {
   const beside = named.sort((a, b) => a.d - b.d).filter((x) => x.d < clear[pinch] + 0.15).slice(0, 2);
   return { width_m: r2(2 * w), at: at.map(r2), beside: beside.map((x) => x.id), beside_names: beside.map((x) => x.name), length_m: r2(length), straight_m: r2(dist(from, to)) };
 }
+// The way is lane D's walkway (rules/grid.mjs): the same free-floor grid, the same widest path and the same
+// 75 / 60 cm rule the model check uses, so the design grade and the rules never give two widths for one gap.
+export function ruleWay(room, fromId, toId) {
+  const O = ruleOutline(room);
+  const G = buildGrid(O, ruleObstacles(room));
+  const r = ruleRoutes(G, O, [], { paths: true }).find((x) => x.from === fromId && x.to === toId);
+  if (!r) return null;
+  if (!r.open || !(r.width > 0)) return { blocked: true, width_m: 0, at: r.at ?? null };
+  const path = r.path ?? [];
+  const length = path.reduce((s, p, i) => (i ? s + dist(path[i - 1], p) : s), 0);
+  const solid = ruleObstacles(room).map((o) => ({ it: o.item, d: r.at ? sdRect(o.R, r.at) : Infinity }))
+    .filter((x) => x.d < (Number.isFinite(r.width) ? r.width / 2 : 1) + 0.1).sort((a, b) => a.d - b.d).slice(0, 2);
+  return { width_m: Number.isFinite(r.width) ? r2(r.width) : null, at: r.at ? r.at.map(r2) : null,
+    beside: solid.map((x) => x.it.id), beside_names: solid.map((x) => ruleLabel(x.it).replace(/^the /, "")),
+    length_m: r2(length), straight_m: r2(path.length ? dist(path[0], path.at(-1)) : 0) };
+}
+
 const flow = {
   id: "flow",
   measure(room) {
     const doors = openings(room).filter(isDoor);
     if (doors.length < 2) return null;
-    const into = (o) => [o.centre[0] + o.inward[0] * 0.3, o.centre[1] + o.inward[1] * 0.3];
     const [a, b] = [doors.find((o) => o.kind === "door") ?? doors[0], doors.find((o) => o.kind !== "door") ?? doors[1]];
-    const route = widestRoute(room, into(a), into(b));
-    if (!route) return { from: a.id, to: b.id, blocked: true };
-    return { from: a.id, to: b.id, narrowest_m: route.width_m, at: route.at, beside: route.beside_names, items: route.beside, route_m: route.length_m, straight_m: route.straight_m,
-      detour: r2(route.length_m / route.straight_m), guide: "a main route is 0.9 m or more; 0.75 m is the least" };
+    const way = ruleWay(room, a.id, b.id);
+    if (!way || way.blocked) return { from: a.id, to: b.id, blocked: true, at: way?.at ?? null };
+    if (way.width_m == null) return null;   // the doors open into the same free floor: nothing to judge
+    return { from: a.id, to: b.id, narrowest_m: way.width_m, at: way.at, beside: way.beside_names, items: way.beside,
+      verdict: way.width_m >= WALK_OK ? "Fits" : way.width_m >= WALK_MIN ? "Just fits" : "Doesn't fit",
+      route_m: way.length_m, straight_m: way.straight_m, detour: way.straight_m ? r2(way.length_m / way.straight_m) : 1,
+      guide: "a walkway of 75 cm or more is comfortable, 60–75 cm is tight, under 60 cm you squeeze sideways" };
   },
   questions: (f) => [{ name: "flow", type: "predicate",
     instructions: `Walking from the ${f.from} to the ${f.to} feels easy and direct: no squeezing sideways between furniture, no long way round.` }],
   say(f) {
     const nice = (s) => s.replace(/_/g, " ");
-    if (f.blocked) return `There is no way through from the ${nice(f.from)} to the ${nice(f.to)}.`;
+    if (f.blocked) return `There is no way through from the ${nice(f.from)} to the ${nice(f.to)} without squeezing past furniture.`;
     const by = f.beside.length ? `, between the ${f.beside.join(" and the ")}` : "";
     const detour = f.detour > 1.25 ? `, and the way round is ${pct(f.detour - 1)} longer than a straight line` : "";
     return `From the ${nice(f.from)} to the ${nice(f.to)} the narrowest gap is ${cm(f.narrowest_m)}${by}${detour}.`;

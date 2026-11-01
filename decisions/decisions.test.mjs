@@ -6,6 +6,9 @@ import { setTransport, decide, normalise } from "./client.mjs";
 import { chooseBest, spotFacts } from "./best-spot.mjs";
 import { gradeDesign, measureAll, widestRoute } from "./design.mjs";
 import { routeUtterance } from "./route.mjs";
+import { choose, design, distinctSpots } from "./hooks.mjs";
+import { outline } from "../rules/geom.mjs";
+import { obstacles, buildGrid, routes } from "../rules/grid.mjs";
 
 const j = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url)));
 const room = j("../contract/fixtures/hoskins-living-room.room.json");
@@ -91,9 +94,15 @@ test("design measures: coffee table, TV, flow, daylight on the fixture", () => {
   const f = Object.fromEntries(measureAll(room, { piece }).map(({ c, facts }) => [c.id, facts]));
   assert.equal(f.coffee_table.ratio, 0.38);
   assert.equal(f.tv_distance.screens_for_distance, "40–55″");
-  assert.deepEqual(f.flow.items.sort(), ["dining_chair_3", "sofa"]);
+  // flow is lane D's walkway: the same width and spot the model check reports for that way
+  const O = outline(room), G = buildGrid(O, obstacles(room));
+  const d = routes(G, O, [], { paths: true }).find((r) => r.from === "hall_door" && r.to === "balcony_door");
+  assert.equal(f.flow.narrowest_m, Math.round(d.width * 100) / 100);
+  assert.deepEqual(f.flow.at, d.at.map((v) => Math.round(v * 100) / 100));
+  assert.ok(f.flow.items.includes("sofa"));
   assert.equal(f.daylight.zones.find((z) => z.zone === "dining table").lit, false);
-  assert.ok(f.lamps_per_zone.zones.find((z) => z.zone === "desk").lights_within_2m.length === 0);
+  // lane A's exact export has the two architect lamps clamped to the desk
+  assert.deepEqual(f.lamps_per_zone.zones.find((z) => z.zone === "desk").lights_within_2m, ["table_lamp", "table_lamp"]);
 });
 
 test("design grade: 4–6 design findings in one request; positions never reach the model", async () => {
@@ -142,4 +151,42 @@ test("a placed new sofa replaces the old one for the design checks", () => {
   assert.equal(f.coffee_table.sofa, "fixture-sofa-84");
   assert.equal(f.coffee_table.ratio, 0.42);
   assert.ok(!f.flow.items.includes("sofa"));
+});
+
+// ---- the hook lane D's route calls (decisions/hooks.mjs) ---------------------------------------------
+
+test("hook choose: one choice per wall, keeps D's 'replacing the old one'", async () => {
+  const many = { ...placement, spots: [
+    { ...placement.spots[1], replaces: "sofa", score: 0.6 },
+    { ...placement.spots[1], at: [0.47, -2.475], replaces: "sofa", score: 0.59 },   // a 10 cm nudge of the same spot
+    placement.spots[0], placement.spots[2] ] };
+  assert.equal(distinctSpots(many.spots).length, 3);
+  setTransport(fake({ best: "spot_1" }));
+  const out = await choose(room, piece, many, { log: () => {} });
+  // two places on the west wall (replacing the old sofa, and further south): keys by index
+  assert.deepEqual(sent.questions[0].choices.map((c) => c.value), ["spot_1", "east", "spot_3"]);
+  assert.equal(out.best.replaces, "sofa");
+  assert.match(out.say, /^Fits\. Put it on the west wall, replacing the old one: /);
+  assert.equal(out.spots_total, 4);
+});
+
+test("hook choose: a Decisions failure keeps D's order and logs", async () => {
+  setTransport(() => { throw new Error("network down"); });
+  const logs = [];
+  const out = await choose(room, piece, placement, { log: (m) => logs.push(m) });
+  assert.equal(out.decision.by, "rules");
+  assert.ok(out.best);
+  assert.match(logs.join(" "), /network down/);
+});
+
+test("hook design: findings from gradeDesign with the piece in its spot; failure means rules only", async () => {
+  setTransport(fake());
+  const ctx = { piece: { ...piece, at: [0.47, -2.575], rot: 90 }, replaces: "sofa" };
+  const out = await design(room, [], ctx, { log: () => {} });
+  assert.ok(out.length >= 4 && out.every((f) => f.kind === "design"));
+  assert.ok(JSON.stringify(sent.input).includes("fixture-sofa-84") || JSON.stringify(sent.input).includes("Green velvet"));
+  setTransport(() => { throw new Error("400 bad"); });
+  const logs = [];
+  assert.deepEqual(await design(room, [], ctx, { log: (m) => logs.push(m) }), []);
+  assert.match(logs[0], /rules-only/);
 });
