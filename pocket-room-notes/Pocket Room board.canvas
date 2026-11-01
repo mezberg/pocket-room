@@ -15,7 +15,7 @@
 			"x": 460,
 			"y": 0,
 			"width": 400,
-			"height": 1004,
+			"height": 1226,
 			"label": "2 · Furniture from any image · MVP"
 		},
 		{
@@ -444,13 +444,23 @@
 			"color": "3"
 		},
 		{
+			"id": "p2_agent",
+			"type": "text",
+			"text": "**4th source: the agent finds it for you**\n\"Find me a sofa for this wall\" → web search in shops → only pieces that fit the free spot and match the room's style → image + dims → same path as a photo.",
+			"x": 470,
+			"y": 994,
+			"width": 380,
+			"height": 222,
+			"color": "3"
+		},
+		{
 			"id": "dev_group",
 			"type": "group",
 			"label": "Development plan · what runs in parallel, what waits",
 			"x": 0,
 			"y": 1636,
 			"width": 2400,
-			"height": 1318
+			"height": 1560
 		},
 		{
 			"id": "dev_h0",
@@ -518,15 +528,15 @@
 			"x": 520,
 			"y": 1786,
 			"width": 400,
-			"height": 118,
-			"text": "**A · Room** (part 1)\nHoskins → GLB + room.json · live box room from a photo · fire-plan shortcut",
+			"height": 196,
+			"text": "**A · Room** (part 1)\nHoskins → GLB + room.json · live box room from a photo · fire-plan shortcut\n**Build the hackathon room:** on arrival measure + photograph the venue → room.json + GLB; then try the live photo build against it",
 			"color": "3"
 		},
 		{
 			"id": "dev_B",
 			"type": "text",
 			"x": 520,
-			"y": 1924,
+			"y": 2002,
 			"width": 400,
 			"height": 170,
 			"text": "**B · Furniture** (part 2)\nVision read · DB match · image → 3D · normalise.\n⚠ Test the 3D vendor on day 1: slowest, riskiest lane",
@@ -536,7 +546,7 @@
 			"id": "dev_C",
 			"type": "text",
 			"x": 520,
-			"y": 2114,
+			"y": 2192,
 			"width": 400,
 			"height": 144,
 			"text": "**C · App** (part 3)\nViewer loads GLB + room.json · camera / upload / share target · backend with the key · deploy",
@@ -546,7 +556,7 @@
 			"id": "dev_D",
 			"type": "text",
 			"x": 520,
-			"y": 2278,
+			"y": 2356,
 			"width": 400,
 			"height": 118,
 			"text": "**D · Rules in code** (parts 4 + 5a)\nPlacement candidates + legal spots · model check: overlaps, doors, paths (A*), walkways",
@@ -556,17 +566,27 @@
 			"id": "dev_E",
 			"type": "text",
 			"x": 520,
-			"y": 2416,
+			"y": 2494,
 			"width": 400,
 			"height": 144,
 			"text": "**E · Decisions** (parts 4 + 5b)\nVerdict + best wall · design-grade question set (light, flow, proportion, style) · tuned on fixtures",
 			"color": "3"
 		},
 		{
+			"id": "dev_G",
+			"type": "text",
+			"x": 520,
+			"y": 2658,
+			"width": 400,
+			"height": 144,
+			"text": "**G · Agent finds furniture** (part 2)\nAgent searches shops for pieces that fit the free spot and the room's style → product image + dims → piece.json, same path as B",
+			"color": "3"
+		},
+		{
 			"id": "dev_F",
 			"type": "text",
 			"x": 520,
-			"y": 2580,
+			"y": 2822,
 			"width": 400,
 			"height": 144,
 			"text": "**F · Render** (part 7, stretch)\ngpt-image edit from a screenshot + room photo. Needs nothing else: anyone free can start it",
@@ -576,11 +596,11 @@
 			"id": "dev_note",
 			"type": "text",
 			"x": 520,
-			"y": 2754,
+			"y": 2996,
 			"width": 400,
 			"height": 160,
 			"color": "5",
-			"text": "Each lane needs only the contract + fixtures, so all run at once.\n5 people: one lane each · 3 people: A+C · B · D+E"
+			"text": "Each lane needs only the contract + fixtures, so all run at once.\n6 people: one lane each · 3 people: A+C · B+G · D+E"
 		},
 		{
 			"id": "dev_I1",
@@ -600,6 +620,16 @@
 			"width": 400,
 			"height": 118,
 			"text": "**Analysis view**\nmarkers + advice list in 3D\nneeds C · D · E (A for the real room)",
+			"color": "3"
+		},
+		{
+			"id": "dev_T",
+			"type": "text",
+			"x": 1000,
+			"y": 2102,
+			"width": 400,
+			"height": 248,
+			"text": "**Test every source in both rooms**\nRooms: Hoskins flat · hackathon room\nSources: live photo in the venue · shop photo / tag · screenshot from a feed · agent-suggested from the internet\nEach: 3D built? true size? placed sensibly? verdict right?\nneeds the loop",
 			"color": "3"
 		},
 		{
@@ -628,15 +658,15 @@
 			"x": 1960,
 			"y": 1786,
 			"width": 400,
-			"height": 144,
-			"text": "**Demo**\nPre-generate hero pieces · prebuild / measure the venue room · rehearse the 90 s · record a fallback video",
+			"height": 170,
+			"text": "**Demo**\nShow all four sources in the hackathon room · pre-generate hero pieces · prebuild / measure the venue room · rehearse the 90 s · record a fallback video",
 			"color": "3"
 		},
 		{
 			"id": "dev_crit",
 			"type": "text",
 			"x": 1960,
-			"y": 1970,
+			"y": 1996,
 			"width": 400,
 			"height": 170,
 			"text": "**Critical path**\ncontract → C viewer + A export → D placement → add-a-piece loop → demo.\nB runs beside it; if image → 3D fails, DB match carries the demo",
@@ -747,6 +777,13 @@
 			"toSide": "left"
 		},
 		{
+			"id": "dev_e_dev_p0_dev_G",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_G",
+			"toSide": "left"
+		},
+		{
 			"id": "dev_e_dev_p0_dev_F",
 			"fromNode": "dev_p0",
 			"fromSide": "right",
@@ -784,6 +821,13 @@
 		{
 			"id": "dev_e_dev_E_dev_I1",
 			"fromNode": "dev_E",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_G_dev_I1",
+			"fromNode": "dev_G",
 			"fromSide": "right",
 			"toNode": "dev_I1",
 			"toSide": "left"
@@ -829,6 +873,21 @@
 			"fromSide": "right",
 			"toNode": "dev_demo",
 			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_T_dev_demo",
+			"fromNode": "dev_T",
+			"fromSide": "right",
+			"toNode": "dev_demo",
+			"toSide": "left",
+			"label": "fixes"
+		},
+		{
+			"id": "dev_e_I1_T",
+			"fromNode": "dev_I1",
+			"fromSide": "bottom",
+			"toNode": "dev_T",
+			"toSide": "top"
 		},
 		{
 			"id": "dev_e_dev_V_dev_demo",
