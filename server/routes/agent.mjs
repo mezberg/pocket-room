@@ -1,23 +1,18 @@
 // Lane G. POST /api/agent/find { roomId, wall?, query } → { pieces } (each already known to fit).
 import { Router } from "express";
 import { openai, MODELS } from "../openai.mjs";
-import { room as fixtureRoom } from "../fixtures.mjs";
+import { resolveRoom } from "../rooms-store.mjs";
 import { find } from "../../agent/find.mjs";
 
 const r = Router();
 const styleCache = new Map();
 const results = new Map();   // same question, same answer, for an hour: a search takes ~40 s
 
-// Rooms come from lane A's /api/rooms/:id once it lands; until then the fixture is the only room.
-const roomFor = (id) => {
-  const room = fixtureRoom();
-  return !id || id === room.id ? room : null;
-};
 
 r.post("/find", async (req, res) => {
-  const { roomId, wall, query, fresh } = req.body ?? {};
+  const { roomId, room: bodyRoom, wall, query, fresh } = req.body ?? {};
   if (!query || typeof query !== "string") return res.status(400).json({ error: "query is required" });
-  const room = roomFor(roomId);
+  const room = resolveRoom({ room: bodyRoom, roomId });   // the shared store; a body room wins
   if (!room) return res.status(404).json({ error: `no room ${roomId}` });
   if (wall && !room.walls.some((w) => w.id === wall)) return res.status(400).json({ error: `no wall ${wall} in ${room.id}` });
 

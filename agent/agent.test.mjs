@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { room as fixtureRoom } from "../server/fixtures.mjs";
 import { bestWall, fitIn, freeSpace } from "./space.mjs";
 import { pageMeta, pageText, shopFor, sizeSnippets } from "./page.mjs";
-import { categoryOf, checkedSize, find } from "./find.mjs";
+import { categoryOf, checkedSize, find, fitByRules } from "./find.mjs";
 
 // ---- space ------------------------------------------------------------------------------------------
 
@@ -25,7 +25,9 @@ test("the old sofa blocks the wall unless it is being replaced", () => {
 test("fitIn: width against the run, depth against walkway and coffee table", () => {
   const s = bestWall(fixtureRoom(), { replace: "sofa" });
   const run = s.runs[0];
-  assert.equal(fitIn(s, run, [2.0, 0.9, 0.8]).verdict, "Fits");
+  // lane A's exact export: the dining table stands 0.82 m + a walkway off the west wall
+  assert.equal(fitIn(s, run, [2.0, 0.5, 0.8]).verdict, "Fits");
+  assert.equal(fitIn(s, run, [2.0, 0.9, 0.8]).verdict, "Just fits");
   assert.equal(fitIn(s, run, [2.0, 0.9, 0.8]).spare_m, 0.672);
   assert.equal(fitIn(s, run, [2.8, 0.9, 0.8]).verdict, "Doesn't fit");     // too wide
   assert.equal(fitIn(s, run, [2.5, 1.5, 0.8]).verdict, "Doesn't fit");     // eats the walkway
@@ -185,7 +187,12 @@ test("find: three real-shop pieces that fit, sizes from the page, links checked"
   }
   const ikea = out.pieces.find((p) => p.source.shop === "IKEA");
   assert.deepEqual(ikea.size, [2.07, 0.85, 0.94]);
-  assert.equal(ikea.agent.reason, "2.07 m wide, fits the west wall with 60 cm to spare; oatmeal fabric suits your light oak floor");
+  // the verdict is lane D's place() on the whole room: the way to the sofa's front is 67 cm, so "just fits"
+  const d = fitByRules(fixtureRoom(), [2.07, 0.85, 0.94], { category: "sofa", wall: "west" });
+  assert.equal(ikea.agent.fit.verdict, d.verdict);
+  assert.deepEqual(ikea.agent.fit.at, d.at);
+  assert.equal(ikea.agent.fit.replaces, "sofa");
+  assert.equal(ikea.agent.reason, `2.07 m wide, ${d.verdict === "Fits" ? "fits" : "just fits"} the west wall with 60 cm to spare; oatmeal fabric suits your light oak floor`);
 
   const why = Object.fromEntries(out.rejected.map((r) => [r.url, r.why]));
   assert.match(why["https://www.habitat.co.uk/product/huge"], /doesn't fit/);
@@ -207,4 +214,12 @@ test("find: room style from the room JSON skips the Vision read", async () => {
   await find(room, { query: "sofa", wall: "west" }, { openai: fakeOpenAI(calls), models: { text: "m" }, fetch: fakeFetch([]) });
   assert.ok(!calls.some((c) => c.kind === "room_style"));
   assert.match(calls.find((c) => c.kind === "products").req.input, /mid-century/);
+});
+
+test("fitByRules: lane D's verdict, the wall asked for, Doesn't fit for a sofa wider than any wall", () => {
+  const ok = fitByRules(fixtureRoom(), [2.0, 0.9, 0.8], { category: "sofa", wall: "west" });
+  assert.ok(ok.fits && ok.wall === "west" && ["Fits", "Just fits"].includes(ok.verdict));
+  const huge = fitByRules(fixtureRoom(), [7.5, 0.9, 0.8], { category: "sofa", wall: "west" });
+  assert.equal(huge.fits, false);
+  assert.match(huge.say, /Doesn't fit/);
 });

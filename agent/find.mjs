@@ -1,11 +1,13 @@
 // "Find me a sofa for this wall": search UK shops, read each product page, keep what fits and suits.
 //
 //   search (Responses + web_search) → fetch each page ourselves (link check) → read sizes off the page
-//   (model copies the text; code checks the text is on the page) → fit against the wall (space.mjs)
+//   (model copies the text; code checks the text is on the page) → fit by lane D's rules (rules/ place())
 //   → style match (model) → three options, each with a one-line reason whose numbers come from code.
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { bestWall, fitIn, freeSpace } from "./space.mjs";
+import { bestWall, freeSpace } from "./space.mjs";
+import { place } from "../rules/index.mjs";
+import { kitFor } from "../furniture/parametric.mjs";
 import { UK_SHOPS, fetchPage, pageMeta, pageText, shopFor, sizeSnippets } from "./page.mjs";
 import { judgeStyle, readProductPage, readRoomStyle, searchProducts } from "./models.mjs";
 
@@ -66,12 +68,13 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
     return { hit, shop, page, meta, got, size: size.m };
   }));
 
-  // 4. Fit, by code.
+  // 4. Fit, by code: lane D's place() on the whole room (walls, doors, swings, walkways), preferring the wall
+  // the search was sized for.
   const fitting = [];
   for (const c of read.filter(Boolean)) {
     if (category !== "other" && c.got.category !== category) { reject(c.hit.url, `it is a ${c.got.category}, not a ${category}`); continue; }
-    const fit = fitIn(space, run, c.size);
-    if (!fit.fits) { reject(c.hit.url, `${fmt(c.size[0])} × ${fmt(c.size[1])} doesn't fit (${fmt(run.length)} × ${fmt(fit.depth_m)} free)`); continue; }
+    const fit = fitByRules(room, c.size, { category, wall: space.wall, strict: !!wall, run });
+    if (!fit.fits) { reject(c.hit.url, `${fmt(c.size[0])} × ${fmt(c.size[1])} doesn't fit: ${fit.say}`); continue; }
     fitting.push({ ...c, fit });
   }
   if (!fitting.length) return { pieces: [], space: { wall: space.wall, run, category }, rejected, style };
@@ -92,7 +95,7 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
     const j = byId.get(ids[i]) ?? { match: 0.5, note: "" };
     // Fits beats Just fits; then style; then using the wall well (about 60 cm to spare is right, either way
     // is worse); a piece with a picture beats one without.
-    const use = clamp01(1 - Math.abs(c.fit.spare_m - 0.6) / 1.2);
+    const use = c.fit.spare_m == null ? 0.5 : clamp01(1 - Math.abs(c.fit.spare_m - 0.6) / 1.2);
     const score = (c.fit.verdict === "Fits" ? 1 : 0.6) * (c.meta.image ? 1 : 0.9) * (0.7 * clamp01(j.match) + 0.3 * use);
     return { c, id: ids[i], j, score };
   }).sort((a, b) => b.score - a.score);
@@ -107,10 +110,24 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
   take(() => true);
 
   return {
-    pieces: picked.map(({ c, id, j }) => toPiece(c, { id, category, wall: space.wall, note: j.note })),
+    pieces: picked.map(({ c, id, j }) => toPiece(c, { id, category, note: j.note })),
     space: { wall: space.wall, run: { from: run.from, to: run.to, length: run.length, depth: run.depth }, category },
     style, rejected,
   };
+}
+
+/**
+ * Does a piece of this size fit, by lane D's rules? The best legal spot on `wall` (or, unless strict, on any
+ * wall when that one has none). spare_m = how much of the wall's free run is left, when it went on that wall.
+ */
+export function fitByRules(room, size, { category, wall, strict = false, run } = {}) {
+  const p = place(room, { id: "candidate", category, name: `new ${category}`, size });
+  const onWall = wall ? p.spots.filter((s) => s.wall === wall) : p.spots;
+  const best = onWall[0] ?? (strict ? null : p.spots[0]);
+  if (!best) return { verdict: "Doesn't fit", fits: false, say: p.best ? `not on the ${wall} wall` : p.say };
+  const spare = run && best.wall === wall ? Math.round((run.length - size[0]) * 1000) / 1000 : null;
+  return { verdict: best.verdict, fits: true, wall: best.wall ?? null, at: best.at, rot: best.rot, clearance_m: best.clearance_m,
+    spare_m: spare, ...(best.replaces ? { replaces: best.replaces } : {}) };
 }
 
 /** The room's style: from the room JSON if it has one, else a Vision read of the room's picture (cached). */
@@ -149,11 +166,15 @@ export function checkedSize(got, text) {
   return { ok: true, m };
 }
 
-function toPiece(c, { id, category, wall, note }) {
+function toPiece(c, { id, category, note }) {
   const [w, d, h] = c.size;
   const name = c.meta.title ?? c.hit.name;
-  const spare = c.fit.spare_m;
-  const fitText = `${fmt(w)} wide, ${c.fit.verdict === "Fits" ? "fits" : "just fits"} the ${wall} wall with ${cm(spare)} to spare`;
+  const spare = c.fit.spare_m, wall = c.fit.wall;
+  const verb = c.fit.verdict === "Fits" ? "fits" : "just fits";
+  const where = wall ? `the ${wall} wall` : "the middle of the room";
+  const fitText = spare != null && spare >= 0
+    ? `${fmt(w)} wide, ${verb} ${where} with ${cm(spare)} to spare`
+    : `${fmt(w)} wide, ${verb} ${where} with ${cm(c.fit.clearance_m)} to walk past`;
   const reason = [fitText, note && !/\d/.test(note) ? note.replace(/\.$/, "") : null].filter(Boolean).join("; ");
   return {
     id,
@@ -163,23 +184,23 @@ function toPiece(c, { id, category, wall, note }) {
     size_source: "product_page",
     style: { tags: c.got.tags ?? [], colors: c.got.colors ?? [], material: c.got.material ?? undefined },
     source: { kind: "agent", image: absolute(c.meta.image, c.page.url), url: c.page.url, price: c.meta.price ?? null, shop: c.shop.name },
-    model: modelFor(category, c.size),
+    model: modelFor(category, c.size, c.got),
     agent: {
       reason,
-      fit: { verdict: c.fit.verdict, wall, at: c.fit.at, rot: c.fit.rot, spare_m: spare, depth_spare_m: c.fit.depth_spare_m },
+      fit: { verdict: c.fit.verdict, wall, at: c.fit.at, rot: c.fit.rot, spare_m: spare, clearance_m: c.fit.clearance_m, ...(c.fit.replaces ? { replaces: c.fit.replaces } : {}) },
       quotes: { width: c.got.width.quote, depth: c.got.depth.quote, height: c.got.height.quote },
     },
   };
 }
 
-// A parametric stand-in from the kit so the piece shows at once; lane B may swap in a real model.
-function modelFor(category, [w, d]) {
-  if (category === "sofa") {
-    const seats = w >= 1.9 ? 3 : 2;
-    return { status: "ready", how: "parametric", glb: null, job: null,
-      parametric: { template: "sofa", args: { seats, seatW: Math.round(((w - 0.3) / seats) * 100) / 100, depth: d } } };
-  }
-  return { status: "pending", how: null, glb: null, parametric: null, job: null };
+// A parametric piece from lane B's kit (furniture/parametric.mjs) so the piece shows at once, in its colours.
+const TEMPLATE = { sofa: "sofa", armchair: "armchair", shelf: "shelf", cupboard: "sideboard", tv: "sideboard", desk: "desk",
+  chair: "diningChair", bed: "bed", rug: "rug", lamp: "floorLamp" };
+function modelFor(category, size, got = {}) {
+  const template = category === "table" ? (size[2] > 0.6 ? "diningTable" : "coffeeTable") : TEMPLATE[category];
+  const parametric = template ? kitFor({ size, style: { colors: got.colors ?? [] } }, { kit_template: template, material: got.material }) : null;
+  return parametric ? { status: "ready", how: "parametric", glb: null, job: null, parametric }
+    : { status: "pending", how: null, glb: null, parametric: null, job: null };
 }
 
 const idFor = (url) => `agent-${createHash("sha1").update(url).digest("hex").slice(0, 10)}`;
