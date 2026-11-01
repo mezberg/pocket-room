@@ -214,7 +214,7 @@ function walkways(ctx) {
       const g = groups.find((g) => g.closed && (g.key === k || g.routes.some((x) => Math.hypot(x.at[0] - r.at[0], x.at[1] - r.at[1]) < 0.35)));
       if (g) g.routes.push(r); else groups.push({ key: k, closed: true, routes: [r] });
     } else {
-      const g = groups.find((g) => !g.closed && Math.hypot(g.routes[0].at[0] - r.at[0], g.routes[0].at[1] - r.at[1]) < 0.35);
+      const g = groups.find((g) => !g.closed && g.routes.some((x) => Math.hypot(x.at[0] - r.at[0], x.at[1] - r.at[1]) < 0.35));
       if (g) g.routes.push(r); else groups.push({ closed: false, routes: [r] });
     }
   }
@@ -265,12 +265,13 @@ function walkways(ctx) {
         : `There's no proper way from ${r.fromLabel} to ${list}: the widest gap is ${cm(r.width)}${by}.`;
     } else {
       const others = g.routes.length - 1;
-      say = `The walkway from ${r.fromLabel} to ${r.toLabel}${others ? ` (and ${others} other way${others > 1 ? "s" : ""})` : ""} is ${cm(r.width)}${by}.`;
+      // within the grid's sampling error of 60 cm: say 60, the floor of "just fits"
+      say = `The walkway from ${r.fromLabel} to ${r.toLabel}${others ? ` (and ${others} other way${others > 1 ? "s" : ""})` : ""} is ${cm(Math.max(r.width, WALK_MIN))}${by}.`;
     }
     const f = {
       id: g.closed ? "path_blocked" : "walkway_tight", kind: "model", pass: false,
       severity: g.closed && !onlyWindows ? "fail" : "warn",
-      at: P2(r.at), items: near.slice(0, 3).map((x) => x.it.id), say, width_m: r2(r.width), path: r.path,
+      at: P2(r.at), items: near.slice(0, 3).map((x) => x.it.id), say, width_m: r2(g.closed ? r.width : Math.max(r.width, WALK_MIN)), path: r.path,
     };
     // Fix: move one movable piece at the narrow spot until this way is 75 cm and no other way gets worse.
     const need = WALK_OK - r.width;

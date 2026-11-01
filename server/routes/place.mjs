@@ -46,8 +46,11 @@ export function placeRouter(hook = E) {
       const room = roomOr404(body, res);
       if (!room) return;
       const ctx = { piece: body.piece?.at ? body.piece : undefined, replaces: body.replaces ?? undefined };
+      // lane E's request goes out first; lane D measures while it is in flight
+      const design = hook.design ? hook.design(room, [], ctx) : Promise.resolve([]);
+      await new Promise((ok) => setTimeout(ok, 25));   // let the request leave before the sync measuring
       const { findings } = analyse(withPiece(room, ctx));
-      if (hook.design) findings.push(...(await hook.design(room, findings, ctx)));
+      findings.push(...(await design));
       res.json({ findings });
     } catch (e) { next(e); }
   });

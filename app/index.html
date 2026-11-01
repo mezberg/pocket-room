@@ -12,18 +12,36 @@
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="stylesheet" href="/css/app.css">
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
+<!-- the import map comes before any module (preloads included), or "three" can't resolve -->
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
 } }
 </script>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
+<!-- the addons the first frame needs, fetched in parallel instead of one import at a time -->
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/EffectComposer.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/RenderPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/GTAOPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/OutputPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/Pass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/ShaderPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/MaskPass.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/CopyShader.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/GTAOShader.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/PoissonDenoiseShader.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/OutputShader.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/math/SimplexNoise.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/geometries/RoundedBoxGeometry.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/utils/BufferGeometryUtils.js" crossorigin>
 </head>
 <body>
 <div class="view" id="view">
   <div class="labels" id="labels"></div>
-  <div class="loading" id="loading"><span class="spin"></span>Building your room…</div>
+  <div class="loading" id="loading"><span class="spin"></span><span id="loading-text">Building your room…</span></div>
 </div>
 
 <header class="top">
@@ -52,25 +70,55 @@
     <div class="eyebrow">Add piece</div>
     <div id="add-pick">
       <h1>Seen something you like?</h1>
-      <p class="meta">A shop photo, a price tag or a screenshot. We build it in 3D and put it in your room, to scale.</p>
+      <p class="meta">A shop photo, a price tag, a screenshot or a link. We build it in 3D and put it in your room, to scale.</p>
       <div class="grid">
         <label class="tile"><input type="file" accept="image/*" capture="environment" id="in-camera" hidden>
           <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Camera</label>
         <label class="tile"><input type="file" accept="image/*" id="in-upload" hidden>
-          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-5 5m5-5 5 5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload</label>
+          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-5 5m5-5 5 5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Photo or screenshot</label>
         <button class="tile" id="btn-sample"><svg viewBox="0 0 24 24"><path d="M4 12h16v5H4zM6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3M6 17v2M18 17v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Sample sofa</button>
       </div>
+      <form class="find" id="link">
+        <input id="link-url" type="url" inputmode="url" placeholder="Paste a link to the product page" autocomplete="off" enterkeyhint="go">
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <p class="hint">On Android, share a screenshot from Instagram straight to Pocket Room. Or let us <button class="linkish" id="go-find" type="button">find one for you</button>.</p>
+    </div>
+    <div id="add-busy" class="busy-box" hidden>
+      <div class="busy">
+        <img id="add-busy-img" alt="" hidden>
+        <div><span class="spin"></span><strong class="busy-step"></strong><p class="meta busy-sub"></p></div>
+      </div>
+      <div class="busy-error" hidden><p class="err"></p><div class="row"><button class="btn primary retry">Try again</button><button class="btn back">Back</button></div></div>
+    </div>
+  </div>
+
+  <div class="screen" data-screen="find" hidden>
+    <div class="eyebrow">Find for me</div>
+    <div id="find-pick">
+      <h1>What are you after?</h1>
+      <p class="meta">We search UK shops, read each product page for its real size and keep three that fit your room.</p>
+      <div class="chips" id="find-chips">
+        <button class="chip-btn" data-q="a sofa for this wall">A sofa for this wall</button>
+        <button class="chip-btn" data-q="an armchair">An armchair</button>
+        <button class="chip-btn" data-q="a bookcase">A bookcase</button>
+        <button class="chip-btn" data-q="a sideboard">A sideboard</button>
+      </div>
       <form class="find" id="find">
-        <input id="find-q" placeholder="Or ask: a green sofa under $1,500" autocomplete="off" enterkeyhint="search">
+        <input id="find-q" placeholder="Or type it: a green velvet sofa under £1,000" autocomplete="off" enterkeyhint="search">
         <button class="btn" type="submit">Find</button>
       </form>
-      <p class="hint">On Android, share a screenshot from Instagram straight to Pocket Room.</p>
     </div>
-    <div id="add-busy" hidden>
+    <div id="find-busy" class="busy-box" hidden>
       <div class="busy">
-        <img id="busy-img" alt="" hidden>
-        <div><span class="spin"></span><strong id="busy-step">Reading the photo…</strong><p class="meta" id="busy-sub"></p></div>
+        <div><span class="spin"></span><strong class="busy-step"></strong><p class="meta busy-sub"></p></div>
       </div>
+      <div class="busy-error" hidden><p class="err"></p><div class="row"><button class="btn primary retry">Try again</button><button class="btn back">Back</button></div></div>
+    </div>
+    <div id="find-results" hidden>
+      <p class="meta" id="find-lead"></p>
+      <ol class="cards" id="find-cards"></ol>
+      <div class="row"><button class="btn" id="find-again">Search again</button></div>
     </div>
   </div>
 
@@ -81,7 +129,9 @@
       <div class="chip" id="verdict-chip"></div>
       <p class="say" id="verdict-say"></p>
       <p class="meta" id="verdict-piece"></p>
+      <p class="building" id="verdict-building" hidden><span class="spin small"></span><span>Showing a stand-in. Building the real 3D model…</span></p>
       <ol class="findings" id="findings"></ol>
+      <p class="meta" id="findings-busy" hidden><span class="spin small"></span> Checking the room with it in…</p>
       <div class="row">
         <button class="btn" id="btn-next" hidden>Next spot</button>
         <button class="btn" id="btn-remove">Remove</button>
@@ -100,6 +150,7 @@
 <nav class="tabs" id="tabs">
   <button data-tab="room" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>My room</button>
   <button data-tab="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Add piece</button>
+  <button data-tab="find"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15 15 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Find for me</button>
   <button data-tab="verdict"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Verdict<i class="dot" id="verdict-dot" hidden></i></button>
   <button data-tab="talk"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Talk</button>
 </nav>

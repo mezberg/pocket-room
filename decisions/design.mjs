@@ -197,7 +197,7 @@ const flow = {
   say(f) {
     const nice = (s) => s.replace(/_/g, " ");
     if (f.blocked) return `There is no way through from the ${nice(f.from)} to the ${nice(f.to)} without squeezing past furniture.`;
-    const by = f.beside.length ? `, between the ${f.beside.join(" and the ")}` : "";
+    const by = f.beside.length > 1 ? `, between the ${f.beside.join(" and the ")}` : f.beside.length ? `, by the ${f.beside[0]}` : "";
     const detour = f.detour > 1.25 ? `, and the way round is ${pct(f.detour - 1)} longer than a straight line` : "";
     return `From the ${nice(f.from)} to the ${nice(f.to)} the narrowest gap is ${cm(f.narrowest_m)}${by}${detour}.`;
   },

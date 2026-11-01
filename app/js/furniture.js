@@ -105,23 +105,37 @@ export function standAt(obj, at, rot = 0, h = 0) {
   obj.rotation.y = THREE.MathUtils.degToRad(rot);
 }
 
-// A piece from lane B / G. Parametric → the kit template with its args; GLB → loaded and fitted;
-// otherwise its category. The style's first colour paints the upholstery when it has one.
+// The kit module a parametric piece names (lane B: model.parametric.module, e.g. chesterfield.js for
+// chesterfieldLoveseat); kit-real.js when it names none.
+const modules = { "kit-real.js": kit };
+async function kitModule(name) {
+  if (!name || !/^[\w-]+\.js$/.test(name)) return kit;
+  return (modules[name] ??= await import(`./kit/${name}`));
+}
+
+// A piece from lane B / G. GLB → loaded and fitted; parametric → the kit template from its module with its
+// args; otherwise its category. The style's first colour paints the upholstery when it has one.
+// While the GLB builds (model.status "building") the parametric piece stands in.
 const loader = new GLTFLoader();
 export async function buildPiece(piece) {
   const m = piece.model ?? {};
   let g;
-  if (m.status === "ready" && m.glb) {   // GLB: y-up, front toward +z in three.js (plan −y)
-    const gltf = await loader.loadAsync(m.glb);
-    g = gltf.scene;
-  } else if (m.parametric?.template && typeof kit[m.parametric.template] === "function") {
-    const args = { ...m.parametric.args };
-    const color = piece.style?.colors?.[0];
-    if (color && args.color == null) args.color = color;
-    g = kit[m.parametric.template](args);
-  } else {
-    g = fromCategory(piece);
+  if (m.status === "ready" && m.glb) {   // GLB: y-up, front toward +z in three.js (plan −y), already at size
+    try { g = (await loader.loadAsync(m.glb)).scene; } catch (e) { console.warn("GLB failed, using the kit piece", e); }
   }
+  if (!g && m.parametric?.template) {
+    try {
+      const mod = await kitModule(m.parametric.module);
+      const make = mod[m.parametric.template];
+      if (typeof make === "function") {
+        const args = { ...m.parametric.args };
+        const color = piece.style?.colors?.[0];
+        if (color && args.color == null && !("leather" in args)) args.color = color;
+        g = make(args);
+      }
+    } catch (e) { console.warn("kit piece failed", e); }
+  }
+  if (!g) g = fromCategory(piece);
   const obj = fitToSize(g, piece.size);
   shadows(obj);
   obj.userData.piece = piece;

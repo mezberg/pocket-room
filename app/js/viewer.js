@@ -53,7 +53,11 @@ export class Viewer {
     const dy = Math.round((this.inset ?? 0) / 2);
     if (dy) this.camera.setViewOffset(w, h, 0, dy, w, h); else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
+    const changed = this.w !== w || this.h !== h;
     this.w = w; this.h = h;
+    if (changed && this.homed && this.room) this.home();   // keep the whole room in view unless the reader moved it
+    // setSize cleared the canvas: draw now (a resize lands after this frame's rAF), or it flashes blank
+    if (changed && this.room && this.real.ready) this.frame(0, performance.now() / 1000);
     this.request();
   }
 
@@ -162,6 +166,18 @@ export class Viewer {
     this.request();
   }
 
+  // room items hidden while a spot replaces them (the old sofa when the new one takes its place)
+  setHidden(ids = []) {
+    const gone = new Set(ids);
+    for (const obj of this.items?.children ?? []) {
+      const id = obj.userData.item?.id;
+      obj.visible = !gone.has(id);
+      const lb = this.labels[`item:${id}`];
+      if (lb) lb.hiddenBySpot = gone.has(id), lb.on = !lb.hiddenBySpot && this.namesOn !== false;
+    }
+    this.request();
+  }
+
   // ---------------------------------------------------------------- the new piece
   async showPiece(piece) {
     this.clearPiece();
@@ -170,6 +186,22 @@ export class Viewer {
     this.scene.add(this.pieceObj);
     await this.real.compile(this.scene, this.camera);
     return this.pieceObj;
+  }
+
+  // the real model is ready: swap it in where the stand-in stands, no drop
+  async swapModel(piece) {
+    const old = this.pieceObj;
+    if (!old) return;
+    const obj = await buildPiece(piece);
+    obj.position.copy(old.position);
+    obj.rotation.copy(old.rotation);
+    obj.visible = old.visible;
+    this.scene.remove(old);
+    this.scene.add(obj);
+    this.pieceObj = obj;
+    await this.real.compile(this.scene, this.camera);
+    if (this.labels.piece) this.label("piece", pieceLabel(piece), this.labels.piece.pos.clone(), "solid");
+    this.request();
   }
 
   // drop the piece into a spot: it falls from above and settles, its footprint drawn in the verdict colour
@@ -197,7 +229,7 @@ export class Viewer {
       return k < 1;
     });
     const [, , h] = piece.size;
-    this.label("piece", `${piece.name} · ${fmt(piece.size[0])} × ${fmt(piece.size[1])} m`, toWorld(at, h + 0.25), "solid");
+    this.label("piece", pieceLabel(piece), toWorld(at, h + 0.25), "solid");
     this.focus(at, Math.max(piece.size[0], piece.size[1]) / 2 + 1.2);
   }
 
@@ -269,18 +301,34 @@ export class Viewer {
   }
 
   showNames(on) {
-    for (const [k, lb] of Object.entries(this.labels)) if (k.startsWith("item:")) lb.on = on;
+    this.namesOn = on;
+    for (const [k, lb] of Object.entries(this.labels)) if (k.startsWith("item:")) lb.on = on && !lb.hiddenBySpot;
     this.request();
   }
 
   // ---------------------------------------------------------------- a still for lane F
-  snapshot() {
+  // Only the 3D view the reader sees (nothing under a panel), without the pins and the footprint
+  // (they'd come back as objects in the photo), at most 1536 px on the long side.
+  snapshot(max = 1536) {
+    const hide = [this.markers, this.footprint].filter(Boolean);
+    hide.forEach((o) => (o.visible = false));
     this.real.render(this.scene, this.camera);
-    return this.renderer.domElement.toDataURL("image/jpeg", 0.88);
+    const src = this.renderer.domElement;
+    const k = src.width / this.w;                      // device px per CSS px
+    const sh = Math.round((this.h - (this.inset ?? 0)) * k);
+    const scale = Math.min(1, max / Math.max(src.width, sh));
+    const c = document.createElement("canvas");
+    c.width = Math.round(src.width * scale);
+    c.height = Math.round(sh * scale);
+    c.getContext("2d").drawImage(src, 0, 0, src.width, sh, 0, 0, c.width, c.height);
+    hide.forEach((o) => (o.visible = true));
+    this.request();
+    return c.toDataURL("image/jpeg", 0.88);
   }
 }
 
 const fmt = (m) => m.toFixed(2);
+const pieceLabel = (p) => `${p.name} · ${fmt(p.size[0])} × ${fmt(p.size[1])} m${p.model?.status === "building" ? " · building 3D…" : ""}`;
 function bounce(k) {
   // fall, then a small bounce
   if (k < 0.7) return (k / 0.7) ** 2;

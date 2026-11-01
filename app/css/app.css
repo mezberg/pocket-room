@@ -24,7 +24,8 @@ button { font: inherit; color: inherit; }
 svg { width: 22px; height: 22px; flex: none; }
 
 /* ---------------------------------------------------------------- 3D */
-.view { position: fixed; inset: 0; background: var(--scene); overflow: hidden; }
+/* phone: the 3D on top, the sheet docked under it; main.js sets --cover to the sheet's top edge */
+.view { position: fixed; left: 0; right: 0; top: 0; bottom: var(--cover, 0px); background: var(--scene); overflow: hidden; transition: bottom .25s ease; }
 .view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .view canvas:active { cursor: grabbing; }
 .loading { position: absolute; inset: 0; display: flex; align-items: flex-start; padding-top: 30svh; justify-content: center; gap: 10px; color: var(--mut); font-size: 14px; background: var(--scene); transition: opacity .5s; }
@@ -59,13 +60,12 @@ svg { width: 22px; height: 22px; flex: none; }
 .icon[aria-pressed="false"] { opacity: .55; }
 
 /* ---------------------------------------------------------------- sheet */
-.sheet { position: fixed; left: 8px; right: 8px; bottom: calc(var(--tabs) + var(--safe-b) + 8px); z-index: 4;
-  max-height: min(46svh, 420px); overflow: auto; overscroll-behavior: contain;
-  background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-radius: 20px; padding: 6px 18px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.14); transition: transform .3s ease, opacity .3s; }
-.sheet.folded { transform: translateY(calc(100% - 34px)); }
-.sheet.folded .screen { opacity: 0; }
-.grip { display: block; width: 100%; height: 22px; border: 0; background: none; cursor: pointer; position: sticky; top: 0; }
+.sheet { position: fixed; left: 0; right: 0; bottom: calc(var(--tabs) + var(--safe-b)); z-index: 4;
+  max-height: min(48svh, 440px); overflow: auto; overscroll-behavior: contain;
+  background: var(--card); border-radius: 18px 18px 0 0; padding: 0 16px 14px; box-shadow: 0 -6px 24px rgba(0,0,0,.10); }
+.sheet.folded { max-height: 30px; overflow: hidden; }
+.sheet.folded .screen { display: none; }
+.grip { display: block; width: calc(100% + 32px); margin: 0 -16px; height: 26px; border: 0; background: var(--card); cursor: pointer; position: sticky; top: 0; z-index: 1; }
 .grip::before { content: ""; display: block; width: 38px; height: 5px; border-radius: 3px; background: var(--line); margin: 6px auto; }
 .screen { transition: opacity .2s; }
 .eyebrow { font: 600 11px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--mut); }
@@ -87,6 +87,28 @@ h1 { font: 700 22px/1.15 var(--display); letter-spacing: .01em; margin: 4px 0 6p
 .find input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; font: inherit; background: var(--card); color: var(--fg); }
 
 .busy { display: flex; gap: 14px; align-items: center; padding: 8px 0; }
+.busy-box { padding: 4px 0; }
+.busy-error .err { color: var(--red); font-weight: 600; margin: 8px 0 0; }
+.busy-box.failed .busy .spin { display: none; }
+.spin.small { width: 13px; height: 13px; border-width: 2px; margin-right: 6px; }
+.building { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--mut); margin: 6px 0 0; }
+.linkish { border: 0; background: none; padding: 0; color: var(--fg); font: inherit; text-decoration: underline; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.chip-btn { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 13px; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+.chip-btn:active { transform: scale(.97); }
+.cards { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.cards li { display: flex; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; }
+.cards li:hover { border-color: var(--mut); }
+.cards li.on { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.cards img { width: 84px; height: 84px; object-fit: contain; border-radius: 10px; background: #fff; flex: none; }
+.cards .body { min-width: 0; flex: 1; }
+.cards .name { font-weight: 700; font-size: 14.5px; line-height: 1.25; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cards .facts { font-size: 12.5px; color: var(--mut); margin: 3px 0; }
+.cards .why { font-size: 13px; margin: 3px 0 6px; }
+.cards .acts { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+.cards .acts a { color: var(--fg); }
+.mini { display: inline-block; padding: 2px 8px; border-radius: 999px; color: #fff; font: 700 11px/1.5 var(--display); letter-spacing: .04em; }
+.mini.fits { background: var(--green); } .mini.just { background: var(--amber); } .mini.no { background: var(--red); }
 .busy img { width: 76px; height: 76px; object-fit: cover; border-radius: 12px; flex: none; }
 .busy strong { display: inline-block; margin-left: 8px; vertical-align: middle; }
 .busy .meta { margin: 6px 0 0; }
@@ -112,19 +134,30 @@ h1 { font: 700 22px/1.15 var(--display); letter-spacing: .01em; margin: 4px 0 6p
 [data-screen="talk"] { text-align: center; }
 
 /* ---------------------------------------------------------------- tabs */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; grid-template-columns: repeat(4, 1fr);
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; grid-template-columns: repeat(5, 1fr);
   height: calc(var(--tabs) + var(--safe-b)); padding-bottom: var(--safe-b);
   background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--line); }
 .tabs button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; cursor: pointer;
-  font-size: 11px; font-weight: 600; color: var(--mut); }
+  font-size: 10.5px; font-weight: 600; color: var(--mut); white-space: nowrap; padding: 0 2px; }
 .tabs button[aria-current="page"] { color: var(--fg); }
 .tabs button[aria-current="page"] svg { transform: translateY(-1px); }
 .tabs .dot { position: absolute; top: 9px; left: calc(50% + 8px); width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
 
-.toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 64px); transform: translateX(-50%); z-index: 9; max-width: calc(100% - 32px);
+.toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 64px); text-align: center; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 32px);
   background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.2); }
 
-@media (min-width: 720px) {
-  .sheet { left: 16px; right: auto; width: 380px; bottom: calc(var(--tabs) + 16px); max-height: calc(100svh - var(--tabs) - 100px); }
+/* desktop: the 3D large on the left, the panel beside it (tabs on top, the screen under them) */
+@media (min-width: 900px) {
+  :root { --panel: 420px; }
+  .view { right: var(--panel); bottom: 0; transition: none; }
+  .top { right: var(--panel); }
+  .tabs { left: auto; right: 0; top: 0; bottom: auto; width: var(--panel); height: 64px; padding: 0; border-top: 0; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--card); grid-template-columns: repeat(5, 1fr); }
+  .sheet { left: auto; right: 0; top: 64px; bottom: 0; width: var(--panel); max-height: none; border-radius: 0; box-shadow: none; border-left: 1px solid var(--line); padding: 8px 24px 24px; }
+  .sheet.folded { max-height: none; overflow: auto; }
+  .sheet.folded .screen { display: block; }
+  .grip { display: none; }
+  .toast { left: calc((100% - var(--panel)) / 2); }
+  h1 { font-size: 26px; }
+  .cards img { width: 96px; height: 96px; }
 }
-@media (prefers-reduced-motion: reduce) { .sheet, .tag, .loading, .screen { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sheet, .tag, .loading, .screen, .view { transition: none; } }

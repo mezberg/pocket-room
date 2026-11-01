@@ -13,10 +13,11 @@ async function call(method, path, body) {
 export const api = {
   room: (id) => call("GET", `/rooms/${encodeURIComponent(id)}`),
   newPiece: (image, kind = "photo", hint) => call("POST", "/pieces", { image, kind, hint }),
+  fromLink: (url) => call("POST", "/pieces/from-link", { url }),
   piece: (id) => call("GET", `/pieces/${encodeURIComponent(id)}`),
-  find: (roomId, query, wall) => call("POST", "/agent/find", { roomId, query, wall }),
-  place: (roomId, piece) => call("POST", "/place", { roomId, piece }),
-  analyse: (roomId, room) => call("POST", "/analyse", { roomId, room }),
+  find: (body) => call("POST", "/agent/find", body),            // { roomId, query, wall?, room? }
+  place: (body) => call("POST", "/place", body),                // { roomId, piece, room? } (scene-state.js placeBody)
+  analyse: (body) => call("POST", "/analyse", body),            // { roomId, piece?, replaces?, room? } (analyseBody)
   render: (roomId, view, prompt) => call("POST", "/render", { roomId, view, prompt }),
 };
 
