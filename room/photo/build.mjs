@@ -67,6 +67,11 @@ export function planExtents(reading, known = {}) {
 }
 
 const FACING = { camera: 0, right: 90, away: 180, left: 270 };
+// A cupboard with no height read is a wardrobe (2 m) unless its name says it is low.
+const LOW = /\b(low|tv|television|media|sideboard|console|chest|drawers|dresser|credenza|bench)\b/i;
+// Photo positions are rough, but not this rough: a piece that needs a longer step to get clear is left
+// where it was read (the rules then show the overlap) rather than moved somewhere nobody saw it.
+const MAX_STEP = 0.6;
 
 // [[a, b], ...] sorted and merged, clipped to [0, len]
 function mergeSpans(spans, len) {
@@ -161,7 +166,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     const dh = dh0 ?? h;
     const width = clamp(metres(o.length) ?? dw, 0.2, Math.max(w, l));
     const depth = clamp(metres(o.depth) ?? dd, 0.05, Math.max(w, l));
-    const height = clamp(metres(o.height) ?? dh, 0.01, h);
+    const height = clamp(metres(o.height) ?? (cat === "cupboard" && LOW.test(o.name || "") ? 0.5 : dh), 0.01, h);
     const rot = FACING[o.facing] ?? 0;
     // keep the footprint inside the walls
     const [fx, fy] = rot % 180 === 0 ? [width, depth] : [depth, width];
@@ -170,7 +175,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     ids[base] = (ids[base] || 0) + 1;
     return {
       id: ids[base] > 1 ? `${base}_${ids[base]}` : base, name: (o.name || cat) + (o.count > 1 ? ` x${o.count}` : ""), category: cat,
-      at: at.map(r3), size: [width, depth, height].map(r3), rot, on_floor: cat !== "rug",
+      at: at.map(r3), size: [width, depth, height].map(r3), rot, on_floor: cat !== "rug" && cat !== "tv",   // a TV stands on a unit or the wall
       ...(/^#[0-9a-f]{6}$/i.test(o.color ?? "") ? { color: o.color.toLowerCase() } : {}),
     };
   });
@@ -221,7 +226,7 @@ export function separate(items, w, l, gap = 0.02) {
         const inside = (axis, d) => mover.at[axis] + d - f[axis] / 2 >= -1e-6 && mover.at[axis] + d + f[axis] / 2 <= [w, l][axis] + 1e-6;
         const small = mover.size[0] * mover.size[1] <= still.size[0] * still.size[1] ? 0 : 0.001;
         for (const [axis, d] of [[0, sb[2] - mb[0] + gap], [0, sb[0] - mb[2] - gap], [1, sb[3] - mb[1] + gap], [1, sb[1] - mb[3] - gap]])
-          if (inside(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
+          if (Math.abs(d) <= MAX_STEP && inside(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
       }
       if (!ways.length) continue;
       const { mover, still, axis, d } = ways.sort((u, v) => u.cost - v.cost)[0];

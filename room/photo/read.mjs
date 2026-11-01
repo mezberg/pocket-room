@@ -112,7 +112,8 @@ things standing in a row towards the far wall (tables, chairs, sofas, floor tile
 a door or a banner even when the ceiling is out of frame (then the span is the part you see).
 Say which part of the floor and which stretches of each wall are actually in view (seen); be strict: a wall
 that runs out of frame is seen only as far as the frame shows it.
-List doors, windows and big floor objects with positions as fractions of the room, with their main colour.
+List doors, windows and big floor objects with positions as fractions of the room, with their main colour
+and, for cupboards, units and tables, their height (low TV units and coffee tables are often under half a metre).
 Each reference means exactly what it names: table_height is a dining table or desk (74 cm), never a coffee table;
 chair_width is a dining chair seat. Keep it to what is visible.`;
 

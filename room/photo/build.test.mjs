@@ -173,7 +173,7 @@ test("objects keep their colour, depth and height (a low TV unit is not 2 m tall
 test("pieces read on top of each other are pushed apart, inside the walls; chairs may tuck under tables", () => {
   const o = (name, category, x, y, len, extra = {}) => ({ name, category, x, y, facing: "camera", length: m("door_width", len), depth: null, height: null, color: null, count: 1, ...extra });
   const room = roomFromReading(reading({ objects: [
-    o("Sofa", "sofa", 0.3, 0.5, 2.4), o("Coffee table", "table", 0.3, 0.55, 1.2),
+    o("Sofa", "sofa", 0.3, 0.5, 2.4), o("Coffee table", "table", 0.3, 0.6, 1.2),
     o("Dining table", "table", 0.8, 0.2, 1.5), o("Chair", "chair", 0.8, 0.2, 0.55), o("Rug", "rug", 0.3, 0.5, 2.4),
   ] }), { id: "t" });
   const by = Object.fromEntries(room.furniture.map((i) => [i.id, i]));
@@ -197,4 +197,24 @@ test("the shorter step wins, whichever piece it moves", () => {
   const moved = separate(items, 3.032, 3.625);
   assert.deepEqual(moved, ["sofa moved 16 cm off the table"]);
   assert.deepEqual(items[1].at, [0.537, 0.8]);
+});
+
+// Zoopla living room, second run: "Low television unit" came with no height and was built 2 m tall, the TV
+// on it was pushed 50 cm off it, and in the open-plan room a coffee table jumped 163 cm.
+test("a low unit with no height read is low, a TV stays on its unit, long jumps are not made", () => {
+  const o = (name, category, x, y, extra = {}) => ({ name, category, x, y, facing: "camera", length: null, depth: null, height: null, color: null, count: 1, ...extra });
+  const room = roomFromReading(reading({ objects: [
+    o("Low television unit", "cupboard", 0.5, 0.2), o("Television", "tv", 0.5, 0.2), o("Wardrobe", "cupboard", 0.9, 0.9),
+  ] }), { id: "t" });
+  const [unit, tv, wardrobe] = room.furniture;
+  assert.equal(unit.size[2], 0.5);
+  assert.equal(wardrobe.size[2], 2);
+  assert.equal(tv.on_floor, false);
+  assert.deepEqual(tv.at, [unit.at[0], unit.at[1]]);
+  const items = [
+    { id: "cabinet", category: "cupboard", at: [2, 2], size: [1.4, 0.6, 0.45], rot: 0 },
+    { id: "table", category: "table", at: [2, 2], size: [1.1, 1.2, 0.45], rot: 0 },
+  ];
+  assert.deepEqual(separate(items, 4, 4), []);       // every way out is 92 cm or more: left for the rules to show
+  assert.deepEqual(items[1].at, [2, 2]);
 });
