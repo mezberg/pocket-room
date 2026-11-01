@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { bestWall, freeSpace } from "./space.mjs";
 import { place } from "../rules/index.mjs";
+import { planPiece } from "../designer/plan.mjs";
 import { kitFor, templateFor } from "../furniture/parametric.mjs";
 import { UK_SHOPS, fetchPage, pageMeta, pageText, shopFor, sizeSnippets } from "./page.mjs";
 import { judgeStyle, readProductPage, readRoomStyle, searchProducts } from "./models.mjs";
@@ -45,7 +46,7 @@ export const categoryOf = (query) => CATEGORIES.find(([re]) => re.test(query))?.
  * @param deps   { openai, models: { text }, fetch, log, styleCache }
  * @returns { pieces, space: { wall, run, category }, rejected: [{ url, why }] }
  */
-export async function find(room, { query, wall, count = 3 }, { openai, models, fetch, log = () => {}, styleCache = new Map() }) {
+export async function find(room, { query, wall, count = 3, designer = false, replace = null }, { openai, models, fetch, log = () => {}, styleCache = new Map() }) {
   const category = categoryOf(query);
   // A sofa "for this wall" replaces the sofa that is there, so the old one isn't in the way.
   const opts = { replace: category };
@@ -88,7 +89,7 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
   const fitting = [];
   for (const c of read.filter(Boolean)) {
     if (category !== "other" && c.got.category !== category) { reject(c.hit.url, `it is a ${c.got.category}, not a ${category}`); continue; }
-    const fit = fitByRules(room, c.size, { category, wall: space.wall, strict: !!wall, run });
+    const fit = fitByRules(room, c.size, { category, wall: space.wall, strict: !!wall, run, designer, replace });
     if (!fit.fits) { reject(c.hit.url, `${fmt(c.size[0])} × ${fmt(c.size[1])} doesn't fit: ${fit.say}`); continue; }
     fitting.push({ ...c, fit });
   }
@@ -135,10 +136,30 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
  * Does a piece of this size fit, by lane D's rules? The best legal spot on `wall` (or, unless strict, on any
  * wall when that one has none). spare_m = how much of the wall's free run is left, when it went on that wall.
  */
-export function fitByRules(room, size, { category, wall, strict = false, run } = {}) {
+export function fitByRules(room, size, { category, wall, strict = false, run, designer = false, replace = null } = {}) {
+  // a piece meant to take another's place (a bigger coffee table for the small one): try exactly that first
+  if (replace) {
+    const r = place(room, { id: "candidate", category, name: `new ${category}`, size }, { replace });
+    const s = r.spots.find((x) => x.replaces === replace);
+    if (s) return { verdict: s.verdict, fits: true, wall: s.wall ?? null, at: s.at, rot: s.rot, clearance_m: s.clearance_m, plan: "replace",
+      replaces: replace, say: `Replace the ${String(replace).replace(/[_-]+/g, " ")} with it, where it stands now.` };
+    // it's meant to take that piece's place: somewhere else in the room (a coffee table against a wall) is no answer
+    return { verdict: "Doesn't fit", fits: false, say: r.say || `it doesn't fit where the ${String(replace).replace(/[_-]+/g, " ")} stands` };
+  }
   const p = place(room, { id: "candidate", category, name: `new ${category}`, size });
   const onWall = wall ? p.spots.filter((s) => s.wall === wall) : p.spots;
   const best = onWall[0] ?? (strict ? null : p.spots[0]);
+  if (!best && designer) {
+    // a shopping hint from a fix (e.g. a bigger coffee table): it fits if the designer can make room for it,
+    // by replacing the piece it's meant to replace or moving furniture first (designer/plan.mjs, measured by code)
+    const plans = planPiece(room, { id: "candidate", category, name: `new ${category}`, size }).plans;
+    if (plans.length) {
+      const pl = plans[0];
+      return { verdict: pl.spot?.verdict ?? "Just fits", fits: true, wall: pl.spot?.wall ?? null, at: pl.spot?.at, rot: pl.spot?.rot, plan: pl.kind,
+        clearance_m: pl.spot?.clearance_m,
+        say: pl.say, ...(pl.spot?.replaces ? { replaces: pl.spot.replaces } : {}) };
+    }
+  }
   if (!best) return { verdict: "Doesn't fit", fits: false, say: p.best ? `not on the ${wall} wall` : p.say };
   const spare = run && best.wall === wall ? Math.round((run.length - size[0]) * 1000) / 1000 : null;
   return { verdict: best.verdict, fits: true, wall: best.wall ?? null, at: best.at, rot: best.rot, clearance_m: best.clearance_m,
@@ -187,9 +208,14 @@ function toPiece(c, { id, category, note }) {
   const spare = c.fit.spare_m, wall = c.fit.wall;
   const verb = c.fit.verdict === "Fits" ? "fits" : "just fits";
   const where = wall ? `the ${wall} wall` : "the middle of the room";
-  const fitText = spare != null && spare >= 0
-    ? `${fmt(w)} wide, ${verb} ${where} with ${cm(spare)} to spare`
-    : `${fmt(w)} wide, ${verb} ${where} with ${cm(c.fit.clearance_m)} to walk past`;
+  // a designer plan (replace, or move things first) says what it does; never print a number we don't have
+  const fitText = c.fit.plan === "move" || c.fit.plan === "replace"
+    ? `${fmt(w)} wide: ${c.fit.say.charAt(0).toLowerCase()}${c.fit.say.slice(1).replace(/\.$/, "")}`
+    : spare != null && spare >= 0
+      ? `${fmt(w)} wide, ${verb} ${where} with ${cm(spare)} to spare`
+      : Number.isFinite(c.fit.clearance_m)
+        ? `${fmt(w)} wide, ${verb} ${where} with ${cm(c.fit.clearance_m)} to walk past`
+        : `${fmt(w)} wide, ${verb} ${where}`;
   const reason = [fitText, note && !/\d/.test(note) ? note.replace(/\.$/, "") : null].filter(Boolean).join("; ");
   return {
     id,

@@ -11,7 +11,7 @@ const results = new Map();   // same question, same answer, for an hour: a searc
 
 
 r.post("/find", async (req, res) => {
-  const { roomId, room: bodyRoom, wall, query, fresh } = req.body ?? {};
+  const { roomId, room: bodyRoom, wall, query, fresh, designer, replace } = req.body ?? {};
   if (!query || typeof query !== "string") return res.status(400).json({ error: "query is required" });
   const room = resolveRoom({ room: bodyRoom, roomId });   // the shared store; a body room wins
   if (!room) return res.status(404).json({ error: `no room ${roomId}` });
@@ -21,7 +21,7 @@ r.post("/find", async (req, res) => {
   const hit = results.get(key);
   if (hit && !fresh && Date.now() - hit.at < 3600e3) return res.json({ ...hit.out, pieces: hit.out.pieces.map((p) => getPiece(p.id) ?? p) });
   try {
-    const out = await find(room, { query, wall }, { openai, models: MODELS, styleCache, log: (m) => console.log(`[agent] ${m}`) });
+    const out = await find(room, { query, wall, designer: !!designer, replace: replace ?? null }, { openai, models: MODELS, styleCache, log: (m) => console.log(`[agent] ${m}`) });
     // Like a pasted link: each piece is kept by lane B under its id (GET /api/pieces/:id) and its 3D model
     // builds from the product picture now, so the one you tap is ready sooner; the kit piece stands in.
     out.pieces = out.pieces.map((p) => registerProductPiece(p));

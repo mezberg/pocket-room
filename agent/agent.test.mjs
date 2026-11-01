@@ -234,3 +234,23 @@ test("search size: a long wall doesn't ask for a 9 m armchair; a short one keeps
   assert.deepEqual(short, { minWidthCm: 150, maxWidthCm: 240, maxDepthCm: 125 });
   assert.equal(big.maxDepthCm, 120);
 });
+
+test("fitByRules with the designer: a coffee table that only fits once the designer makes room counts as fitting", async () => {
+  const { fitByRules } = await import("./find.mjs");
+  const room = fixtureRoom();
+  const plain = fitByRules(room, [1.4, 0.7, 0.45], { category: "table" });
+  const helped = fitByRules(room, [1.4, 0.7, 0.45], { category: "table", designer: true });
+  if (!plain.fits) {
+    assert.equal(helped.fits, true, "the designer finds room by replacing or moving furniture");
+    assert.ok(["place", "replace", "move"].includes(helped.plan));
+  } else assert.equal(helped.fits, true);
+});
+
+test("fitByRules with replace: only a true replacement counts, never a spot elsewhere", async () => {
+  const { fitByRules } = await import("./find.mjs");
+  const room = fixtureRoom();
+  const small = fitByRules(room, [1.0, 0.55, 0.45], { category: "table", replace: "coffee_table", designer: true });
+  if (small.fits) assert.equal(small.replaces, "coffee_table");
+  const huge = fitByRules(room, [2.6, 1.2, 0.45], { category: "table", replace: "coffee_table", designer: true });
+  assert.equal(huge.fits, false, "too big to stand where the old one is: not offered on a wall instead");
+});

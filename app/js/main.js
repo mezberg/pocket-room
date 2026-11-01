@@ -484,7 +484,7 @@ const size = (p) => `${p.size[0].toFixed(2)} × ${p.size[1].toFixed(2)} × ${p.s
 // ---------------------------------------------------------------- Find for me
 const PLURAL = { sofa: "sofas", armchair: "armchairs", chair: "chairs", bookcase: "bookcases", shelf: "shelves", sideboard: "sideboards",
   desk: "desks", table: "tables", bed: "beds", rug: "rugs", lamp: "lamps", cabinet: "cabinets" };
-async function findFor(q) {
+async function findFor(q, extra = {}) {
   show("find");
   $("find-results").hidden = true;
   const what = Object.keys(PLURAL).find((k) => new RegExp(`\\b${k}`, "i").test(q));
@@ -494,7 +494,7 @@ async function findFor(q) {
         [7000, "Opening each product page…"], [14000, "Reading the stated sizes off each page…"],
         [22000, "Checking each one against your walls and walkways…"], [32000, "Picking three that suit your room…"],
         [55000, "Still going: some shops are slow…"]] });
-      const out = await withRoom(() => api.find({ roomId: state.room.id, query: q, room: state.saved ? undefined : state.room }));
+      const out = await withRoom(() => api.find({ roomId: state.room.id, query: q, room: state.saved ? undefined : state.room, ...extra }));
       if (!out.pieces?.length) throw new Error(out.say || `Nothing we found fits this room. Try other words, or a smaller ${what ?? "piece"}.`);
       findBusy.hide();
       $("find-pick").hidden = true;
@@ -664,9 +664,17 @@ function fixPanel(f, i) {
   row.className = "row";
   row.innerHTML = `<button class="btn primary small" data-act="apply">Apply</button><button class="btn small" data-act="cancel">Cancel</button>`;
   const apply = row.querySelector('[data-act="apply"]');
-  apply.disabled = !sel?.steps.length;
-  if (sel && !sel.steps.length) apply.textContent = "Nothing to apply";
-  apply.onclick = () => applyOption(f, sel).catch((err) => toast(plain(err)));
+  apply.disabled = !sel?.steps.length && !sel?.shop;
+  if (sel?.shop && !sel.steps.length) {
+    // a shopping hint: find real ones of that size in UK shops; the one you pick is placed by the designer
+    // (a free spot, replacing the old one, or moving furniture first)
+    const [w, d] = sel.shop.size;
+    apply.textContent = "Find one that fits";
+    apply.onclick = () => { closeFix(); findFor(`a ${sel.shop.name} about ${Math.round(w * 100)} × ${Math.round(d * 100)} cm`, { designer: true, replace: sel.items?.[0] ?? null }); };
+  } else {
+    if (sel && !sel.steps.length) apply.textContent = "Nothing to apply";
+    apply.onclick = () => applyOption(f, sel).catch((err) => toast(plain(err)));
+  }
   row.querySelector('[data-act="cancel"]').onclick = () => { closeFix(); renderVerdict(); };
   box.append(list, row);
   return box;
