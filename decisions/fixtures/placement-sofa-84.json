@@ -1,0 +1,12 @@
+{
+  "_note": "Mock of lane D's placement for contract/fixtures/sofa-84 in hoskins-living, shaped as contract/api.md. The numbers are hand-set, not measured; replace with D's output when rules/ lands. The east spot is the server stub's.",
+  "verdict": "Fits",
+  "best": null,
+  "spots": [
+    { "at": [3.18, -3.4], "rot": 270, "wall": "east", "score": 0.8, "clearance_m": 0.7, "verdict": "Just fits", "reasons": ["stub"] },
+    { "at": [0.47, -2.575], "rot": 90, "wall": "west", "score": 0.75, "clearance_m": 0.95, "verdict": "Fits", "reasons": ["replaces the old sofa"] },
+    { "at": [0.47, -4.95], "rot": 90, "wall": "west", "score": 0.7, "clearance_m": 0.68, "verdict": "Just fits", "reasons": [] },
+    { "at": [1.8, -0.9], "rot": 0, "wall": "north", "score": 0.2, "clearance_m": 0.4, "verdict": "Doesn't fit", "reasons": ["blocks the hall door"] }
+  ],
+  "say": "Fits."
+}
