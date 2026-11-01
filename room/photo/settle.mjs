@@ -110,6 +110,9 @@ function snapToWalls(room, O, w, l, repairs) {
 // to 62 cm when a short move (≤ 25 cm) of one piece does it legally: between a piece and a wall, or between
 // two pieces facing each other across it.
 const WAY = 0.62, NUDGE = 0.25;
+// The 40-50 cm between a sofa or chair and its coffee table is legroom, not a way through.
+const SEATS = new Set(["sofa", "armchair", "chair"]);
+const legroom = (a, c) => [[a, c], [c, a]].some(([x, t]) => SEATS.has(x.category) && t.category === "table" && t.size[2] < 0.6);
 function openGaps(room, O, w, l, repairs) {
   const items = room.furniture.filter(solid);
   const tryMove = (it, axis, d, why) => {
@@ -126,7 +129,7 @@ function openGaps(room, O, w, l, repairs) {
       if (gap > 0.02 && gap < WAY - 0.02) tryMove(it, axis, dir * (WAY - gap), `by the ${["west", "east", "south", "north"][axis * 2 + (dir < 0 ? 1 : 0)]} wall`);
   }
   for (const a of items) for (const c of items) {
-    if (a === c || groupOf(room, a).includes(c) || tucked(a, c)) continue;
+    if (a === c || groupOf(room, a).includes(c) || tucked(a, c) || legroom(a, c)) continue;
     const A = bbox(a), C = bbox(c);
     for (const axis of [0, 1]) {
       const o = 1 - axis;
