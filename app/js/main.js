@@ -5,6 +5,7 @@ import { Viewer } from "./viewer.js";
 import { api, untilBuilt, imageToDataURL, fileAsDataURL } from "./api.js";
 import { roomStats } from "./room3d.js";
 import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "./scene-state.js";
+import { fixBody, applyFix, undoStack, withFixed, previewMoves } from "./fix-state.js";
 import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS, seenShare, spotUnseen } from "./new-room.js";
 
 const $ = (id) => document.getElementById(id);
@@ -37,7 +38,8 @@ async function withRoom(call) {
 }
 const desktop = matchMedia("(min-width: 900px)");
 
-const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0 };
+const fixCache = new Map(), undo = undoStack();   // tap an issue → fixes, and what Apply changed
+const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null };
 
 await firstPaint();
 const viewer = new Viewer($("view"), $("labels"));
@@ -74,9 +76,16 @@ new ResizeObserver(() => requestAnimationFrame(layout)).observe(sheet);
 desktop.addEventListener("change", layout);
 addEventListener("resize", layout);
 
-function toast(msg, ms = 3600) {
+function toast(msg, ms = 3600, action) {
   const t = $("toast");
   t.textContent = msg;
+  if (action) {
+    const b = document.createElement("button");
+    b.className = "toast-act";
+    b.textContent = action.label;
+    b.onclick = () => { t.hidden = true; action.run(); };
+    t.append(b);
+  }
   t.hidden = false;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => (t.hidden = true), ms);
@@ -163,7 +172,8 @@ async function loadRoom(id, { fresh } = {}) {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [] });
+  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null });
+  closeFix(); undo.clear();
   $("verdict-building").hidden = true;
   $("verdict-dot").hidden = true;
   $("still").hidden = true;
@@ -221,7 +231,8 @@ async function checkRoom() {
     const spot = state.piece ? spotOf(state.placement, state.spot) : null;
     const { findings } = await withRoom(() => api.analyse(analyseBody(state.room, state.piece, spot, { saved: state.saved })));
     if (run !== state.run) return;   // the piece or spot changed meanwhile
-    setFindings(findings);
+    setFindings(withFixed(findings, state.fixed?.finding, state.fixed?.option));
+    prefetchFixes(run);
   } finally {
     $("findings-busy").hidden = true;
     renderVerdict();
@@ -323,7 +334,8 @@ async function addPiece(read, box) {
   box.show("Finding the best spot…", `${piece.name} · ${size(piece)}`);
   const [placement] = await Promise.all([withRoom(() => api.place(placeBody(state.room, piece, { saved: state.saved }))), viewer.showPiece(piece)]);
   if (run !== state.run) return;
-  Object.assign(state, { piece, placement, spot: 0, findings: [] });
+  Object.assign(state, { piece, placement, spot: 0, findings: [], fixed: null });
+  closeFix();
   viewer.clearFindings();
   dropSpot();
   box.hide();
@@ -421,10 +433,170 @@ function setFindings(findings) {
 function focusFinding(i) {
   const f = state.findings[i];
   show("verdict");
+  if (f && !f.pass) return openFix(i);
+  closeFix();
   document.querySelectorAll(".findings li").forEach((li, j) => li.classList.toggle("on", j === i));
   if (f?.at) viewer.focus(f.at, 1.4);
-  if (f && !desktop.matches) toast(f.say, 4500);
 }
+
+// ---------------------------------------------------------------- tap an issue → fixes (fixes/, POST /api/fixes)
+// Asked for as soon as the room is checked, one finding after another, so a tap usually finds them ready.
+const fixKey = (f) => `${state.run}|${f.id}|${f.at?.join(",") ?? ""}|${(f.items ?? []).join(",")}`;
+function loadFixes(f) {
+  const k = fixKey(f);
+  if (!fixCache.has(k)) {
+    const spot = state.piece ? spotOf(state.placement, state.spot) : null;
+    const p = withRoom(() => api.fixes(fixBody(state.room, state.piece, spot, f, { saved: state.saved })));
+    p.then((r) => { p.settled = r; }, () => fixCache.delete(k));
+    fixCache.set(k, p);
+  }
+  return fixCache.get(k);
+}
+async function prefetchFixes(run) {
+  for (const f of state.findings.filter((x) => !x.pass)) {
+    if (run !== state.run) return;
+    await loadFixes(f).catch(() => {});
+  }
+}
+
+function openFix(i) {
+  const f = state.findings[i];
+  state.fixOpen = i;
+  state.fixSel = null;
+  renderVerdict();
+  if (f.at) viewer.focus(f.at, 1.4);
+  const li = document.querySelectorAll(".findings li")[i];
+  li?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const run = state.run;
+  loadFixes(f).then((res) => {
+    if (run !== state.run || state.fixOpen !== i) return;
+    const best = res.options.find((o) => o.best) ?? res.options.find((o) => o.steps.length);
+    if (best) selectFix(i, best.id); else renderVerdict();
+  }).catch((err) => { if (state.fixOpen === i) { state.fixErr = plain(err); renderVerdict(); } });
+}
+function closeFix() {
+  state.fixOpen = state.fixSel = state.fixErr = null;
+  viewer.clearPreview();
+}
+async function selectFix(i, id) {
+  state.fixSel = id;
+  const res = await loadFixes(state.findings[i]);
+  const opt = res.options.find((o) => o.id === id);
+  renderVerdict();
+  // the options and Apply in view (on a phone the sheet is short)
+  const open = document.querySelector(".findings li.open");
+  if (open) { open.scrollIntoView({ block: "start", behavior: "smooth" }); open.querySelector(".fix .row")?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  if (opt?.steps.length) viewer.previewFix(previewMoves(state.room, opt, { pieceId: state.piece?.id, spot: spotOf(state.placement, state.spot), piece: state.piece }));
+  else viewer.clearPreview();
+}
+
+// the fix panel under a finding: the options (the Decisions pick first), Apply / Cancel, or why there's none
+function fixPanel(f, i) {
+  const box = document.createElement("div");
+  box.className = "fix";
+  box.onclick = (e) => e.stopPropagation();
+  const cached = fixCache.get(fixKey(f));
+  const res = cached?.settled;
+  if (state.fixErr) { box.innerHTML = `<p class="meta"></p>`; box.firstChild.textContent = state.fixErr; return box; }
+  if (!res) {
+    box.innerHTML = `<p class="meta"><span class="spin small"></span> Looking for a fix: trying moves and measuring every walkway…</p>`;
+    cached?.then(() => { if (state.fixOpen === i && !state.fixSel) renderVerdict(); }).catch(() => {});
+    return box;
+  }
+  if (!res.options.length) {
+    box.innerHTML = `<p class="fix-none"></p><div class="row"><button class="btn small">Close</button></div>`;
+    box.querySelector(".fix-none").textContent = res.none;
+    box.querySelector("button").onclick = () => { closeFix(); renderVerdict(); };
+    return box;
+  }
+  const list = document.createElement("div");
+  list.className = "fix-opts";
+  list.setAttribute("role", "radiogroup");
+  for (const o of res.options) {
+    const b = document.createElement("button");
+    b.className = "fix-opt";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(o.id === state.fixSel));
+    const usable = res.options.filter((x) => x.steps.length).length;
+    const tag = o.best ? (res.decision?.by && res.decision.by !== "rules" && o.probability != null ? `Designer's pick · ${Math.round(o.probability * 100)}% sure` : usable > 1 ? "Smallest change" : "Checked fix") : o.kind === "shop" ? "Shopping hint" : "";
+    b.innerHTML = `${tag ? `<em></em>` : ""}<span></span>`;
+    if (tag) b.querySelector("em").textContent = tag;
+    b.querySelector("span").textContent = o.say + (o.after_m != null ? ` The way becomes ${Math.round(o.after_m * 100)} cm.` : "");
+    b.onclick = () => selectFix(i, o.id);
+    list.append(b);
+  }
+  const sel = res.options.find((o) => o.id === state.fixSel);
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `<button class="btn primary small" data-act="apply">Apply</button><button class="btn small" data-act="cancel">Cancel</button>`;
+  const apply = row.querySelector('[data-act="apply"]');
+  apply.disabled = !sel?.steps.length;
+  if (sel && !sel.steps.length) apply.textContent = "Nothing to apply";
+  apply.onclick = () => applyOption(f, sel).catch((err) => toast(plain(err)));
+  row.querySelector('[data-act="cancel"]').onclick = () => { closeFix(); renderVerdict(); };
+  box.append(list, row);
+  return box;
+}
+
+// Apply: the room changes in 3D, the room is checked again (and the piece's verdict), Undo for 8 s.
+async function applyOption(f, opt) {
+  const spot = state.piece ? spotOf(state.placement, state.spot) : null;
+  undo.push({ room: state.room, saved: state.saved, placement: state.placement, fixed: state.fixed });
+  const next = applyFix(state.room, opt, { pieceId: state.piece?.id, spot });
+  closeFix();
+  state.room = next.room;
+  state.saved = false;                     // the server's copy is the room before the fix: send it whole
+  state.fixed = { finding: f, option: opt };
+  if (spot && next.spot !== spot) setSpot(next.spot);
+  state.run++;
+  setFindings([]);
+  await viewer.updateItems(state.room);
+  if (next.spot?.moved) viewer.movePiece(next.spot.at, next.spot.rot ?? 0);
+  toast(`Done: ${opt.say}`, 8000, { label: "Undo", run: () => undoFix().catch((err) => toast(plain(err))) });
+  await refreshPlacement();
+  await checkRoom();
+}
+
+async function undoFix() {
+  const prev = undo.pop();
+  if (!prev) return;
+  closeFix();
+  Object.assign(state, { room: prev.room, saved: prev.saved, placement: prev.placement, fixed: prev.fixed });
+  state.run++;
+  setFindings([]);
+  await viewer.updateItems(state.room);
+  const spot = spotOf(state.placement, state.spot);
+  if (state.piece && spot) viewer.movePiece(spot.at, spot.rot ?? 0);
+  renderVerdict();
+  await checkRoom();
+}
+
+// the spot on show, replaced (a fix moved the new piece)
+function setSpot(spot) {
+  const p = state.placement;
+  const spots = [...(p.spots ?? [])];
+  spots[state.spot] = spot;
+  state.placement = { ...p, spots, best: state.spot === 0 ? spot : p.best };
+}
+
+// With a piece placed, its verdict comes from rules/ for the room as it is now: the same spot measured again.
+async function refreshPlacement() {
+  if (!state.piece || !state.placement) return;
+  const spot = spotOf(state.placement, state.spot);
+  const run = state.run;
+  const fresh = await withRoom(() => api.place({ ...placeBody(state.room, state.piece, { saved: state.saved }), replace: spot?.replaces ?? false }));
+  if (run !== state.run) return;
+  const same = (fresh.spots ?? []).filter((s) => s.rot === spot.rot && Math.hypot(s.at[0] - spot.at[0], s.at[1] - spot.at[1]) < 0.15)
+    .sort((a, b) => Math.hypot(a.at[0] - spot.at[0], a.at[1] - spot.at[1]) - Math.hypot(b.at[0] - spot.at[0], b.at[1] - spot.at[1]))[0];
+  if (!same) return;
+  const upd = { ...same, at: spot.at, rot: spot.rot, decision: spot.decision };
+  setSpot(upd);
+  if (state.spot === 0) state.placement = { ...state.placement, verdict: upd.verdict, say: verdictSay(upd) };
+  dropColor(upd.verdict);
+  renderVerdict();
+}
+const verdictSay = (s) => `${s.verdict}. ${s.wall ? `On the ${s.wall} wall` : "In the middle of the room"}${s.replaces ? ", replacing the old one" : ""}${s.blocked ? `, but a way beside it is still blocked (${Math.round(s.blocked.after_m * 100)} cm)` : s.reasons?.[1] ? `: ${s.reasons[s.reasons.length - 1].toLowerCase()}` : ""}.`;
+function dropColor(verdict) { viewer.setFootprintColor?.(verdict); }
 
 // the spot on show: drop the piece there, hide what it replaces
 function dropSpot() {
@@ -474,9 +646,10 @@ function renderVerdict() {
     li.querySelector("span").textContent = f.say;
     const small = document.createElement("small");
     const chance = chanceWords(f);
-    small.textContent = `${f.kind === "design" ? "Design" : "Rule"}${chance ? ` · ${chance}` : ""}${f.fix ? " · green pin shows the fix" : ""}`;
+    small.textContent = f.fixed ? "Fixed · tap Undo to put it back" : `${f.kind === "design" ? "Design" : "Rule"}${chance ? ` · ${chance}` : ""}${f.pass ? "" : " · tap for a fix"}`;
     li.querySelector("span").append(small);
-    li.onclick = () => focusFinding(i);
+    li.onclick = () => (state.fixOpen === i ? (closeFix(), renderVerdict()) : focusFinding(i));
+    if (state.fixOpen === i) { li.classList.add("on", "open"); li.querySelector("span").append(fixPanel(f, i)); }
     return li;
   }));
 }
@@ -486,6 +659,7 @@ $("btn-next").onclick = () => {
   if (!p?.spots?.length) return;
   state.spot = (state.spot + 1) % p.spots.length;
   state.run++;   // findings for the old spot no longer apply
+  state.fixed = null; closeFix();
   setFindings([]);
   dropSpot();
   renderVerdict();
@@ -497,7 +671,8 @@ $("btn-remove").onclick = () => {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { piece: null, placement: null, spot: 0, findings: [] });
+  Object.assign(state, { piece: null, placement: null, spot: 0, findings: [], fixed: null });
+  closeFix();
   $("verdict-building").hidden = true;
   renderVerdict();
   show("add");

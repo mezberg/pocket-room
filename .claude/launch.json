@@ -1,7 +1,40 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "pocket-room", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 8790 },
-    { "name": "pocket-room-8793", "runtimeExecutable": "node", "runtimeArgs": ["--env-file-if-exists=.env", "--watch", "server/index.mjs"], "env": { "PORT": "8793" }, "port": 8793 }
+    {
+      "name": "pocket-room",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 8790
+    },
+    {
+      "name": "pocket-room-8793",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file-if-exists=.env",
+        "--watch",
+        "server/index.mjs"
+      ],
+      "env": {
+        "PORT": "8793"
+      },
+      "port": 8793
+    },
+    {
+      "name": "pocket-room-fixes",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file-if-exists=.env",
+        "--watch",
+        "server/index.mjs"
+      ],
+      "env": {
+        "PORT": "8830"
+      },
+      "port": 8830
+    }
   ]
 }

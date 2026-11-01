@@ -225,3 +225,20 @@ label.btn { display: inline-flex; align-items: center; }
 }
 @media (max-width: 480px) { .logo span { display: none; } .logo { padding: 11px; } }
 @media (prefers-reduced-motion: reduce) { .sheet, .tag, .loading, .screen, .view { transition: none; } }
+
+/* ---------------------------------------------------------------- tap an issue → fixes */
+.findings li.open { flex-wrap: wrap; background: var(--card); box-shadow: 0 0 0 1.5px var(--fg); cursor: default; }
+.findings li > span { flex: 1; min-width: 0; }
+.fix { margin-top: 10px; display: grid; gap: 8px; cursor: default; }
+.fix .meta { margin: 0; font-size: 13px; }
+.fix-none { margin: 0; font-size: 14px; }
+.fix-opts { display: grid; gap: 6px; }
+.fix-opt { display: grid; gap: 3px; text-align: left; padding: 10px 12px 10px 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; position: relative; font-size: 14px; line-height: 1.35; }
+.fix-opt::before { content: ""; position: absolute; left: 12px; top: 12px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--mut); }
+.fix-opt[aria-checked="true"] { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.fix-opt[aria-checked="true"]::before { border-color: var(--green); background: radial-gradient(var(--green) 45%, transparent 50%); }
+.fix-opt em { font-style: normal; font: 700 10.5px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--green); }
+.fix .row { margin-top: 2px; }
+.btn.small { padding: 8px 14px; font-size: 13.5px; }
+.toast-act { margin-left: 12px; border: 0; background: none; color: var(--bg); font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; }
+.tag.marker.fixed { background: var(--green); }

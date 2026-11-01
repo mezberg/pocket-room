@@ -247,6 +247,13 @@ export class Viewer {
     });
   }
 
+  // the verdict changed (a fix applied): the footprint takes its colour
+  setFootprintColor(verdict) {
+    const color = VERDICT_COLOR[verdict] ?? AMBER;
+    this.footprint?.traverse((o) => o.material?.color?.set(color));
+    this.request();
+  }
+
   clearPiece() {
     if (this.pieceObj) this.scene.remove(this.pieceObj);
     if (this.footprint) this.scene.remove(this.footprint);
@@ -256,7 +263,8 @@ export class Viewer {
   }
 
   // ---------------------------------------------------------------- findings
-  // a pin per finding: red where something is wrong, green where it passes or where the fix goes.
+  // a pin per finding: red where something is wrong, green where it passes or a fix put it right
+  // (the fixes themselves are previewed with previewFix when a finding is tapped).
   // onTap(finding) when its bubble is tapped.
   showFindings(findings, onTap) {
     this.clearFindings();
@@ -266,12 +274,6 @@ export class Viewer {
       this.markers.add(pin(f.at, bad ? RED : GREEN));
       const el = this.label(`finding:${f.id}:${i}`, String(i + 1), toWorld(f.at, 1.05), bad ? "marker bad" : "marker good");
       el.onclick = () => onTap?.(f, i);
-      if (f.fix?.at) {
-        this.markers.add(pin(f.fix.at, GREEN, 0.5));
-        this.markers.add(arrow(f.at, f.fix.at));
-        const fe = this.label(`fix:${f.id}:${i}`, "fix", toWorld(f.fix.at, 0.5), "marker good small");
-        fe.onclick = () => onTap?.(f, i);
-      }
     });
     this.request();
   }
@@ -279,6 +281,100 @@ export class Viewer {
   clearFindings() {
     this.markers.clear();
     for (const k of Object.keys(this.labels)) if (k.startsWith("finding:") || k.startsWith("fix:")) this.unlabel(k);
+    this.request();
+  }
+
+  // ---------------------------------------------------------------- fixes: a ghost where each piece goes
+  // moves: fix-state.js previewMoves. A see-through green copy at the new place with a dashed arrow from the old
+  // one; a piece that leaves is tinted red; a new piece (a lamp) is a green ghost.
+  previewFix(moves) {
+    this.clearPreview();
+    const g = this.preview = new THREE.Group();
+    for (const m of moves) {
+      if (m.remove) {
+        const obj = this.objectOf(m.item.id);
+        if (obj) { this.tinted = [...(this.tinted ?? []), obj]; tint(obj, RED, 0.45); }
+        g.add(pin(m.from, RED, 0.6));
+        continue;
+      }
+      const item = m.add ?? { ...m.item, at: m.to, rot: m.rot, size: m.size ?? m.item.size };
+      const ghostObj = m.piece && this.pieceObj ? this.pieceObj.clone(true) : buildItem({ ...item, on_floor: true }, 0);
+      standAt(ghostObj, m.to, m.rot, 0);
+      if (m.size && !m.piece) ghostObj.scale.multiply(new THREE.Vector3(m.size[0] / m.item.size[0], 1, m.size[1] / m.item.size[1]));
+      tint(ghostObj, GREEN, 0.62);
+      g.add(ghostObj);
+      const fp = footprint(item.size, GREEN);
+      standAt(fp, m.to, m.rot, 0.006);
+      g.add(fp);
+      if (m.from && Math.hypot(m.to[0] - m.from[0], m.to[1] - m.from[1]) > 0.02) g.add(arrow(m.from, m.to));
+    }
+    this.scene.add(g);
+    const pts = moves.flatMap((m) => [m.from, m.to].filter(Boolean));
+    if (pts.length) {
+      const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+      const r = Math.max(1.2, ...pts.map((p) => Math.hypot(p[0] - cx, p[1] - cy) + 0.9));
+      this.focus([cx, cy], r);
+    }
+    this.request();
+  }
+
+  clearPreview() {
+    if (this.preview) this.scene.remove(this.preview);
+    for (const obj of this.tinted ?? []) untint(obj);
+    this.preview = null; this.tinted = [];
+    this.request();
+  }
+
+  objectOf(id) { return (this.items?.children ?? []).find((o) => o.userData.item?.id === id); }
+
+  // The room's furniture changed (a fix applied or undone): slide what moved, rebuild what was resized,
+  // drop what left, add what came. The camera stays where it is.
+  async updateItems(room) {
+    this.roomData = room;
+    const want = new Map([...(room.fixtures ?? []), ...(room.furniture ?? [])].map((i) => [i.id, i]));
+    const onFloor = [...want.values()].filter((i) => i.on_floor !== false);
+    for (const obj of [...this.items.children]) {
+      const old = obj.userData.item, now = want.get(old.id);
+      if (!now) { this.items.remove(obj); this.unlabel(`item:${old.id}`); continue; }
+      want.delete(old.id);
+      if (now.size.some((v, k) => v !== old.size[k])) {
+        this.items.remove(obj);
+        this.items.add(buildItem(now, this.elevation(now, onFloor)));
+      } else if (now.at[0] !== old.at[0] || now.at[1] !== old.at[1] || (now.rot ?? 0) !== (old.rot ?? 0)) {
+        obj.userData.item = now;
+        this.slide(obj, now.at, now.rot ?? 0);
+      }
+      this.label(`item:${now.id}`, now.name, toWorld(now.at, now.size[2] + 0.12), "ghost");
+    }
+    for (const now of want.values()) {
+      this.items.add(buildItem(now, this.elevation(now, onFloor)));
+      this.label(`item:${now.id}`, now.name, toWorld(now.at, now.size[2] + 0.12), "ghost");
+    }
+    this.showNames(this.namesOn !== false);
+    await this.real.compile(this.scene, this.camera);
+    this.request();
+  }
+
+  // the new piece follows a fix that moves it
+  movePiece(at, rot) {
+    if (this.pieceObj) this.slide(this.pieceObj, at, rot);
+    if (this.footprint) standAt(this.footprint, at, rot, 0.006);
+    if (this.labels.piece) this.labels.piece.pos.copy(toWorld(at, this.labels.piece.pos.y));
+    this.request();
+  }
+
+  slide(obj, at, rot) {
+    const p0 = obj.position.clone(), r0 = obj.rotation.y;
+    const p1 = toWorld(at, p0.y), r1 = THREE.MathUtils.degToRad(rot);
+    let dr = ((r1 - r0 + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    let k = 0;
+    this.anims.push((dt) => {
+      k = Math.min(1, k + dt / 0.6);
+      const e = 1 - (1 - k) ** 3;
+      obj.position.lerpVectors(p0, p1, e);
+      obj.rotation.y = r0 + dr * e;
+      return k < 1;
+    });
     this.request();
   }
 
@@ -351,6 +447,24 @@ function footprint([w, d], color) {
   g.add(fill, edge);
   g.traverse((o) => { o.userData.noEdge = true; o.raycast = () => {}; });
   return g;
+}
+
+// see-through, tinted towards a colour; untint puts the materials back
+function tint(obj, color, opacity) {
+  obj.traverse((m) => {
+    if (!m.isMesh) return;
+    m.userData.mat0 ??= m.material;
+    m.material = m.userData.mat0.clone();
+    m.material.transparent = true;
+    m.material.opacity = opacity;
+    m.material.depthWrite = false;
+    m.material.color?.lerp(new THREE.Color(color), 0.7);
+    m.castShadow = false;
+    m.userData.noEdge = true;
+  });
+}
+function untint(obj) {
+  obj.traverse((m) => { if (m.isMesh && m.userData.mat0) { m.material = m.userData.mat0; m.castShadow = true; delete m.userData.mat0; } });
 }
 
 // a marker pin: a disc on the floor, a thin stem, a ball on top
