@@ -25,7 +25,11 @@ voice, gpt-image. Board: `pocket-room-notes/Pocket Room board.canvas` (Obsidian)
   `kit-real.js` parametric furniture; `shell.js` room shell; `palette.js` colours). Lane C owns it.
 
 ## Run
-- `npm install`, `cp .env.example .env`, paste the key, `npm run check:openai`.
+- `npm install`, then `.env`: in a worktree or a fresh clone, copy it from
+  `~/Desktop/Coding projects/Pocket Room/.env` (it holds the key and is never committed). `npm run check:openai`
+  confirms the key, the models and the Decisions endpoint.
+- Models (set in `.env`, 2026-11-01): text/vision `gpt-6.1-terra`, Decisions `gpt-6-luna`, image `gpt-image-2`
+  (also try `gpt-image-2.5-flare` / `-sunburst`), realtime `gpt-realtime-2.1`.
 - `npm run dev` → http://localhost:8790 (preview config `pocket-room` in `.claude/launch.json`).
 - `npm test` runs `node --test` (put tests next to the code as `*.test.mjs`).
 

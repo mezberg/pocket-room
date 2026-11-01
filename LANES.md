@@ -21,7 +21,9 @@ analysis view (C D E).
   with `size_source` (tag / product page beat estimates; category defaults last).
 - Model, in order: match a GLB we already have (`room/` models, Poly Haven) → a parametric kit piece
   (`kit-real.js`: sofa, armchair, tables, desk, bed, shelf, rug, lamp, plant) sized to the piece → image-to-3D.
-- Image-to-3D: no confirmed OpenAI endpoint. Test candidates on day 1 (Meshy, Hunyuan3D, the WaveSpeed
+- Image-to-3D: no confirmed OpenAI endpoint, but `gpt-6-astra` is visible to our key and is the model a
+  third-party listing calls "openai/gpt-6-astra/image-to-3d": check first whether it does image → 3D through
+  the OpenAI API. Then test the others on day 1 (Meshy, Hunyuan3D, the WaveSpeed
   listing that claims an OpenAI model), within the hackathon's rules. Async: `model.status` building → ready.
 - Normalise every GLB: scale to `size`, base on the floor, front at −y, centred, decimated.
 - Done: three test pictures (shop photo, tag, Instagram screenshot) each give a correct piece.json and a
@@ -47,8 +49,8 @@ analysis view (C D E).
   computed spots and model findings.
 
 ## E · Decisions (`decisions/`)
-- The Decisions API (`/v1/decisions`, public beta): bounded answers with probabilities. Check the real docs
-  first; fall back to structured output from the Responses API if it isn't reachable.
+- The Decisions API (`/v1/decisions`, public beta, model `gpt-6-luna`): bounded answers with probabilities.
+  The endpoint answers our key (it needs `input`). Find the request shape in the docs first; fall back to structured output from the Responses API if it isn't reachable.
 - Best spot: choose among lane D's legal spots ("best wall: one of […]"), with probability.
 - Design grade (5b): a question set per room (light: daylight reach, lamps per zone, dark corners; flow;
   proportion: rug vs sofa, TV height; style: does the new piece match) → `finding` with `kind: "design"`.
