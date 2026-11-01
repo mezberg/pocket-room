@@ -8,10 +8,12 @@
 //   4. an L-sofa's chaise goes to the other end; a measured piece in a doorway keeps its place and the opening
 //      (read from the same photos, just as rough) slides along its wall to a clear stretch;
 //   5. only then is a piece left out (a guessed one first, an L-sofa's chaise before the sofa), said in the caveats.
-// Then big pieces left a few cm to 50 cm off a wall are put back against it. Nothing is drawn where the
+// Then big pieces left a few cm to 50 cm off a wall are put back against it, gaps under 60 cm are opened,
+// and the rules' walkway check names any pinch left, which a short move opens. Nothing is drawn where the
 // code knows it can't be.
 import { outline, footprint } from "../../rules/geom.mjs";
 import { overlap, outside, doorwayRect, hitsSwing } from "../../rules/geom.mjs";
+import { analyse } from "../../rules/check.mjs";
 
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const MAX_STEP = 0.6, DOOR_STEP = 1.2, STEP = 0.02, WALL = 0.05, DEPTH = 0.03;
@@ -165,6 +167,45 @@ function slideOpening(room, id) {
   return null;
 }
 
+// Last, the rules' own walkway check (rules/check.mjs): each blocked way names the pieces at its pinch.
+// Move one of them away from the pinch by what the way is short of 62 cm (≤ 30 cm, legal, never off its
+// wall) and check again. A round that doesn't leave fewer blocked ways is undone. At most 3 rounds (~1 s each).
+const blocked = (room) => analyse(room).findings.filter((f) => f.id === "path_blocked" && !f.pass && f.severity === "fail");
+const short = (f) => Math.max(0.05, WAY - Number(/widest gap is (\d+) cm/.exec(f.say)?.[1] ?? 0) / 100);
+const shortfall = (ways) => ways.reduce((s, f) => s + short(f), 0);
+function clearWays(room, O, w, l, repairs) {
+  let ways = blocked(room);
+  for (let round = 0; round < 3 && ways.length; round++) {
+    const before = room.furniture.map((i) => [i, i.at]), said = repairs.length;
+    for (const f of ways) {
+      const its = (f.items ?? []).map((id) => room.furniture.find((i) => i.id === id)).filter(Boolean);
+      const from = f.say.match(/from (the [^:,]+?)(?: to|:)/)?.[1] ?? "a door";
+      // each piece at the pinch takes its share; if one can't move, another takes it all
+      let left = short(f) + 0.02;
+      for (const it of its) {
+        const want = Math.min(0.3, its.length > 1 && left === short(f) + 0.02 ? left / 2 : left);
+        const away = [it.at[0] - f.at[0], it.at[1] - f.at[1]];
+        const axes = Math.abs(away[0]) >= Math.abs(away[1]) ? [0, 1] : [1, 0];
+        if (axes.some((axis) => Math.abs(away[axis]) > 0.01 && nudgeGroup(room, O, w, l, it, axis, Math.sign(away[axis]) * want, repairs, `to open the way from ${from}`))) left -= want;
+        if (left <= 0.01) break;
+      }
+    }
+    const after = blocked(room);
+    if (shortfall(after) >= shortfall(ways) - 0.01) { for (const [i, at] of before) i.at = at; repairs.length = said; break; }
+    ways = after;
+  }
+}
+function nudgeGroup(room, O, w, l, it, axis, d, repairs, why) {
+  const group = groupOf(room, it), boxes = group.map(bbox);
+  const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+  if ((d > 0 && box[axis] <= WALL) || (d < 0 && box[axis + 2] >= [w, l][axis] - WALL)) return false;   // off its wall
+  const shift = (i) => i.at.map((v, k) => (k === axis ? r3(v + d) : v));
+  if (!group.every((g) => !problems(room, O, g, shift(g)).length)) return false;
+  group.forEach((g) => { g.at = shift(g); });
+  repairs.push(`${it.id} moved ${Math.round(Math.abs(d) * 100)} cm ${why}`);
+  return true;
+}
+
 const bbox = (i) => {
   const [fx, fy] = (((i.rot ?? 0) % 180) + 180) % 180 === 90 ? [i.size[1], i.size[0]] : [i.size[0], i.size[1]];
   return [i.at[0] - fx / 2, i.at[1] - fy / 2, i.at[0] + fx / 2, i.at[1] + fy / 2];
@@ -246,6 +287,7 @@ export function settle(room, guessed = new Set()) {
   }
   snapToWalls(room, O, w, l, repairs);
   openGaps(room, O, w, l, repairs);
+  clearWays(room, O, w, l, repairs);
   for (const i of room.furniture) delete i.flipped;
   return { repairs, left_out };
 }

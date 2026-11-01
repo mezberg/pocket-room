@@ -327,3 +327,17 @@ test("the gap between a sofa and its coffee table is left alone", () => {
   settle(room);
   assert.deepEqual(room.furniture[1].at, [2.5, 3.425]);   // 45 cm from the sofa's front, as read
 });
+
+// A real build of the Zoopla open plan (5 listing photos, POST /api/rooms/from-photo, 1 Nov 2026), as the
+// server returned it before the walkway step: "no proper way from the door 1 to the tall oven cabinet: 26 cm,
+// by the round glass dining table".
+test("the rules' walkway check names the pinch; a short move opens it", () => {
+  const room = JSON.parse(readFileSync(new URL("./fixtures/zoopla-openplan-blocked.room.json", import.meta.url)));
+  const fails = (r) => analyse(r).findings.filter((f) => f.id === "path_blocked" && !f.pass && f.severity === "fail");
+  assert.equal(fails(room).length, 1);
+  const { repairs, left_out } = settle(room);
+  assert.deepEqual(left_out, []);
+  assert.deepEqual(fails(room), []);
+  assert.deepEqual(broken(room), []);
+  assert.match(repairs.join(";"), /round_glass_dining_table moved \d+ cm to open the way/);
+});

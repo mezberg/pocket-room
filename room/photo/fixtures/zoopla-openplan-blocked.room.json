@@ -1,0 +1,352 @@
+{
+ "id": "photo-mvy0ys1v",
+ "name": "Zoopla open-plan",
+ "source": "photo",
+ "accuracy_m": 0.41,
+ "height": 2.652,
+ "glb": null,
+ "walls": [
+  {
+   "id": "south",
+   "a": [
+    0,
+    0
+   ],
+   "b": [
+    5.867,
+    0
+   ],
+   "openings": [
+    {
+     "id": "door_1",
+     "kind": "door",
+     "from": 1.35,
+     "width": 0.82,
+     "head": 2.069,
+     "swing": null
+    }
+   ],
+   "seen": [
+    [
+     1.173,
+     5.867
+    ]
+   ]
+  },
+  {
+   "id": "east",
+   "a": [
+    5.867,
+    0
+   ],
+   "b": [
+    5.867,
+    4.8
+   ],
+   "openings": []
+  },
+  {
+   "id": "north",
+   "a": [
+    5.867,
+    4.8
+   ],
+   "b": [
+    0,
+    4.8
+   ],
+   "openings": [
+    {
+     "id": "window_1",
+     "kind": "window",
+     "from": 3.853,
+     "width": 1.8,
+     "head": 2.44,
+     "sill": 0.133
+    },
+    {
+     "id": "window_2",
+     "kind": "window",
+     "from": 2.975,
+     "width": 0.738,
+     "head": 2.44,
+     "sill": 0.133
+    },
+    {
+     "id": "glazed_door_1",
+     "kind": "glazed_door",
+     "from": 1.403,
+     "width": 1.066,
+     "head": 2.44,
+     "swing": null
+    }
+   ]
+  },
+  {
+   "id": "west",
+   "a": [
+    0,
+    4.8
+   ],
+   "b": [
+    0,
+    0
+   ],
+   "openings": [
+    {
+     "id": "opening_1",
+     "kind": "opening",
+     "from": 1.75,
+     "width": 0.82,
+     "head": 2.519
+    }
+   ],
+   "seen": [
+    [
+     0,
+     3.6
+    ]
+   ]
+  }
+ ],
+ "fixtures": [],
+ "furniture": [
+  {
+   "id": "dark_l_shaped_sectional_sofa",
+   "name": "Dark L-shaped sectional sofa",
+   "category": "sofa",
+   "at": [
+    0.956,
+    3.45
+   ],
+   "size": [
+    2.7,
+    0.95,
+    0.8
+   ],
+   "rot": 90,
+   "on_floor": true,
+   "color": "#30343a"
+  },
+  {
+   "id": "dark_l_shaped_sectional_sofa_chaise",
+   "name": "Dark L-shaped sectional sofa (chaise end)",
+   "category": "sofa",
+   "at": [
+    2.106,
+    4.325
+   ],
+   "size": [
+    0.95,
+    1.35,
+    0.8
+   ],
+   "rot": 90,
+   "on_floor": true,
+   "color": "#30343a"
+  },
+  {
+   "id": "rectangular_coffee_table",
+   "name": "Rectangular coffee table",
+   "category": "table",
+   "at": [
+    2.054,
+    2.832
+   ],
+   "size": [
+    1.035,
+    0.495,
+    0.407
+   ],
+   "rot": 0,
+   "on_floor": true,
+   "color": "#b28b60"
+  },
+  {
+   "id": "living_room_rug",
+   "name": "Living-room rug",
+   "category": "rug",
+   "at": [
+    1.995,
+    2.832
+   ],
+   "size": [
+    2.5,
+    1.8,
+    0.01
+   ],
+   "rot": 0,
+   "on_floor": false,
+   "color": "#aaa49b"
+  },
+  {
+   "id": "low_white_media_unit",
+   "name": "Low white media unit",
+   "category": "cupboard",
+   "at": [
+    2.992,
+    3.072
+   ],
+   "size": [
+    1.64,
+    0.36,
+    0.37
+   ],
+   "rot": 270,
+   "on_floor": true,
+   "color": "#eeede9"
+  },
+  {
+   "id": "round_glass_dining_table",
+   "name": "Round glass dining table",
+   "category": "table",
+   "at": [
+    4.224,
+    3.408
+   ],
+   "size": [
+    0.9,
+    0.9,
+    0.74
+   ],
+   "rot": 0,
+   "on_floor": true,
+   "color": "#cbd0cf"
+  },
+  {
+   "id": "dining_chairs",
+   "name": "Dining chairs x2",
+   "category": "chair",
+   "at": [
+    4.224,
+    3.504
+   ],
+   "size": [
+    0.45,
+    0.5,
+    0.85
+   ],
+   "rot": 0,
+   "on_floor": true,
+   "color": "#41474b"
+  },
+  {
+   "id": "kitchen_base_cabinets_and_countertop",
+   "name": "Kitchen base cabinets and countertop",
+   "category": "cupboard",
+   "at": [
+    4.929,
+    1.845
+   ],
+   "size": [
+    3.69,
+    0.54,
+    0.888
+   ],
+   "rot": 270,
+   "on_floor": true,
+   "color": "#d8c9b7"
+  },
+  {
+   "id": "tall_oven_cabinet",
+   "name": "Tall oven cabinet",
+   "category": "cupboard",
+   "at": [
+    5.567,
+    3.168
+   ],
+   "size": [
+    0.656,
+    0.6,
+    2.142
+   ],
+   "rot": 270,
+   "on_floor": true,
+   "color": "#d0c0ad"
+  }
+ ],
+ "lights": [],
+ "style": {
+  "tags": [
+   "contemporary",
+   "open-plan",
+   "minimal",
+   "light wood"
+  ],
+  "colors": [
+   "#f1f0eb",
+   "#d8c9b7",
+   "#30343a",
+   "#aaa49b"
+  ]
+ },
+ "_derived": {
+  "width": {
+   "m": 5.867,
+   "err": 0.41,
+   "from": [
+    "photo 1: 1.6 x three_seat_sofa_length = 3.2 m of 60% (Window-side living area across the sectional)",
+    "photo 3: 13 x chair_width = 5.85 m (Living area to dining end, estimated across the view)",
+    "photo 4: 7 x door_width = 5.74 m of 85% (Kitchen to living area across the visible room)",
+    "photo 5: 8.5 x chair_width = 3.825 m of 65% (Living-room partition to kitchen side)"
+   ],
+   "seen_fraction": 1,
+   "photos": [
+    5.333,
+    5.85,
+    6.753,
+    5.885
+   ]
+  },
+  "depth": {
+   "m": 4.8,
+   "err": 0.146,
+   "from": [
+    "photo 1: 1.8 x three_seat_sofa_length = 3.6 m of 75% (Visible floor from foreground to window, compared with sectional)",
+    "photo 2: 6.2 x door_width = 5.084 m (Entry side to window-side living area)",
+    "photo 3: 8.5 x chair_width = 3.825 m of 85% (Foreground floor to window and dining walls)",
+    "photo 4: 6.5 x table_height = 4.81 m (Kitchen run and floor toward entry wall)",
+    "photo 5: 10 x chair_width = 4.5 m (Kitchen and dining floor toward end wall)"
+   ],
+   "seen_fraction": 1,
+   "photos": [
+    4.8,
+    5.084,
+    4.5,
+    4.81,
+    4.5
+   ]
+  },
+  "height": {
+   "m": 2.652,
+   "err": 0.1,
+   "from": [
+    "photo 1: 6.2 x sofa_seat_height = 2.79 m (Floor to ceiling against sectional seat)",
+    "photo 2: 1.3 x door_height = 2.652 m (Entry door and ceiling)",
+    "photo 3: 3.5 x table_height = 2.59 m (Dining table to ceiling)",
+    "photo 4: 1.3 x door_height = 2.652 m (Door and ceiling at entry)",
+    "photo 5: 3.5 x table_height = 2.59 m (Dining table and ceiling)"
+   ],
+   "seen_fraction": 1,
+   "photos": [
+    2.79,
+    2.652,
+    2.59,
+    2.652,
+    2.59
+   ]
+  },
+  "caveats": [
+   "The open-plan footprint is irregular; the box and object positions are approximate.",
+   "The five views overlap but do not establish every corner or wall junction unambiguously. Window and door wall assignments are approximate.",
+   "Depth and width readings use perspective and furniture estimates rather than a calibrated floor plan."
+  ],
+  "repairs": [
+   "dark_l_shaped_sectional_sofa moved 34 cm (it stood in the opening 1)",
+   "tall_oven_cabinet moved 32 cm (it overlapped the kitchen base cabinets and countertop)",
+   "tall_oven_cabinet moved 8 cm back to the wall (too close to walk past, too far to be off it)"
+  ],
+  "ms": 29243,
+  "photos": 5
+ }
+}
