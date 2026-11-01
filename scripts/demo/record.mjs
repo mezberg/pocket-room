@@ -88,16 +88,14 @@ async function applyFix(i, { look = 0 } = {}) {
   await page.waitForFunction(() => window.pocketRoom.state.findings.length > 0 && document.getElementById("findings-busy").hidden, null, { timeout: 120_000 });
   return true;
 }
-// Off camera: check the room and apply the fixes that make the starting room make sense (the overlapping
-// chair, the blocked way to the sofa), with the app's own Check → Fix → Apply. The room stays as fixed.
+// Off camera: check the room and clear the leather bag from the balcony walkway with the app's own
+// Check → Fix → Apply (three walkway findings, one small fix), so the check on camera shows what matters.
 async function tidyRoom() {
   await tab("room");
   await page.click("#btn-check");
   await findingsIn();
-  for (const id of ["path_blocked", "overlap"]) {   // the blocked way first: its fix moves the dining set too
-    const i = await page.evaluate((id) => window.pocketRoom.state.findings.findIndex((f) => !f.pass && f.id === id), id);
-    if (i >= 0) console.log(`tidy ${id}:`, (await applyFix(i)) ? "applied" : "no fix");
-  }
+  const i = await page.evaluate(() => window.pocketRoom.state.findings.findIndex((f) => !f.pass && f.id === "walkway_tight" && /leather bag/.test(f.say)));
+  if (i >= 0) console.log("tidy leather bag:", (await applyFix(i)) ? "applied" : "no fix");
   await page.waitForSelector("#toast", { state: "hidden", timeout: 15_000 }).catch(() => {});
   // start the film from a room with no pins up and nothing marked "Fixed" (the fixed room itself stays)
   await page.evaluate(() => { window.pocketRoom.state.fixed = null; window.pocketRoom.setFindings([]); window.pocketRoom.viewer.home(); });
@@ -149,14 +147,39 @@ async function desktopFlow() {
   await page.click("#btn-check");
   await live("Decisions API", findingsIn);
   await hold(1000);
-  caption("Each issue is a pin in the room. Tap one to read it");
-  await tapMarker();
-  await hold(3200);
+  // two issues fixed on camera: the blocked way from the hall door (a measured three-piece move), then the
+  // chair run into the coffee table (three measured fixes, the Decisions API picks one)
+  const FIXES = [
+    ["path_blocked", "Tap an issue: the fix is measured in code, every walkway re-checked", "Apply: three pieces move and the way opens"],
+    ["overlap", "Chair 3 runs into the coffee table: the Decisions API picks a fix", "Apply: the chair moves, the room is checked again"],
+  ];
+  let shown = 0;
+  for (const [id, ask, done] of FIXES) {
+    const i = await page.evaluate((id) => window.pocketRoom.state.findings.findIndex((f) => !f.pass && f.id === id), id);
+    if (i < 0) { console.log("no finding:", id); continue; }
+    caption(ask);
+    await page.locator("#findings li").nth(i).click();   // the list, not the pin: pins can sit on top of each other
+    await live("fixes", () => page.waitForSelector('.fix [data-act="apply"]:not([disabled]), .fix .fix-none', { timeout: 60_000 }));
+    if (!(await page.locator('.fix [data-act="apply"]:not([disabled])').count())) { console.log("no fix:", id); await page.click(".fix .fix-none ~ .row button"); continue; }
+    console.log("fix:", id, (await page.locator(".fix .fix-opt[aria-checked=true]").first().textContent()).trim());
+    await hold(3500);
+    caption(done);
+    await page.click('.fix [data-act="apply"]');
+    await live("Decisions API", () => page.waitForFunction(() => window.pocketRoom.state.findings.length > 0 && document.getElementById("findings-busy").hidden, null, { timeout: 120_000 }));
+    await hold(2500);
+    shown++;
+  }
+  if (!shown) {
+    caption("Each issue is a pin in the room. Tap one to read it");
+    await tapMarker();
+    await hold(3200);
+  }
+  await page.waitForSelector("#toast", { state: "hidden", timeout: 9_000 }).catch(() => {});
   await page.click("#btn-home").catch(() => {});
   await hold(700);
 
-  // 3. find for me: a floor lamp (the check said the north-west corner is dark; no armchair fits this room)
-  caption("Find for me: an agent searches UK shops for a floor lamp that fits");
+  // 3. find for me: a new floor lamp, in place of the old one (no armchair fits this room)
+  caption("Find for me: an agent searches UK shops for a new floor lamp that fits");
   await tab("find");
   await hold(700);
   await page.click("#find-q");
@@ -166,7 +189,7 @@ async function desktopFlow() {
   await live("agent search", () => page.waitForSelector("#find-results:not([hidden]) #find-cards li", { timeout: 240_000 }));
   caption("Three real products, sizes read from each shop's own page");
   await hold(3500);
-  caption("Tap one: it's placed in the room with its verdict");
+  caption("Tap one: it takes the old lamp's place, with its verdict");
   await page.locator("#find-cards li").first().click();
   await verdictIn();
   await live("Decisions API", findingsIn);
@@ -191,20 +214,6 @@ async function desktopFlow() {
     caption("gpt-6-astra builds the 3D model from the photo");
     await live("image → 3D", () => page.waitForFunction(() => document.getElementById("verdict-building").hidden, null, { timeout: 240_000 }));
   }
-
-  // 5. tap an issue → the Decisions API picks a fix → Apply: the furniture moves
-  let i = await findingIndex(["walkway_tight", "overlap", "path_blocked"]);
-  if (i < 0) i = await findingIndex(["walkway_tight", "overlap", "path_blocked", "flow", "lamps_per_zone"]);
-  if (i >= 0) {
-    caption("Tap an issue: fixes are measured in code, the Decisions API picks one");
-    await page.locator("#findings li").nth(i).click();
-    await live("fixes", () => page.waitForSelector('.fix [data-act="apply"]:not([disabled])', { timeout: 60_000 }));
-    await hold(3500);
-    caption("Apply: the furniture moves and the room is checked again");
-    await page.click('.fix [data-act="apply"]');
-    await live("Decisions API", () => page.waitForFunction(() => window.pocketRoom.state.findings.length > 0 && document.getElementById("findings-busy").hidden, null, { timeout: 120_000 }));
-    await hold(3000);
-  } else console.log("no fixable finding with the piece in");
 
   // 6. photo view from eye height
   await page.waitForSelector("#toast", { state: "hidden", timeout: 9_000 }).catch(() => {});

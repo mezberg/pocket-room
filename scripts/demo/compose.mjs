@@ -154,10 +154,10 @@ if (stillsPrefix) {
   const before = (prefix, d = 0.25) => { const e = capEvents.find((c) => c.text.startsWith(prefix)); return e ? e.t - d : null; };
   const picks = [
     ["room", before("Check my room")],
-    ["findings", before("Find for me")],
+    ["findings", before("Apply: three", 0.3)],
     ["find", before("Tap one")],
-    ["chesterfield", before("Tap an issue")],
-    ["fix", before("Apply", 0.3)],
+    ["chesterfield", before("Photo view")],
+    ["fix", before("Find for me", 0.4)],
   ];
   for (const [name, t] of picks) if (t) copyFileSync(join(rec, "frames", at(t).name), `${stillsPrefix}-${name}.jpg`);
   if (hasPhoto) copyFileSync(join(work, "photo.jpg"), `${stillsPrefix}-photo-view.jpg`);
