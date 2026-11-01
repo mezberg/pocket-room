@@ -1,7 +1,7 @@
 # fixes — tap an issue, get a fix
 
 Tap any red finding from Check my room (`/api/analyse`) and get up to three suggested fixes, each one measured.
-Code proposes and measures; the Decisions API only chooses (CLAUDE.md: geometry from code, models judge).
+Code proposes and measures; the Decisions API only chooses (docs/ENGINEERING.md: geometry from code, models judge).
 
 ```js
 import { suggest } from "./fixes/index.mjs";

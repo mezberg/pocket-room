@@ -30,7 +30,7 @@ voice, gpt-image. Board: `pocket-room-notes/Pocket Room board.canvas` (Obsidian)
   confirms the key, the models and the Decisions endpoint.
 - Models (set in `.env`, 2026-11-01): text/vision `gpt-6.1-terra`, Decisions `gpt-6-luna`, image `gpt-image-2`
   (also try `gpt-image-2.5-flare` / `-sunburst`), realtime `gpt-realtime-2.1`.
-- `npm run dev` → http://localhost:8790 (preview config `pocket-room` in `.claude/launch.json`).
+- `npm run dev` → http://localhost:8790.
 - `npm test` runs `node --test` (put tests next to the code as `*.test.mjs`).
 
 ## Assets outside the repo

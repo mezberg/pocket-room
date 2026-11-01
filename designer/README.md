@@ -1,7 +1,7 @@
 # designer — the interior-designer flow
 
 Build the room → see what's wrong (on the 3D, ranked) → bring in a piece the way a designer would.
-Code measures every plan (rules/, fixes/); the Decisions API only chooses and ranks (CLAUDE.md).
+Code measures every plan (rules/, fixes/); the Decisions API only chooses and ranks (docs/ENGINEERING.md).
 
 ```js
 import { plan, advise } from "./designer/index.mjs";

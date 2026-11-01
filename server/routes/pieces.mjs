@@ -12,7 +12,7 @@ const FIXTURES = { "fixture-sofa-84": fixtureSofa };
 const pieceById = (id) => getPiece(id) ?? FIXTURES[id]?.() ?? null;
 
 const r = Router();
-const SEND = { dotfiles: "allow" };   // the checkout may sit under a dot folder (.claude/worktrees)
+const SEND = { dotfiles: "allow" };   // the checkout may sit under a dot folder (e.g. a git worktree)
 const viewer = fileURLToPath(new URL("../../furniture/viewer.html", import.meta.url));
 
 r.post("/", async (req, res, next) => {

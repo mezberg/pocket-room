@@ -1,7 +1,7 @@
 # decisions · lane E
 
 The Decisions API answers bounded questions about an input, with probabilities. Pocket Room uses it in three
-places. Code measures every number first, and the model only judges those numbers (CLAUDE.md, "Rules").
+places. Code measures every number first, and the model only judges those numbers (docs/ENGINEERING.md, "Rules").
 
 | Where | Function | Questions per request | Live latency |
 |---|---|---|---|

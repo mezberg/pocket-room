@@ -692,7 +692,7 @@
 		{
 			"id": "prog_B",
 			"type": "text",
-			"text": "**B · Furniture: image → 3D works through OpenAI** 🟩 tested\n`gpt-6-astra` reads the photo and returns 3D parts; our code builds the GLB. 15–35 s, clean low-poly, right shape and colours, untextured.\nAll 3 test pictures pass (photo, shop tag, Instagram screenshot).\nBranch `claude/lane-b-furniture-fc4f26`",
+			"text": "**B · Furniture: image → 3D works through OpenAI** 🟩 tested\n`gpt-6-astra` reads the photo and returns 3D parts; our code builds the GLB. 15–35 s, clean low-poly, right shape and colours, untextured.\nAll 3 test pictures pass (photo, shop tag, Instagram screenshot).\nBranch `lane-b-furniture`",
 			"x": 40,
 			"y": 3596,
 			"width": 400,
@@ -720,7 +720,7 @@
 		{
 			"id": "prog_C",
 			"type": "text",
-			"text": "**C · App: phone viewer runs end to end on the stubs** 🟧 partly\nRoom in 3D with sun and shadows, Add piece flow, verdict markers, PWA share target.\nVercel preview not deployed (needs your OK to create a project).\nBranch `claude/lane-c-app-9d1714`",
+			"text": "**C · App: phone viewer runs end to end on the stubs** 🟧 partly\nRoom in 3D with sun and shadows, Add piece flow, verdict markers, PWA share target.\nVercel preview not deployed (needs your OK to create a project).\nBranch `lane-c-app`",
 			"x": 40,
 			"y": 3936,
 			"width": 400,
@@ -748,7 +748,7 @@
 		{
 			"id": "prog_E",
 			"type": "text",
-			"text": "**E · Decisions API works with our key** 🟩 tested\n`gpt-6-luna`, no fallback needed. Best spot with a reason, 6 design findings on the fixture room, voice routing.\n12 tests + live smoke pass.\nBranch `claude/lane-e-decisions-790a42`",
+			"text": "**E · Decisions API works with our key** 🟩 tested\n`gpt-6-luna`, no fallback needed. Best spot with a reason, 6 design findings on the fixture room, voice routing.\n12 tests + live smoke pass.\nBranch `lane-e-decisions`",
 			"x": 40,
 			"y": 4276,
 			"width": 400,
@@ -795,7 +795,7 @@
 		{
 			"id": "prog_G",
 			"type": "text",
-			"text": "**G · Agent finds 3 real UK products that fit** 🟩 tested\nLinks checked (200), sizes copied from the product pages. 15 tests pass.\nBranch `claude/lane-g-agent-985b31`",
+			"text": "**G · Agent finds 3 real UK products that fit** 🟩 tested\nLinks checked (200), sizes copied from the product pages. 15 tests pass.\nBranch `lane-g-agent`",
 			"x": 40,
 			"y": 4852,
 			"width": 400,
