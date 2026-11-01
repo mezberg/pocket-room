@@ -452,8 +452,11 @@ export class Viewer {
 
 const fmt = (m) => m.toFixed(2);
 // shop names run long ("Hutch Fabric Round Arm 3 Seater Sofa - Oat"): the label keeps the part before " - ", ≤ 26 chars
-const short = (n = "") => { const s = n.split(" - ")[0]; return s.length > 26 ? `${s.slice(0, 25).trim()}…` : s; };
-const pieceLabel = (p) => `${short(p.name)} · ${fmt(p.size[0])} × ${fmt(p.size[1])} m${p.model?.status === "building" ? " · building 3D…" : ""}`;
+// On a phone (≤ 500 px) the label keeps 16 characters and drops "building 3D…" (the sheet says it), so it
+// stays inside the screen.
+const short = (n = "", max = 26) => { const s = n.split(" - ")[0]; return s.length > max ? `${s.slice(0, max - 1).trim()}…` : s; };
+const narrow = () => typeof innerWidth === "number" && innerWidth <= 500;
+const pieceLabel = (p) => `${short(p.name, narrow() ? 16 : 26)} · ${fmt(p.size[0])} × ${fmt(p.size[1])} m${p.model?.status === "building" && !narrow() ? " · building 3D…" : ""}`;
 function bounce(k) {
   // fall, then a small bounce
   if (k < 0.7) return (k / 0.7) ** 2;

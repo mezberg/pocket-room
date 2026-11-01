@@ -167,6 +167,9 @@ before(async () => {
   app.use(express.json({ limit: "5mb" }));
   app.use("/api/fixes", fixesRouter({ decide: false }));
   await new Promise((ok) => (server = app.listen(0, ok)));
+  // under the full suite the event loop can stall past the server's 5 s keep-alive while the client reuses the
+  // socket (\"fetch failed\"): keep idle sockets open longer than the client does
+  server.keepAliveTimeout = 60000;
   base = `http://localhost:${server.address().port}/api/fixes`;
 });
 after(() => server.close());

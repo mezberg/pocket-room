@@ -8,10 +8,12 @@ export const allItems = (room) => [...(room.fixtures ?? []), ...(room.furniture 
 export const byId = (room, id) => allItems(room).find((x) => x.id === id);
 export const routeKey = (r) => `${r.from}>${r.to}`;
 
-// Chairs may stand tucked under a dining table or desk (≥ 65 cm high, so not a coffee table): as in rules/check.mjs.
+// Chairs may stand tucked under a dining table or desk (≥ 65 cm high, so not a coffee table), and a low table
+// in an L-shaped sectional's crook: as in rules/check.mjs.
 const TUCK = new Set(["chair", "stool"]), UNDER = new Set(["table", "desk"]);
 export const under = (c, t) => TUCK.has(c.category) && UNDER.has(t.category) && t.size[2] >= 0.65;
-export const tucked = (a, b) => under(a, b) || under(b, a);
+import { tucked } from "../rules/check.mjs";
+export { tucked };
 
 // The outline is the expensive part of a grid (rules/grid.mjs keeps the walls-only grid per outline object),
 // so a search passes one outline, made once, to every snap.

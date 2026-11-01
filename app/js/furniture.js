@@ -11,21 +11,23 @@ export const toWorld = ([x, y], h = 0) => new THREE.Vector3(x, h, -y);
 export const toPlan = (v) => [v.x, -v.z];
 
 // category → a kit piece built near its size (the box scale below takes it the rest of the way)
+// item.color (#rrggbb): the colour the room's photos show (rooms from photos carry it); else the kit's own.
 function fromCategory(item) {
   const [w, d, h] = item.size, cat = item.category, name = (item.name || "").toLowerCase();
+  const c = /^#[0-9a-f]{6}$/i.test(item.color ?? "") ? item.color : null;
   switch (cat) {
-    case "sofa": return kit.sofa({ seats: Math.max(1, Math.round((w - 0.24) / 0.62)), depth: d, color: "linen", pillows: 2 });
-    case "armchair": return kit.armchair({ color: "clay" });
+    case "sofa": return kit.sofa({ seats: Math.max(1, Math.round((w - 0.24) / 0.62)), depth: d, color: c ?? "linen", pillows: 2 });
+    case "armchair": return kit.armchair({ color: c ?? "clay" });
     case "chair":
       if (/office/.test(name)) return officeChair();
-      return kit.diningChair({ color: "moss" });
+      return kit.diningChair({ color: c ?? "moss" });
     case "table":
       if (h > 0.65) return kit.diningTable({ w, d, h, round: Math.abs(w - d) < 0.05 && /round/.test(name) });
       if (w < 0.5 && d < 0.5) return kit.coffeeTable({ w, d, h, round: true, top: "walnut" });
       return kit.coffeeTable({ w, d, h, top: "oak" });
     case "desk": return kit.desk({ w, d });
     case "shelf": case "bookcase": return kit.shelf({ w, h, d });
-    case "cupboard": case "wardrobe": return kit.wardrobe({ w, h, d, doors: Math.max(1, Math.round(w / 0.55)), color: "cap" });
+    case "cupboard": case "wardrobe": return kit.wardrobe({ w, h, d, doors: Math.max(1, Math.round(w / 0.55)), color: c ?? "cap" });
     case "dresser": return kit.dresser({ w, h, d });
     case "sideboard": return kit.sideboard({ w, h, d });
     case "tv": return tvBench(w, d, h);
@@ -33,9 +35,9 @@ function fromCategory(item) {
     case "nightstand": return kit.nightstand({ w, d });
     case "lamp": return /table/.test(name) ? kit.tableLamp() : kit.floorLamp();
     case "plant": return kit.plant({ size: Math.max(0.6, Math.min(h / 1.0, 2)) });
-    case "rug": return kit.rug({ w, d });
+    case "rug": return kit.rug({ w, d, ...(c ? { color: c } : {}) });
     case "radiator": return radiator(w, d, h);
-    default: return blockOf(item, "stone");
+    default: return blockOf(item, c ?? "stone");
   }
 }
 

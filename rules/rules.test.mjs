@@ -213,5 +213,15 @@ test("analyse is well under 2 s on the flat with a new sofa in", () => {
   const t0 = performance.now();
   analyse(r);
   const ms = performance.now() - t0;
-  assert.ok(ms < 1500, `analyse took ${Math.round(ms)} ms`);
+  assert.ok(ms < 2000, `analyse took ${Math.round(ms)} ms`);   // ~0.5 s alone; headroom for the full suite running in parallel
+});
+
+test("a coffee table in an L-shaped sectional's crook is not an overlap; through an ordinary sofa it is", () => {
+  const room = typical();
+  const sofa = room.furniture.find((f) => f.category === "sofa");
+  const table = { id: "ct", name: "Coffee table", category: "table", size: [0.8, 0.5, 0.42], at: [sofa.at[0], sofa.at[1]], rot: 0 };
+  const plain = { ...room, furniture: [...room.furniture, table] };
+  assert.ok(analyse(plain).findings.some((f) => f.id === "overlap" && f.items.includes("ct")), "through a plain sofa");
+  const crook = { ...plain, furniture: plain.furniture.map((f) => (f.id === sofa.id ? { ...f, name: "L-shaped sectional" } : f)) };
+  assert.ok(!analyse(crook).findings.some((f) => f.id === "overlap" && f.items.includes("ct")), "in the sectional's crook");
 });

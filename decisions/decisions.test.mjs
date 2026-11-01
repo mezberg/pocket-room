@@ -198,3 +198,20 @@ test("lamps: a room with no lights recorded (built from photos) says so, never '
   assert.match(say, /^No lights are recorded for this room yet/);
   assert.ok(!/Infinity/.test(say));
 });
+
+test("lamps: no lights recorded is unknown, not a fail: not asked, passes, no probability", async () => {
+  let asked = [];
+  setTransport((body) => { asked = body.questions.map((q) => q.name); return { model: "gpt-6-luna", answers: body.questions.map((q) => q.type === "score"
+    ? { type: "score", name: q.name, score: 1, confidence: 0.5, probabilities: q.levels.map((l, i) => ({ label: l.label, value: i, probability: i === 1 ? 1 : 0 })) }
+    : { type: "predicate", name: q.name, probability: 0.1 }) }; });
+  try {
+    const { findings } = await gradeDesign({ ...room, lights: [] }, { piece });
+    const f = findings.find((x) => x.id === "lamps_per_zone");
+    assert.ok(!asked.includes("lamps_per_zone"), "the model isn't asked about lights nobody recorded");
+    assert.equal(f.pass, true);
+    assert.equal(f.severity, "info");
+    assert.equal(f.probability, null);
+    assert.equal(f.unknown, true);
+    assert.match(f.say, /^No lights are recorded/);
+  } finally { setTransport(null); }
+});

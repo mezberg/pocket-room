@@ -8,7 +8,12 @@ import { WALK_OK, WALK_MIN } from "./place.mjs";
 const TUCK = new Set(["chair", "stool"]);           // chairs may tuck under these
 const UNDER = new Set(["table", "desk"]);
 const under = (c, t) => TUCK.has(c.category) && UNDER.has(t.category) && t.size[2] >= 0.65; // not a coffee table
-const tucked = (a, b) => under(a, b) || under(b, a);
+// An L-shaped / corner sectional is one box in the data, so a coffee table, footstool or rug standing in its
+// crook looks like an overlap. A low piece inside a sectional's box is in the crook, not through the sofa.
+const SECTIONAL = /\b(l[- ]?shaped|sectional|corner sofa|corner group|chaise)\b/i;
+const low = (t) => (t.category === "table" && t.size[2] < 0.6) || /ottoman|footstool|pouf/i.test(`${t.name} ${t.id}`) || t.category === "rug";
+const inCrook = (s, t) => s.category === "sofa" && SECTIONAL.test(`${s.name ?? ""} ${s.id}`) && low(t);
+export const tucked = (a, b) => under(a, b) || under(b, a) || inCrook(a, b) || inCrook(b, a);
 const P2 = (p) => [r2(p[0]), r2(p[1])];
 const sentence = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // The grid samples clearance at 4 cm cell centres, so a corridor reads up to ~1 cm narrower than it is.

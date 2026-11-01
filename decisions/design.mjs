@@ -78,6 +78,8 @@ const lamps = {
       nearest_light_m: r2(Math.min(Infinity, ...lights.map((l) => dist(l.at, c)))), nearest_glass_m: r2(Math.min(Infinity, ...glazing.map((o) => openingDist(c, o)))) }));
     return { lights: lights.map((l) => l.kind), zones: zs, corners, dark_corners: corners.filter((c) => c.nearest_light_m > DARK).map((c) => c.corner) };
   },
+  // no lights recorded (rooms from photos or a plan): unknown, not a fail; nothing to ask the model
+  unknown: (f) => !f.lights.length,
   questions: () => [{ name: "lamps_per_zone", type: "predicate",
     instructions: "In the evening, with only these lights, every zone has its own light and no corner is left dark. (A pendant lights its zone; a zone with no light within 2 m needs a lamp.)" }],
   say(f) {
@@ -299,9 +301,15 @@ export async function gradeDesign(room, ctx = {}, checks = CHECKS) {
   const facts = Object.fromEntries(measured.map(({ c, facts }) => [c.id, strip(facts)]));
   const images = measured.flatMap(({ c }) => c.image?.(room, ctx) ?? []);
   const input = messages(`Room "${room.name ?? room.id}" (${m1(floorArea(room))}², ceiling ${room.height ?? "?"} m). Measured facts per check:`, facts, images);
-  const questions = measured.flatMap(({ c, facts }) => c.questions(facts));
-  const d = await decide({ input, questions, cacheKey: `design:${room.id}` });
+  const asked = measured.filter(({ c, facts }) => !c.unknown?.(facts));
+  const questions = asked.flatMap(({ c, facts }) => c.questions(facts));
+  const d = questions.length ? await decide({ input, questions, cacheKey: `design:${room.id}` }) : { answers: {} };
   const findings = measured.map(({ c, facts }) => {
+    if (c.unknown?.(facts)) {   // can't be judged from what we know: says so, passes, no probability
+      const f = { id: c.id, kind: "design", pass: true, severity: "info", probability: null, unknown: true, say: c.say(facts, true, {}) };
+      const at = c.at?.(facts, room); if (at) f.at = at.map(r2);
+      return f;
+    }
     const a = d.answers[c.id];
     const p = a?.p == null ? null : r2(a.p);
     const g = grade(p);
