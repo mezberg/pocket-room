@@ -192,8 +192,11 @@ test("hook design: findings from gradeDesign with the piece in its spot; failure
   assert.match(logs[0], /rules-only/);
 });
 
+// no lights recorded and no lamps standing in it (a lamp in the furniture counts as light, see lightsOf)
+const unlit = (r) => ({ ...r, lights: [], furniture: (r.furniture ?? []).filter((f) => f.category !== "lamp") });
+
 test("lamps: a room with no lights recorded (built from photos) says so, never 'Infinity m'", () => {
-  const { lamps_per_zone: f } = Object.fromEntries(measureAll({ ...room, lights: [] }, { piece }).map(({ c, facts }) => [c.id, facts]));
+  const { lamps_per_zone: f } = Object.fromEntries(measureAll(unlit(room), { piece }).map(({ c, facts }) => [c.id, facts]));
   const say = CHECKS_SAY(f);
   assert.match(say, /^No lights are recorded for this room yet/);
   assert.ok(!/Infinity/.test(say));
@@ -205,7 +208,7 @@ test("lamps: no lights recorded is unknown, not a fail: not asked, passes, no pr
     ? { type: "score", name: q.name, score: 1, confidence: 0.5, probabilities: q.levels.map((l, i) => ({ label: l.label, value: i, probability: i === 1 ? 1 : 0 })) }
     : { type: "predicate", name: q.name, probability: 0.1 }) }; });
   try {
-    const { findings } = await gradeDesign({ ...room, lights: [] }, { piece });
+    const { findings } = await gradeDesign(unlit(room), { piece });
     const f = findings.find((x) => x.id === "lamps_per_zone");
     assert.ok(!asked.includes("lamps_per_zone"), "the model isn't asked about lights nobody recorded");
     assert.equal(f.pass, true);

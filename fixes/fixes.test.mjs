@@ -190,3 +190,33 @@ test("POST /api/fixes: a finding is needed, and an unknown room is a 404", async
   assert.equal((await post({ roomId: "hoskins-living" })).status, 400);
   assert.equal((await post({ roomId: "nope", finding: { id: "overlap" } })).status, 404);
 });
+
+// Regression: rooms from photos record no lights but keep the lamps they saw as furniture. The designer used to
+// call the sofa dark and put a new floor lamp on top of the one standing beside it.
+test("lamp fix: a lamp already by the sofa counts as light, and no new lamp lands on or beside it", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { searchLamp } = await import("./search.mjs");
+  const room = JSON.parse(readFileSync(new URL("../room/photo/fixtures/zoopla-openplan-blocked.room.json", import.meta.url)));
+  const lampCheck = CHECKS.find((c) => c.id === "lamps_per_zone");
+  for (const on_floor of [true, false]) {
+    const lamp = { id: "lamp_1", name: "Floor lamp", category: "lamp", at: [1.66, 3.45], size: [0.35, 0.35, 1.6], rot: 0, on_floor };
+    const r = { ...room, lights: [], furniture: [...room.furniture, lamp] };
+    const sofaZone = lampCheck.measure(r, {}).zones.find((z) => z.zone === "sofa");
+    assert.ok(sofaZone.lights_within_2m.length, "the lamp beside the sofa lights the sofa");
+    for (const fx of searchLamp(r, {}).fixes) {
+      const at = fx.steps[0].add.at;
+      assert.ok(Math.hypot(at[0] - lamp.at[0], at[1] - lamp.at[1]) >= 0.6, `new lamp ${at} too close to the existing one`);
+      assert.notEqual(fx.steps[0].add.id, "lamp_1");
+    }
+  }
+});
+
+test("lamp fix: a second added lamp gets its own id", async () => {
+  const { searchLamp } = await import("./search.mjs");
+  const room = fixtureRoom();
+  const first = searchLamp(room, {}).fixes[0];
+  if (!first) return;   // nothing dark in the fixture: nothing to add
+  const after = applyFix(room, first).room;
+  const second = searchLamp({ ...after, lights: after.lights.filter((l) => l.id !== first.steps[0].add.id) }, {}).fixes[0];
+  if (second) assert.notEqual(second.steps[0].add.id, first.steps[0].add.id);
+});

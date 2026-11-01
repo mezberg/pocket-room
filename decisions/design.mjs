@@ -5,7 +5,7 @@ import { decide, messages } from "./client.mjs";
 import { outline as ruleOutline, footprint as ruleFootprint, sdRect } from "../rules/geom.mjs";
 import { obstacles as ruleObstacles, buildGrid, routes as ruleRoutes, label as ruleLabel } from "../rules/grid.mjs";
 import { WALK_OK, WALK_MIN } from "../rules/place.mjs";
-import { r2, dist, front, footprint, frontCentre, polyDist, outline, inRoom, floorArea, openings, isGlazed, isDoor, openingDist, obstacles, byCategory } from "./geom.mjs";
+import { r2, dist, front, footprint, frontCentre, polyDist, outline, inRoom, floorArea, openings, isGlazed, isDoor, openingDist, obstacles, byCategory, lightsOf } from "./geom.mjs";
 
 const cm = (m) => `${Math.round(m * 100)} cm`;
 const m1 = (m) => `${r2(m).toFixed(1)} m`;
@@ -69,7 +69,7 @@ const LAMP_REACH = 2.0, DARK = 2.5;
 const lamps = {
   id: "lamps_per_zone",
   measure(room, { piece }) {
-    const lights = room.lights ?? [], glazing = openings(room).filter(isGlazed);
+    const lights = lightsOf(room), glazing = openings(room).filter(isGlazed);
     const zs = zones(room, piece).map((z) => {
       const near = lights.filter((l) => dist(l.at, z.at) <= LAMP_REACH);
       return { zone: z.zone, at: z.at, item: z.item, lights_within_2m: near.map((l) => l.kind), nearest_light_m: r2(Math.min(Infinity, ...lights.map((l) => dist(l.at, z.at)))) };

@@ -1,7 +1,7 @@
 // Best spot: lane D's rules find the legal spots and measure them; Decisions picks the one a person would
 // choose, with a probability, and which measured fact decided it. One request for the whole choice.
 import { decide, messages } from "./client.mjs";
-import { r2, dist, front, footprint, frontCentre, polyDist, openings, isGlazed, isDoor, openingDist, byCategory } from "./geom.mjs";
+import { r2, dist, front, footprint, frontCentre, polyDist, openings, isGlazed, isDoor, openingDist, byCategory, lightsOf } from "./geom.mjs";
 
 const cm = (m) => `${Math.round(m * 100)} cm`;
 const m1 = (m) => `${r2(m).toFixed(1)} m`;
@@ -28,7 +28,8 @@ export function spotFacts(spot, piece, room) {
   if (doors.length) facts.nearest_door_m = r2(Math.min(...doors.map((o) => Math.min(...fp.map((p) => openingDist(p, o))))));
   const radiators = (room.fixtures ?? []).filter((x) => x.category === "radiator");
   if (radiators.length) facts.radiator_m = r2(Math.min(...radiators.map((x) => Math.min(...footprint(x).map((p) => polyDist(p, fp))))));
-  if (room.lights?.length) facts.nearest_light_m = r2(Math.min(...room.lights.map((l) => dist(l.at, fc))));
+  const lights = lightsOf(room);
+  if (lights.length) facts.nearest_light_m = r2(Math.min(...lights.map((l) => dist(l.at, fc))));
   return facts;
 }
 
