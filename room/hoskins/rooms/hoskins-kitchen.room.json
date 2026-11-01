@@ -1,0 +1,170 @@
+{
+  "id": "hoskins-kitchen",
+  "name": "Kitchen, Hoskins Street",
+  "source": "prebuilt",
+  "accuracy_m": 0.04,
+  "_note": "Exact export of the 26 Sep 2026 build (room/hoskins/export.mjs).",
+  "height": 2.4,
+  "glb": "/room/hoskins-flat.glb",
+  "walls": [
+    {
+      "id": "south",
+      "a": [
+        1.361,
+        0.098
+      ],
+      "b": [
+        3.549,
+        0.098
+      ],
+      "openings": []
+    },
+    {
+      "id": "east",
+      "a": [
+        3.549,
+        0.098
+      ],
+      "b": [
+        3.549,
+        3.21
+      ],
+      "openings": []
+    },
+    {
+      "id": "north",
+      "a": [
+        3.549,
+        3.21
+      ],
+      "b": [
+        1.361,
+        3.21
+      ],
+      "openings": []
+    },
+    {
+      "id": "west",
+      "a": [
+        1.361,
+        3.21
+      ],
+      "b": [
+        1.361,
+        0.098
+      ],
+      "openings": [
+        {
+          "id": "kitchen_door",
+          "kind": "door",
+          "from": 1.153,
+          "width": 0.806,
+          "head": 2.04,
+          "swing": {
+            "hinge": "b",
+            "into": true
+          }
+        }
+      ]
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "kitchen_run_north",
+      "name": "Kitchen units (north run)",
+      "category": "cupboard",
+      "at": [
+        2.455,
+        2.897
+      ],
+      "size": [
+        2.188,
+        0.625,
+        0.91
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "kitchen_run_east",
+      "name": "Kitchen units (east run)",
+      "category": "cupboard",
+      "at": [
+        3.243,
+        1.724
+      ],
+      "size": [
+        1.722,
+        0.611,
+        0.91
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "tall_unit",
+      "name": "Tall unit",
+      "category": "cupboard",
+      "at": [
+        3.257,
+        0.48
+      ],
+      "size": [
+        0.764,
+        0.583,
+        2.12
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "wall_cabinets",
+      "name": "Wall cabinets",
+      "category": "cupboard",
+      "at": [
+        3.389,
+        2.029
+      ],
+      "size": [
+        2.334,
+        0.319,
+        2.12
+      ],
+      "rot": 270,
+      "on_floor": false
+    }
+  ],
+  "furniture": [
+    {
+      "id": "fridge_freezer",
+      "name": "Fridge-freezer",
+      "category": "other",
+      "at": [
+        1.681,
+        0.414
+      ],
+      "size": [
+        0.583,
+        0.632,
+        1.8
+      ],
+      "rot": 180,
+      "on_floor": true
+    }
+  ],
+  "lights": [
+    {
+      "id": "kitchen_light",
+      "kind": "ceiling",
+      "at": [
+        2.452,
+        1.661
+      ],
+      "h": 2.28
+    }
+  ],
+  "style": {
+    "tags": [],
+    "colors": []
+  }
+}

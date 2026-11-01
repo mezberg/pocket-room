@@ -1,7 +1,8 @@
 // Writes the exact Hoskins Street export to the contract fixture and room/hoskins/*.room.json.
 //   node room/hoskins/export.mjs
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { livingRoom } from "./living.mjs";
+import { flat } from "./flat.mjs";
 import { checkRoom } from "../schema-check.mjs";
 
 const out = (url, room) => {
@@ -12,3 +13,7 @@ const out = (url, room) => {
 };
 
 out(new URL("../../contract/fixtures/hoskins-living-room.room.json", import.meta.url), livingRoom());
+
+const dir = new URL("./rooms/", import.meta.url);
+mkdirSync(dir, { recursive: true });
+for (const room of flat()) out(new URL(`${room.id}.room.json`, dir), room);

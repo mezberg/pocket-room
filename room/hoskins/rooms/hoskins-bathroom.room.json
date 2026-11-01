@@ -1,0 +1,226 @@
+{
+  "id": "hoskins-bathroom",
+  "name": "Bathroom, Hoskins Street",
+  "source": "prebuilt",
+  "accuracy_m": 0.04,
+  "_note": "Exact export of the 26 Sep 2026 build (room/hoskins/export.mjs).",
+  "height": 2.4,
+  "glb": "/room/hoskins-flat.glb",
+  "walls": [
+    {
+      "id": "south",
+      "a": [
+        1.361,
+        3.418
+      ],
+      "b": [
+        3.216,
+        3.418
+      ],
+      "openings": []
+    },
+    {
+      "id": "riser_west",
+      "a": [
+        3.216,
+        3.418
+      ],
+      "b": [
+        3.216,
+        4.231
+      ],
+      "openings": []
+    },
+    {
+      "id": "riser_north",
+      "a": [
+        3.216,
+        4.231
+      ],
+      "b": [
+        3.549,
+        4.231
+      ],
+      "openings": []
+    },
+    {
+      "id": "east",
+      "a": [
+        3.549,
+        4.231
+      ],
+      "b": [
+        3.549,
+        5.627
+      ],
+      "openings": []
+    },
+    {
+      "id": "north",
+      "a": [
+        3.549,
+        5.627
+      ],
+      "b": [
+        1.361,
+        5.627
+      ],
+      "openings": []
+    },
+    {
+      "id": "west",
+      "a": [
+        1.361,
+        5.627
+      ],
+      "b": [
+        1.361,
+        3.418
+      ],
+      "openings": [
+        {
+          "id": "bathroom_door",
+          "kind": "door",
+          "from": 0.25,
+          "width": 0.764,
+          "head": 2.04,
+          "swing": {
+            "hinge": "b",
+            "into": false
+          }
+        }
+      ]
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "bath",
+      "name": "Bath",
+      "category": "other",
+      "at": [
+        2.295,
+        3.804
+      ],
+      "size": [
+        1.84,
+        0.771,
+        0.56
+      ],
+      "rot": 180,
+      "on_floor": true
+    },
+    {
+      "id": "duct_ledge",
+      "name": "Duct ledge",
+      "category": "cupboard",
+      "at": [
+        3.417,
+        4.929
+      ],
+      "size": [
+        1.396,
+        0.264,
+        1.05
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "wc",
+      "name": "WC",
+      "category": "other",
+      "at": [
+        2.954,
+        5.272
+      ],
+      "size": [
+        0.4,
+        0.658,
+        0.84
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "basin",
+      "name": "Basin",
+      "category": "other",
+      "at": [
+        3.065,
+        4.647
+      ],
+      "size": [
+        0.54,
+        0.46,
+        0.86
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "towel_radiator",
+      "name": "Towel radiator",
+      "category": "radiator",
+      "at": [
+        1.66,
+        5.577
+      ],
+      "size": [
+        0.459,
+        0.028,
+        1.35
+      ],
+      "rot": 0,
+      "on_floor": false
+    },
+    {
+      "id": "mirror_cabinet",
+      "name": "Mirror cabinet",
+      "category": "cupboard",
+      "at": [
+        3.478,
+        4.925
+      ],
+      "size": [
+        1.278,
+        0.142,
+        1.86
+      ],
+      "rot": 270,
+      "on_floor": false
+    }
+  ],
+  "furniture": [
+    {
+      "id": "bath_mat",
+      "name": "Bath mat",
+      "category": "rug",
+      "at": [
+        1.965,
+        4.397
+      ],
+      "size": [
+        0.764,
+        0.361,
+        0.01
+      ],
+      "rot": 0,
+      "on_floor": true
+    }
+  ],
+  "lights": [
+    {
+      "id": "bathroom_light",
+      "kind": "ceiling",
+      "at": [
+        2.347,
+        4.647
+      ],
+      "h": 2.28
+    }
+  ],
+  "style": {
+    "tags": [],
+    "colors": []
+  }
+}

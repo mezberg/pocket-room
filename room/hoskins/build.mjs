@@ -26,7 +26,7 @@ export function walls(corners, ids, openings = {}) {
 // An opening given by its pixel span [s0, s1] along the wall (x px on horizontal walls, y px on vertical).
 function opening(a, b, o) {
   const horiz = a[1] === b[1];
-  const [pa, pb] = horiz ? [a[0], b[0]] : [a[1], b[1]];
+  const pa = horiz ? a[0] : a[1];
   const [s0, s1] = o.span;
   const near = Math.min(Math.abs(s0 - pa), Math.abs(s1 - pa));
   const out = { id: o.id, kind: o.kind, from: r3(M(near)), width: r3(M(Math.abs(s1 - s0))) };
@@ -35,8 +35,9 @@ function opening(a, b, o) {
   if (o.kind === "door" || o.kind === "glazed_door") {
     if (o.hingePx == null) out.swing = null;
     else {
-      // hinge end: whichever wall end (a or b) the hinge pixel is nearer to
-      const hinge = Math.abs(o.hingePx - pa) < Math.abs(o.hingePx - pb) ? "a" : "b";
+      // hinge: which end of the opening it is on, the end towards wall end a or the one towards b
+      const endA = Math.abs(s0 - pa) < Math.abs(s1 - pa) ? s0 : s1;
+      const hinge = o.hingePx === endA ? "a" : "b";
       out.swing = { hinge, into: o.into };
     }
   }
@@ -59,5 +60,15 @@ export function item(id, assemblyName, category, rot, { size, at, h, onFloor = t
     id, name: name || a.name, category,
     at: at ? at.map(r3) : [r3(a.origin_blender[0]), r3(a.origin_blender[1])],
     size: s.map(r3), rot, on_floor: onFloor,
+  };
+}
+
+/** An item from a plan-pixel rectangle (world axes) and its facing; for things the manifest lumps together. */
+export function pbox(id, name, category, rot, [px0, py0, px1, py1], h, onFloor = true) {
+  const sx = Math.abs(X(px1) - X(px0)), sy = Math.abs(Y(py1) - Y(py0));
+  const quarter = ((rot % 180) + 180) % 180 === 90;
+  return {
+    id, name, category, at: [r3((X(px0) + X(px1)) / 2), r3((Y(py0) + Y(py1)) / 2)],
+    size: (quarter ? [sy, sx, h] : [sx, sy, h]).map(r3), rot, on_floor: onFloor,
   };
 }

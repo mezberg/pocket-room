@@ -1,0 +1,251 @@
+{
+  "id": "hoskins-bedroom",
+  "name": "Bedroom, Hoskins Street",
+  "source": "prebuilt",
+  "accuracy_m": 0.04,
+  "_note": "Exact export of the 26 Sep 2026 build (room/hoskins/export.mjs).",
+  "height": 2.4,
+  "glb": "/room/hoskins-flat.glb",
+  "walls": [
+    {
+      "id": "south",
+      "a": [
+        0.104,
+        7.738
+      ],
+      "b": [
+        1.361,
+        7.738
+      ],
+      "openings": []
+    },
+    {
+      "id": "alcove_east",
+      "a": [
+        1.361,
+        7.738
+      ],
+      "b": [
+        1.361,
+        8.189
+      ],
+      "openings": []
+    },
+    {
+      "id": "south_door",
+      "a": [
+        1.361,
+        8.189
+      ],
+      "b": [
+        2.695,
+        8.189
+      ],
+      "openings": [
+        {
+          "id": "bedroom_door",
+          "kind": "door",
+          "from": 0.521,
+          "width": 0.708,
+          "head": 2.04,
+          "swing": {
+            "hinge": "b",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "east",
+      "a": [
+        2.695,
+        8.189
+      ],
+      "b": [
+        2.695,
+        12.572
+      ],
+      "openings": []
+    },
+    {
+      "id": "north",
+      "a": [
+        2.695,
+        12.572
+      ],
+      "b": [
+        0.104,
+        12.572
+      ],
+      "openings": [
+        {
+          "id": "bedroom_window",
+          "kind": "window",
+          "from": 1.056,
+          "width": 1.326,
+          "sill": 0.95,
+          "head": 2.15
+        }
+      ]
+    },
+    {
+      "id": "west",
+      "a": [
+        0.104,
+        12.572
+      ],
+      "b": [
+        0.104,
+        7.738
+      ],
+      "openings": []
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "bedroom_heater",
+      "name": "Bedroom heater",
+      "category": "radiator",
+      "at": [
+        1.097,
+        12.526
+      ],
+      "size": [
+        0.694,
+        0.09,
+        0.6
+      ],
+      "rot": 0,
+      "on_floor": false
+    },
+    {
+      "id": "open_wardrobe",
+      "name": "Open wardrobe",
+      "category": "cupboard",
+      "at": [
+        0.754,
+        7.984
+      ],
+      "size": [
+        1.271,
+        0.482,
+        2.318
+      ],
+      "rot": 180,
+      "on_floor": true
+    }
+  ],
+  "furniture": [
+    {
+      "id": "bed",
+      "name": "Bed",
+      "category": "bed",
+      "at": [
+        1.119,
+        10.151
+      ],
+      "size": [
+        1.492,
+        2.022,
+        0.89
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "bedside_table_north",
+      "name": "Bedside table (north)",
+      "category": "table",
+      "at": [
+        0.341,
+        11.148
+      ],
+      "size": [
+        0.45,
+        0.446,
+        0.56
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "bedside_table_south",
+      "name": "Bedside table (south)",
+      "category": "table",
+      "at": [
+        0.341,
+        9.155
+      ],
+      "size": [
+        0.45,
+        0.446,
+        0.56
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "peace_lily",
+      "name": "Peace lily",
+      "category": "plant",
+      "at": [
+        0.235,
+        9.194
+      ],
+      "size": [
+        0.526,
+        0.332,
+        0.384
+      ],
+      "rot": 90,
+      "on_floor": false
+    },
+    {
+      "id": "chest_of_drawers",
+      "name": "Chest of drawers",
+      "category": "cupboard",
+      "at": [
+        2.288,
+        12.312
+      ],
+      "size": [
+        0.785,
+        0.49,
+        1.12
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "window_desk",
+      "name": "Window desk",
+      "category": "desk",
+      "at": [
+        1.097,
+        12.315
+      ],
+      "size": [
+        1.181,
+        0.486,
+        0.75
+      ],
+      "rot": 0,
+      "on_floor": true
+    }
+  ],
+  "lights": [
+    {
+      "id": "bedroom_pendant",
+      "kind": "pendant",
+      "at": [
+        1.396,
+        10.273
+      ],
+      "h": 1.88
+    }
+  ],
+  "style": {
+    "tags": [],
+    "colors": []
+  }
+}

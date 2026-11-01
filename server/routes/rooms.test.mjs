@@ -31,3 +31,11 @@ test("from-photo wants images", async () => {
   const res = await fetch(`${base}/from-photo`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
   assert.equal(res.status, 400);
 });
+
+test("the rest of the flat is listed and served", async () => {
+  const { rooms } = await (await fetch(base)).json();
+  const ids = rooms.map((r) => r.id);
+  for (const id of ["hoskins-living", "hoskins-bedroom", "hoskins-hall", "hoskins-kitchen", "hoskins-bathroom"]) assert.ok(ids.includes(id), id);
+  const kitchen = await (await fetch(`${base}/hoskins-kitchen`)).json();
+  assert.equal(kitchen.walls[3].openings[0].id, "kitchen_door");
+});
