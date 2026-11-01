@@ -54,3 +54,26 @@ test("room size from any outline", () => {
   const walls = [[0, 0], [4, 0], [4, 3], [1, 3], [1, 5], [0, 5]].map((a, i, all) => ({ a, b: all[(i + 1) % all.length] }));
   assert.deepEqual(roomSize({ walls }), { width: 4, depth: 5 });
 });
+
+import { seenShare, spotUnseen } from "./new-room.js";
+const box = {
+  walls: [["south", [0, 0], [4, 0], []], ["east", [4, 0], [4, 3], [[1, 3]]], ["north", [4, 3], [0, 3], undefined], ["west", [0, 3], [0, 0], []]]
+    .map(([id, a, b, seen]) => (seen ? { id, a, b, seen } : { id, a, b })),
+  floor_seen: [[0, 1], [4, 1], [4, 3], [0, 3]],
+};
+
+test("how much the photos showed", () => {
+  const s = seenShare(box);
+  assert.equal(s.walls, (2 + 4) / 14);           // east 2 of 3 m, north all 4 m; south and west unseen
+  assert.ok(Math.abs(s.floor - 2 / 3) < 1e-9);
+  assert.equal(seenShare({ walls: box.walls.map(({ seen, ...w }) => w) }), null);   // a known room
+});
+
+test("a spot on a wall or floor nobody saw", () => {
+  assert.equal(spotUnseen(box, { at: [2, 0.45], wall: "south" }), "wall");
+  assert.equal(spotUnseen(box, { at: [3.55, 2], wall: "east" }), null);
+  assert.equal(spotUnseen(box, { at: [3.55, 0.5], wall: "east" }), "wall");
+  assert.equal(spotUnseen(box, { at: [2, 2.5], wall: "north" }), null);
+  assert.equal(spotUnseen(box, { at: [2, 0.5] }), "floor");
+  assert.equal(spotUnseen({ walls: [] }, { at: [1, 1] }), null);
+});

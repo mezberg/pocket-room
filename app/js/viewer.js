@@ -76,8 +76,9 @@ export class Viewer {
     this.roomData = room;
     if (this.room) this.scene.remove(this.room);
     if (this.items) this.scene.remove(this.items);
-    for (const k of Object.keys(this.labels)) if (k.startsWith("item:")) this.unlabel(k);   // the last room's names
+    for (const k of Object.keys(this.labels)) if (k.startsWith("item:") || k.startsWith("unseen:")) this.unlabel(k);   // the last room's
     this.room = buildRoom(room);
+    for (const w of this.room.userData.walls) if (w.unseen) this.label(`unseen:${w.id}`, "Not in your photos", new THREE.Vector3(w.unseen.x, 1.3, -w.unseen.y), "ghost unseen");
     this.items = new THREE.Group();
     this.items.name = "furniture";
     const onFloor = [...(room.furniture ?? []), ...(room.fixtures ?? [])].filter((i) => i.on_floor !== false);

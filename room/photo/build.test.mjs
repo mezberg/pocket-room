@@ -112,3 +112,34 @@ test("resizeRoom stretches walls, keeps opening widths and keeps furniture insid
   assert.ok(one.accuracy_m < room.accuracy_m);
   assert.equal(resizeRoom(room, { height_m: 3 }).fixtures[0].size[2], 3);   // columns stay floor to ceiling
 });
+
+test("what the photos showed: seen wall spans and floor; the rest is marked, not made up", () => {
+  const seen = { floor: { left: 0.2, right: 1, near: 0.3, far: 1 }, walls: [{ wall: "far", from: 0.2, to: 1 }, { wall: "right", from: 0.3, to: 1 }] };
+  const room = roomFromReading(reading({ seen, depth: { seen_fraction: 1, measures: [m("door_width", 6)] } }), { id: "t" });
+  assert.deepEqual(checkRoom(room), []);
+  const by = Object.fromEntries(room.walls.map((x) => [x.id, x]));
+  // far wall = north, a at the east end: seen from the right end to 20% from the left (0 .. 3.28 m from a),
+  // and its door (2.665 .. 3.485) was seen too, so the span runs on to the door's far edge
+  assert.deepEqual(by.north.seen, [[0, 3.485]]);
+  assert.deepEqual(by.east.seen, [[1.476, 4.92]]);   // right wall: from 30% of the way to the far end
+  assert.deepEqual(by.south.seen, []);               // behind the camera: nobody saw it
+  assert.deepEqual(by.west.seen, []);
+  assert.deepEqual(room.floor_seen, [[0.82, 1.476], [4.1, 1.476], [4.1, 4.92], [0.82, 4.92]]);
+});
+
+test("an older reading without `seen` falls back to the seen fractions", () => {
+  const room = roomFromReading(venue, { id: "v" });
+  assert.deepEqual(checkRoom(room), []);
+  const by = Object.fromEntries(room.walls.map((x) => [x.id, x]));
+  assert.ok(by.north.seen.length >= 1);              // the far wall, partly
+  assert.deepEqual(by.south.seen, []);
+  assert.equal(room.floor_seen.length, 4);
+});
+
+test("resizeRoom carries what was seen along", () => {
+  const seen = { floor: { left: 0, right: 0.5, near: 0, far: 1 }, walls: [{ wall: "far", from: 0, to: 0.5 }] };
+  const room = roomFromReading(reading({ seen, openings: [] }), { id: "t" });
+  const out = resizeRoom(room, { width_m: 8.2 });
+  assert.deepEqual(out.walls.find((x) => x.id === "north").seen, [[4.1, 8.2]]);
+  assert.equal(out.floor_seen[1][0], 4.1);
+});

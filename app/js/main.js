@@ -5,7 +5,7 @@ import { Viewer } from "./viewer.js";
 import { api, untilBuilt, imageToDataURL, fileAsDataURL } from "./api.js";
 import { roomStats } from "./room3d.js";
 import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "./scene-state.js";
-import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS } from "./new-room.js";
+import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS, seenShare, spotUnseen } from "./new-room.js";
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -191,6 +191,9 @@ function showRoomFacts() {
   $("room-sure").hidden = !built;
   $("room-sure").dataset.level = sure.level;
   $("room-sure-text").textContent = sure.say;
+  const share = seenShare(room);
+  $("room-unseen").hidden = !share;
+  if (share) $("room-unseen-text").textContent = `Grey is what your photos didn't show (${Math.round((1 - share.walls) * 100)}% of the walls, ${Math.round((1 - share.floor) * 100)}% of the floor): a guess, not your room. Add photos from the other corners to fill it in.`;
   $("btn-fix-size").hidden = !built;
   $("btn-fix-size").textContent = sure.level === "exact" ? "Change the size" : "Fix the size";
   $("size-form").hidden = true;
@@ -450,6 +453,10 @@ function renderVerdict() {
     if (spot?.clearance_m != null) bits.push(`${Math.round(Math.min(spot.clearance_m, 2) * 100)}${spot.clearance_m >= 2 ? "+" : ""} cm to walk past`);
     if (state.piece?.source?.price) bits.push(state.piece.source.price);
     $("verdict-piece").textContent = bits.filter(Boolean).join(" · ");
+    const unseen = spot ? spot.unseen ?? spotUnseen(state.room, spot) : null;   // the server marks it; same rule as room/photo/seen.mjs
+    $("verdict-unseen").hidden = !unseen || /in your photos/.test($("verdict-say").textContent);   // the sentence may say it already
+    $("verdict-unseen").textContent = unseen === "wall" ? "That stretch of wall wasn't in your photos, so we can't vouch for it: check it's clear before you buy."
+      : unseen ? "That part of the floor wasn't in your photos, so we can't vouch for it: check it's clear before you buy." : "";
     $("btn-next").hidden = !(p.spots?.length > 1);
     $("btn-next").textContent = `Next spot (${state.spot + 1} of ${p.spots?.length ?? 1})`;
     $("btn-remove").hidden = false;

@@ -31,12 +31,34 @@ const extent = {
 
 export const READING_SCHEMA = {
   type: "object", additionalProperties: false,
-  required: ["room_type", "width", "depth", "height", "openings", "objects", "style", "caveats"],
+  required: ["room_type", "width", "depth", "height", "seen", "openings", "objects", "style", "caveats"],
   properties: {
     room_type: { type: "string" },
     width: { ...extent, description: "Left-right across the view, along the far wall" },
     depth: { ...extent, description: "From the camera's wall to the far wall" },
     height: { ...extent, description: "Floor to ceiling (seen_fraction < 1 if the ceiling is out of frame)" },
+    seen: {
+      type: "object", additionalProperties: false, required: ["floor", "walls"],
+      description: "What the photos together actually show. Code greys out the rest of the room instead of making it up.",
+      properties: {
+        floor: {
+          type: "object", additionalProperties: false, required: ["left", "right", "near", "far"],
+          description: "The part of the floor in view, as fractions of the room: left/right across (0 = left wall, 1 = right wall), near/far from the camera wall (0) to the far wall (1)",
+          properties: { left: frac, right: frac, near: frac, far: frac },
+        },
+        walls: {
+          type: "array", description: "Each stretch of wall in view. Several entries for one wall are fine; leave out walls nobody saw (usually the near wall behind photo 1)",
+          items: {
+            type: "object", additionalProperties: false, required: ["wall", "from", "to"],
+            properties: {
+              wall: { type: "string", enum: ["far", "left", "right", "near"] },
+              from: { ...frac, description: "Start of the seen stretch, same convention as an opening's center" },
+              to: { ...frac, description: "End of the seen stretch" },
+            },
+          },
+        },
+      },
+    },
     openings: {
       type: "array",
       items: {
@@ -85,6 +107,8 @@ If the room continues out of frame, measure what you see and say what share of t
 Always give readings for width, depth AND height, even rough ones: depth runs along the floor, so read it against
 things standing in a row towards the far wall (tables, chairs, sofas, floor tiles, people), and height against a person,
 a door or a banner even when the ceiling is out of frame (then the span is the part you see).
+Say which part of the floor and which stretches of each wall are actually in view (seen); be strict: a wall
+that runs out of frame is seen only as far as the frame shows it.
 List doors, windows and big floor objects with positions as fractions of the room. Keep it to what is visible.`;
 
 // Added when there are several photos: they go round the room from corner to corner.

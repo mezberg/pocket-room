@@ -36,7 +36,13 @@ Plan up is taken as north, so the balcony glazing is the living room's south wal
    looking north), openings, furniture and columns.
    Hand-measured `width_m` / `depth_m` in `hint` win (0.05). One measured wall scales the other by the photo's
    proportions (the shape reads better than the size). `_derived` shows the arithmetic, per-photo values and caveats.
-3. `resizeRoom` (`PATCH /api/rooms/:id`): fix the size by typing. Any outline: walls stretch about the plan's
+3. What was seen (`seen.mjs`, contract `walls[].seen` / `floor_seen`): the reading also says which floor area and
+   which stretches of each wall are in view (openings count as seen). The rest of the box is a guess: the app draws
+   it hatched grey with "Not in your photos", and `/api/place` puts spots on seen ground first (each spot carries
+   `unseen: "wall" | "floor"` otherwise; when nothing seen fits, `say` says to check the spot). Venue photo: 78% of
+   the walls and 47% of the floor unseen; the long table fills the seen far wall, so a sofa only fits on unseen walls,
+   and the verdict says so.
+4. `resizeRoom` (`PATCH /api/rooms/:id`): fix the size by typing. Any outline: walls stretch about the plan's
    bounding box, door and window centres keep their share along the wall (widths stay), furniture centres move
    (sizes stay, kept inside), columns stay floor to ceiling. Both walls given → 0.05.
 

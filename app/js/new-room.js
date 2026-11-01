@@ -84,3 +84,38 @@ export const PHOTO_STEPS = [
 export const PLAN_STEPS = [
   [0, "Reading the plan…"], [4000, "Tracing the walls…"], [9000, "Finding the doors…"], [14000, "Building it in 3D…"], [30000, "Plans take a little longer…"],
 ];
+
+// How much of the room the photos showed: share of wall length and of floor area seen, or null when all known.
+export function seenShare(room) {
+  const walls = room.walls ?? [];
+  if (!room.floor_seen && !walls.some((w) => w.seen)) return null;
+  let total = 0, seen = 0;
+  for (const w of walls) {
+    const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
+    total += len;
+    seen += w.seen ? w.seen.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, len) - Math.max(a, 0)), 0) : len;
+  }
+  const area = (pts) => Math.abs(pts.reduce((s, p, i) => { const q = pts[(i + 1) % pts.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+  const floor = room.floor_seen ? area(room.floor_seen) / area(walls.map((w) => w.a)) : 1;
+  return { walls: total ? seen / total : 1, floor: Math.min(1, floor) };
+}
+
+// A placed spot on something no photo showed: "wall" (its wall span was unseen), "floor", or null.
+export function spotUnseen(room, spot) {
+  if (!room || !spot?.at) return null;
+  const [x, y] = spot.at;
+  const w = spot.wall && room.walls.find((v) => v.id === spot.wall);
+  if (w?.seen) {
+    const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], len = Math.hypot(dx, dy);
+    const t = ((x - w.a[0]) * dx + (y - w.a[1]) * dy) / len;
+    if (!w.seen.some(([a, b]) => t >= a - 0.1 && t <= b + 0.1)) return "wall";
+  }
+  const f = room.floor_seen;
+  if (f?.length >= 3) {
+    let inside = false;
+    for (let i = 0, j = f.length - 1; i < f.length; j = i++)
+      if ((f[i][1] > y) !== (f[j][1] > y) && x < ((f[j][0] - f[i][0]) * (y - f[i][1])) / (f[j][1] - f[i][1]) + f[i][0]) inside = !inside;
+    if (!inside) return "floor";
+  }
+  return null;
+}

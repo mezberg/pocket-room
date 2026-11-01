@@ -62,6 +62,52 @@ export function planExtents(reading, known = {}) {
 
 const FACING = { camera: 0, right: 90, away: 180, left: 270 };
 
+// [[a, b], ...] sorted and merged, clipped to [0, len]
+function mergeSpans(spans, len) {
+  const out = [];
+  for (const [a, b] of spans.map(([a, b]) => [clamp(Math.min(a, b), 0, len), clamp(Math.max(a, b), 0, len)]).filter(([a, b]) => b - a > 0.05).sort((p, q) => p[0] - q[0])) {
+    const last = out[out.length - 1];
+    if (last && a <= last[1] + 0.05) last[1] = Math.max(last[1], b); else out.push([a, b]);
+  }
+  return out.map(([a, b]) => [r3(a), r3(b)]);
+}
+
+/**
+ * What the photos showed: the floor as a rectangle (polygon) and, per wall, the seen spans in metres from a.
+ * From the reading's `seen`; an older reading without it falls back to the seen fractions (width centred,
+ * depth running back from the far wall, the near wall unseen). Openings were seen, so their spans count.
+ * A wall seen end to end gets no `seen` (null here); the floor seen whole gets no floor_seen (undefined).
+ */
+export function seenParts(reading, walls, w, l, W = {}, L = {}) {
+  const f = reading.seen?.floor;
+  const sw = clamp(W.seen_fraction ?? reading.width?.seen_fraction ?? 1, 0, 1), sd = clamp(L.seen_fraction ?? reading.depth?.seen_fraction ?? 1, 0, 1);
+  const x0 = f ? clamp(Math.min(f.left, f.right), 0, 1) : (1 - sw) / 2, x1 = f ? clamp(Math.max(f.left, f.right), 0, 1) : (1 + sw) / 2;
+  const y0 = f ? clamp(Math.min(f.near, f.far), 0, 1) : 1 - sd, y1 = f ? clamp(Math.max(f.near, f.far), 0, 1) : 1;
+  const byView = { near: walls[0], right: walls[1], far: walls[2], left: walls[3] };
+  const lenOf = (x) => Math.hypot(x.b[0] - x.a[0], x.b[1] - x.a[1]);
+  // a fraction along the wall in the openings' convention -> metres from a
+  const along = (view, c) => { const len = lenOf(byView[view]); return { near: c * len, right: c * len, far: (1 - c) * len, left: (1 - c) * len }[view]; };
+  const raw = { south: [], east: [], north: [], west: [] };
+  if (reading.seen?.walls) {
+    for (const s of reading.seen.walls) if (byView[s.wall]) raw[byView[s.wall].id].push([along(s.wall, clamp(s.from, 0, 1)), along(s.wall, clamp(s.to, 0, 1))]);
+  } else {
+    if (y1 >= 0.95) raw.north.push([along("far", x0), along("far", x1)]);
+    if (x0 <= 0.05) raw.west.push([along("left", y0), along("left", y1)]);
+    if (x1 >= 0.95) raw.east.push([along("right", y0), along("right", y1)]);
+    if (y0 <= 0.05) raw.south.push([along("near", x0), along("near", x1)]);
+  }
+  for (const x of walls) for (const o of x.openings) raw[x.id].push([o.from, o.from + o.width]);
+  const out = { walls: {}, floor: undefined };
+  for (const x of walls) {
+    const spans = mergeSpans(raw[x.id], lenOf(x));
+    const all = spans.length === 1 && spans[0][0] <= 0.1 && spans[0][1] >= lenOf(x) - 0.1;
+    out.walls[x.id] = all ? null : spans;
+  }
+  if (!(x0 <= 0.02 && x1 >= 0.98 && y0 <= 0.02 && y1 >= 0.98))
+    out.floor = [[x0 * w, y0 * l], [x1 * w, y0 * l], [x1 * w, y1 * l], [x0 * w, y1 * l]].map((p) => p.map(r3));
+  return out;
+}
+
 /**
  * reading: from read.mjs. opts: { id, name, known: { width_m, depth_m, height_m } } (measured by hand, optional).
  */
@@ -96,6 +142,12 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     wall.openings.push(op);
   }
 
+  const seen = seenParts(reading, walls, w, l, W, L);
+  for (const x of walls) {
+    const spans = seen.walls[x.id];
+    if (spans) x.seen = spans; else delete x.seen;   // absent = the whole wall was seen
+  }
+
   const ids = {};
   const items = (reading.objects || []).slice(0, 30).map((o) => {
     const cat = DEFAULT_SIZE[o.category] ? o.category : "other";
@@ -120,6 +172,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     accuracy_m: r3(Math.max(W.err, L.err)),   // 0.15 when the photos show the room wall to wall
     height: r3(h), glb: null,
     walls: walls.map((x) => ({ ...x, a: x.a.map(r3), b: x.b.map(r3) })),
+    floor_seen: seen.floor,
     fixtures: items.filter((i) => i.category === "column"),
     furniture: items.filter((i) => i.category !== "column"),
     lights: [],
@@ -150,8 +203,11 @@ export function resizeRoom(room, { width_m, depth_m, height_m } = {}) {
       if (o.head != null) op.head = r3(Math.min(o.head, H));
       return op;
     });
-    return { ...w, a, b, openings };
+    const out = { ...w, a, b, openings };
+    if (w.seen) out.seen = w.seen.map(([s0, s1]) => [r3((s0 / len0) * len), r3((s1 / len0) * len)]);
+    return out;
   });
+  if (room.floor_seen) out.floor_seen = room.floor_seen.map(P);
   const move = (i) => {
     const rot = ((i.rot ?? 0) % 180 + 180) % 180;
     const [fx, fy] = rot === 90 ? [i.size[1], i.size[0]] : [i.size[0], i.size[1]];
