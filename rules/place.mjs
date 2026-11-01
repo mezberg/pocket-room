@@ -31,7 +31,7 @@ export function frontSpace(G, R, max = 2) {
   return best;
 }
 
-function candidates(O, piece) {
+export function candidates(O, piece) {
   const [w, d] = piece.size;
   const out = [];
   for (const wall of O.walls) {
@@ -108,7 +108,8 @@ export function place(room, piece, opts = {}) {
     const exclude = new Set(swap ? [swap.id] : []);
     const obs = obstacles(room, { exclude });
     const Gv = swap ? buildGrid(O, obs) : G0;
-    for (const c of candidates(O, piece)) {
+    // opts.at: measure just this one candidate ({ at, rot, wall }), e.g. a spot cleared by moving furniture
+    for (const c of opts.at ? [opts.at] : candidates(O, piece)) {
       const P = footprint(piece, c.at, c.rot);
       const b = blocked(O, obs, P, h, room.height);
       if (b) { misses[b.why]++; continue; }
@@ -173,7 +174,7 @@ export function place(room, piece, opts = {}) {
   spots.sort((a, b) => b.score - a.score || b.clearance_m - a.clearance_m);
   const best = spots[0] ?? null;
   const verdict = best ? best.verdict : "Doesn't fit";
-  return { verdict, best, spots, say: sayPlacement(piece, best, O, misses, nearMiss) };
+  return { verdict, best, spots, say: sayPlacement(piece, best, O, misses, nearMiss), ...(opts.at ? { misses, near_miss: nearMiss } : {}) };
 }
 
 function sayPlacement(piece, best, O, misses, nearMiss) {

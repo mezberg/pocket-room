@@ -37,8 +37,9 @@ export function snap(room, O = outline(room)) {
 
 // Everything that got worse from a to b: a new overlap, a door newly blocked, a piece newly through a wall,
 // a walkway that drops below what it was (or below 75 cm, whichever is less) by more than the grid's error.
-// `ignore`: the walkways the fix is about (they are judged by the goal instead).
-export function worse(a, b, ignore = new Set()) {
+// `ignore`: the walkways the fix is about (they are judged by the goal instead). `floor`: how wide a way may
+// narrow to before it counts (75 cm for fixes; the designer's plans accept 60 cm, "Just fits", as place() does).
+export function worse(a, b, ignore = new Set(), { floor = WALK_OK } = {}) {
   const bad = [];
   for (const k of b.ov) if (!a.ov.has(k)) bad.push({ kind: "overlap", key: k });
   for (const k of b.door) if (!a.door.has(k)) bad.push({ kind: "door", key: k });
@@ -46,7 +47,7 @@ export function worse(a, b, ignore = new Set()) {
   for (const [k, r] of b.rs) {
     if (ignore.has(k)) continue;
     const w0 = a.rs.get(k)?.width ?? 0;
-    if (r.width < Math.min(w0, WALK_OK) - 0.03) bad.push({ kind: "walkway", key: k, before: w0, after: r.width });
+    if (r.width < Math.min(w0, floor) - 0.03) bad.push({ kind: "walkway", key: k, before: w0, after: r.width });
   }
   return bad;
 }

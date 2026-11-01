@@ -7,6 +7,7 @@ import { roomStats } from "./room3d.js";
 import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "./scene-state.js";
 import { fixBody, applyFix, undoStack, withFixed, previewMoves } from "./fix-state.js";
 import { rankFindings, fold } from "./advice.js";
+import { planMoves, planToFix, placementOf } from "./plan-state.js";
 import { nextShot, CORNERS, MAX_PHOTOS, parseLength, formatLength, editLength, accuracyWords, roomSize, sortRooms, PHOTO_STEPS, PLAN_STEPS, seenShare, spotUnseen } from "./new-room.js";
 
 const $ = (id) => document.getElementById(id);
@@ -40,7 +41,7 @@ async function withRoom(call) {
 const desktop = matchMedia("(min-width: 900px)");
 
 const fixCache = new Map(), undo = undoStack();   // tap an issue → fixes, and what Apply changed
-const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null, moreOpen: false };
+const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, fixOpen: null, fixSel: null, fixed: null, moreOpen: false, plan: null, planSel: null };
 
 await firstPaint();
 const viewer = new Viewer($("view"), $("labels"));
@@ -173,7 +174,7 @@ async function loadRoom(id, { fresh } = {}) {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null, moreOpen: false });
+  Object.assign(state, { room, saved, piece: null, placement: null, spot: 0, findings: [], fixed: null, moreOpen: false, plan: null, planSel: null });
   closeFix(); undo.clear();
   $("verdict-building").hidden = true;
   $("verdict-dot").hidden = true;
@@ -231,13 +232,14 @@ async function checkRoom() {
   busyEl.hidden = false;
   renderVerdict();
   try {
-    const spot = state.piece ? spotOf(state.placement, state.spot) : null;
-    const { findings } = await withRoom(() => api.analyse(analyseBody(state.room, state.piece, spot, { saved: state.saved })));
+    const spot = state.piece && state.placement ? spotOf(state.placement, state.spot) : null;
+    const piece = spot ? state.piece : null;   // a piece still at the plan stage isn't in the room yet
+    const { findings } = await withRoom(() => api.analyse(analyseBody(state.room, piece, spot, { saved: state.saved })));
     if (run !== state.run) return;   // the piece or spot changed meanwhile
     setFindings(rankFindings(withFixed(findings, state.fixed?.finding, state.fixed?.option)));
     // what's wrong, most important first: blocking rules, then the Decisions API's order (designer/advice.mjs)
     try {
-      const advice = await withRoom(() => api.advice({ ...analyseBody(state.room, state.piece, spot, { saved: state.saved }), findings: state.findings }));
+      const advice = await withRoom(() => api.advice({ ...analyseBody(state.room, piece, spot, { saved: state.saved }), findings: state.findings }));
       if (run !== state.run) return;
       if (state.fixOpen != null) closeFix();
       setFindings(rankFindings(state.findings, advice));
@@ -341,20 +343,90 @@ async function addPiece(read, box) {
   const run = ++state.run;
   const piece = await read();
   if (run !== state.run) return;
-  box.show("Finding the best spot…", `${piece.name} · ${size(piece)}`);
-  const [placement] = await Promise.all([withRoom(() => api.place(placeBody(state.room, piece, { saved: state.saved }))), viewer.showPiece(piece)]);
+  box.show("Thinking like a designer…", `${piece.name} · ${size(piece)}: a free spot, moving a piece or two, or replacing one`);
+  // the designer's plans (designer/, POST /api/plan): place / move then place / replace, the Decisions pick first
+  const [plan] = await Promise.all([withRoom(() => api.plan(placeBody(state.room, piece, { saved: state.saved }))), viewer.showPiece(piece)]);
   if (run !== state.run) return;
-  Object.assign(state, { piece, placement, spot: 0, findings: [], fixed: null });
   closeFix();
+  Object.assign(state, { piece, placement: null, spot: 0, findings: [], fixed: null, plan, planSel: plan.best?.id ?? null });
   viewer.clearFindings();
-  dropSpot();
   box.hide();
   $("verdict-dot").hidden = false;
   show("verdict");
   renderVerdict();
-  checkRoom().catch((err) => toast(plain(err)));
+  previewPlan();
   if (piece.model?.status === "building" || (piece.model?.status === "pending" && piece.model?.job)) buildInBackground(piece, run);
   else $("verdict-building").hidden = true;
+}
+
+// ---------------------------------------------------------------- the designer's plan for a new piece
+const selPlan = () => state.plan?.plans.find((p) => p.id === state.planSel) ?? null;
+function previewPlan() {
+  const p = selPlan();
+  if (!p) { viewer.clearPreview(); return; }
+  viewer.previewFix(planMoves(state.room, p, state.piece));
+}
+
+function planCard() {
+  const box = $("plan");
+  const plan = state.plan;
+  box.hidden = !plan || !!state.placement;
+  if (box.hidden) return;
+  box.replaceChildren();
+  if (!plan.plans.length) {
+    box.innerHTML = `<p class="fix-none"></p><div class="row"><button class="btn small" data-act="drop">Remove it</button></div>`;
+    box.querySelector(".fix-none").textContent = plan.say;
+    box.querySelector('[data-act="drop"]').onclick = () => $("btn-remove").click();
+    return;
+  }
+  const head = document.createElement("p");
+  head.className = "plan-head";
+  head.textContent = "The designer's plan";
+  const list = document.createElement("div");
+  list.className = "fix-opts";
+  list.setAttribute("role", "radiogroup");
+  const KIND = { place: "Free spot", move: "Move, then place", replace: "Replace" };
+  for (const p of plan.plans) {
+    const b = document.createElement("button");
+    b.className = "fix-opt plan-opt";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(p.id === state.planSel));
+    const pick = p.best && plan.decision?.by !== "rules" && p.probability != null ? ` · Designer's pick · ${Math.round(p.probability * 100)}% sure` : p.best ? " · Designer's pick" : "";
+    b.innerHTML = `<em></em><span class="steps"></span><small></small>`;
+    b.querySelector("em").textContent = `${KIND[p.kind]} · ${p.verdict}${pick}`;
+    const steps = b.querySelector(".steps");
+    const parts = [...p.moves.map((m) => m.say.replace(/^./, (c) => c.toUpperCase())), p.say.split(", then ").pop().replace(/^./, (c) => c.toUpperCase())];
+    if (parts.length > 1) { const ol = document.createElement("ol"); ol.className = "plan-steps"; for (const t of parts) { const li = document.createElement("li"); li.textContent = t.replace(/\.?$/, "."); ol.append(li); } steps.append(ol); }
+    else steps.textContent = p.say.replace(/^./, (c) => c.toUpperCase());
+    b.querySelector("small").textContent = p.reason ? `Why: ${p.reason}.` : "";
+    b.onclick = () => { state.planSel = p.id; renderVerdict(); previewPlan(); };
+    list.append(b);
+  }
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `<button class="btn primary" data-act="apply">Apply the plan</button><button class="btn" data-act="cancel">Not this piece</button>`;
+  row.querySelector('[data-act="apply"]').onclick = () => applyPlan().catch((err) => toast(plain(err)));
+  row.querySelector('[data-act="cancel"]').onclick = () => $("btn-remove").click();
+  box.append(head, list, row);
+}
+
+// Apply: the moves happen in 3D, the piece drops into its spot, the room is checked with it in. Undo for 8 s.
+async function applyPlan() {
+  const p = selPlan();
+  if (!p) return;
+  undo.push({ room: state.room, saved: state.saved, placement: null, fixed: state.fixed, planSel: state.planSel, plan: true });
+  const next = applyFix(state.room, planToFix(p));
+  viewer.clearPreview();
+  state.room = next.room;
+  if (p.moves.length) state.saved = false;   // the server's copy is the room before the moves
+  state.placement = placementOf(state.plan, p);
+  state.spot = 0;
+  state.run++;
+  await viewer.updateItems(state.room);
+  dropSpot();
+  renderVerdict();
+  toast(`Done: ${p.say.replace(/^./, (c) => c.toUpperCase())}`, 8000, { label: "Undo", run: () => undoFix().catch((err) => toast(plain(err))) });
+  await checkRoom();
 }
 
 async function buildInBackground(piece, run) {
@@ -470,8 +542,8 @@ const fixKey = (f) => `${state.run}|${f.id}|${f.at?.join(",") ?? ""}|${(f.items 
 function loadFixes(f) {
   const k = fixKey(f);
   if (!fixCache.has(k)) {
-    const spot = state.piece ? spotOf(state.placement, state.spot) : null;
-    const p = withRoom(() => api.fixes(fixBody(state.room, state.piece, spot, f, { saved: state.saved })));
+    const spot = state.piece && state.placement ? spotOf(state.placement, state.spot) : null;
+    const p = withRoom(() => api.fixes(fixBody(state.room, spot ? state.piece : null, spot, f, { saved: state.saved })));
     p.then((r) => { p.settled = r; }, () => fixCache.delete(k));
     fixCache.set(k, p);
   }
@@ -566,7 +638,7 @@ function fixPanel(f, i) {
 
 // Apply: the room changes in 3D, the room is checked again (and the piece's verdict), Undo for 8 s.
 async function applyOption(f, opt) {
-  const spot = state.piece ? spotOf(state.placement, state.spot) : null;
+  const spot = state.piece && state.placement ? spotOf(state.placement, state.spot) : null;
   undo.push({ room: state.room, saved: state.saved, placement: state.placement, fixed: state.fixed });
   const next = applyFix(state.room, opt, { pieceId: state.piece?.id, spot });
   closeFix();
@@ -591,6 +663,15 @@ async function undoFix() {
   state.run++;
   setFindings([]);
   await viewer.updateItems(state.room);
+  if (prev.plan) {   // back to the plan, the piece not yet in
+    state.planSel = prev.planSel;
+    viewer.hidePiece();
+    viewer.setHidden([]);
+    renderVerdict();
+    previewPlan();
+    await checkRoom();
+    return;
+  }
   const spot = spotOf(state.placement, state.spot);
   if (state.piece && spot) viewer.movePiece(spot.at, spot.rot ?? 0);
   renderVerdict();
@@ -633,7 +714,7 @@ function dropSpot() {
 
 function renderVerdict() {
   const p = state.placement;
-  const hasAny = p || state.findings.length || !$("findings-busy").hidden;
+  const hasAny = p || state.plan || state.findings.length || !$("findings-busy").hidden;
   $("verdict-empty").hidden = !!hasAny;
   $("verdict-body").hidden = !hasAny;
   if (!hasAny) return;
@@ -658,12 +739,23 @@ function renderVerdict() {
     $("btn-next").hidden = !(p.spots?.length > 1);
     $("btn-next").textContent = `Next spot (${state.spot + 1} of ${p.spots?.length ?? 1})`;
     $("btn-remove").hidden = false;
+  } else if (state.plan && state.piece) {
+    const best = state.plan.plans.find((x) => x.id === state.planSel) ?? state.plan.best;
+    chip.hidden = false;
+    chip.textContent = best?.verdict ?? state.plan.verdict;
+    chip.className = `chip ${chipClass(best?.verdict ?? state.plan.verdict)}`;
+    $("verdict-say").textContent = state.plan.say;
+    $("verdict-piece").textContent = [state.piece.name, size(state.piece), state.piece.source?.price].filter(Boolean).join(" · ");
+    $("verdict-unseen").hidden = true;
+    $("btn-next").hidden = true;
+    $("btn-remove").hidden = false;
   } else {
     chip.hidden = true;
     $("verdict-say").textContent = "Your room as it is.";
     $("verdict-piece").textContent = "";
     $("btn-next").hidden = $("btn-remove").hidden = true;
   }
+  planCard();
   const ranked = state.findings.some((f) => f.rank);
   $("advice-head").hidden = !ranked;
   $("advice-head").textContent = state.piece && state.placement ? "What's wrong with it in" : "What's wrong with your room";
@@ -707,11 +799,14 @@ $("btn-remove").onclick = () => {
   viewer.clearPiece();
   viewer.clearFindings();
   viewer.setHidden([]);
-  Object.assign(state, { piece: null, placement: null, spot: 0, findings: [], fixed: null });
+  Object.assign(state, { piece: null, placement: null, spot: 0, findings: [], fixed: null, plan: null, planSel: null });
   closeFix();
+  undo.clear();
+  viewer.clearPreview();
   $("verdict-building").hidden = true;
   renderVerdict();
   show("add");
+  checkRoom().catch(() => {});   // the room as it is again
 };
 
 // ---------------------------------------------------------------- units (m or ft in), shared by every size field

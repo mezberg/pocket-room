@@ -26,7 +26,7 @@ app.use("/api/agent", agent);
 app.use("/api", place);                       // /api/place, /api/analyse
 app.use("/api/render", render);
 app.use("/api/fixes", fixes);
-app.use("/api", designer);                    // /api/advice
+app.use("/api", designer);                    // /api/plan, /api/advice
 
 app.use("/room", express.static(join(root, "room")));
 app.use("/contract", express.static(join(root, "contract")));

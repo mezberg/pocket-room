@@ -252,3 +252,9 @@ label.btn { display: inline-flex; align-items: center; }
 .advice-teaser b { color: var(--red); font-size: 14px; }
 .advice-teaser span { font-size: 14px; }
 .advice-teaser small { color: var(--mut); font-size: 12px; }
+
+/* ---------------------------------------------------------------- the designer's plan for a new piece */
+.plan { margin: 12px 0 4px; display: grid; gap: 8px; }
+.plan-head { margin: 4px 0 0; font: 700 11px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+.plan-opt small { color: var(--mut); font-size: 12.5px; }
+.plan-steps { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 2px; }
