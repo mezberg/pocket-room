@@ -1,0 +1,842 @@
+{
+	"nodes": [
+		{
+			"id": "p1",
+			"type": "group",
+			"x": 0,
+			"y": 0,
+			"width": 400,
+			"height": 1436,
+			"label": "1 · Room in 3D · MVP"
+		},
+		{
+			"id": "p2",
+			"type": "group",
+			"x": 460,
+			"y": 0,
+			"width": 400,
+			"height": 1004,
+			"label": "2 · Furniture from any image · MVP"
+		},
+		{
+			"id": "legend",
+			"type": "group",
+			"x": 760,
+			"y": -560,
+			"width": 420,
+			"height": 360,
+			"label": "Legend"
+		},
+		{
+			"id": "p2_2",
+			"type": "text",
+			"text": "**Else build it: image → 3D**\nMeshy / Hunyuan3D / Blender MCP `generate_3d`. Async, 1–3 min.\nThird-party \"openai gpt-6-astra image-to-3d\" on WaveSpeed: unverified.",
+			"x": 470,
+			"y": 476,
+			"width": 380,
+			"height": 170,
+			"color": "3"
+		},
+		{
+			"id": "p2_3",
+			"type": "text",
+			"text": "**Normalise**\nScale to real dims, base on floor, front faces +Z, decimate, GLB. Repaint to the palette (`restyle()`).",
+			"x": 470,
+			"y": 666,
+			"width": 380,
+			"height": 144,
+			"color": "3"
+		},
+		{
+			"id": "p2_4",
+			"type": "text",
+			"text": "**Risk: no confirmed OpenAI image-to-3D**\nCheck the hackathon rules. Demo: pre-generate the hero sofa, live-generate one more on stage.",
+			"x": 470,
+			"y": 830,
+			"width": 380,
+			"height": 144,
+			"color": "1"
+		},
+		{
+			"id": "p3_0",
+			"type": "text",
+			"text": "**Phone-first web app, three.js**\nReuse Misplaced `real.js` (renderer, sun, shadows, AO), `labels.js`, `rotate.js`.",
+			"x": 930,
+			"y": 70,
+			"width": 380,
+			"height": 118,
+			"color": "3"
+		},
+		{
+			"id": "p3_1",
+			"type": "text",
+			"text": "**Inputs**\nCamera · upload · PWA share target, so a screenshot from Instagram / Pinterest goes straight in.",
+			"x": 930,
+			"y": 208,
+			"width": 380,
+			"height": 144,
+			"color": "3"
+		},
+		{
+			"id": "p3_2",
+			"type": "text",
+			"text": "**Small backend**\nHolds the OpenAI key, runs 3D jobs, caches models. Node on Vercel.",
+			"x": 930,
+			"y": 372,
+			"width": 380,
+			"height": 118,
+			"color": "3"
+		},
+		{
+			"id": "p3_3",
+			"type": "text",
+			"text": "**Screens**\nMy room · Add piece (spinner while 3D builds) · Verdict + advice list · Talk",
+			"x": 930,
+			"y": 510,
+			"width": 380,
+			"height": 118,
+			"color": "3"
+		},
+		{
+			"id": "p3",
+			"type": "group",
+			"x": 920,
+			"y": 0,
+			"width": 400,
+			"height": 658,
+			"label": "3 · App / website · MVP"
+		},
+		{
+			"id": "p4_0",
+			"type": "text",
+			"text": "**Free-floor map**\nFrom the room graph: walls, door swings, windows, radiators, existing pieces.",
+			"x": 1390,
+			"y": 70,
+			"width": 380,
+			"height": 118,
+			"color": "3"
+		},
+		{
+			"id": "p4_1",
+			"type": "text",
+			"text": "**Candidates**\nSlide the piece along every wall segment and the room centre; score each spot: walkway ≥ 30 in, door swing clear, not in front of radiator / window.",
+			"x": 1390,
+			"y": 208,
+			"width": 380,
+			"height": 170,
+			"color": "3"
+		},
+		{
+			"id": "p4_2",
+			"type": "text",
+			"text": "**Pick + say it**\nCode keeps only legal spots; Decisions picks the best one (\"best wall: one of […]\") with a probability.\nVerdict: Fits / Just fits / Doesn't fit.",
+			"x": 1390,
+			"y": 398,
+			"width": 380,
+			"height": 170,
+			"color": "3"
+		},
+		{
+			"id": "p4_3",
+			"type": "text",
+			"text": "**Rule: geometry comes from code, never the model**\nThe model reads pictures and explains; solvers measure.",
+			"x": 1390,
+			"y": 588,
+			"width": 380,
+			"height": 144,
+			"color": "5"
+		},
+		{
+			"id": "p4",
+			"type": "group",
+			"x": 1380,
+			"y": 0,
+			"width": 400,
+			"height": 762,
+			"label": "4 · Where to put it · MVP"
+		},
+		{
+			"id": "p5_0",
+			"type": "text",
+			"text": "**5a · Model check: rules, pass / fail**\nNothing overlaps or pokes through walls · everything on the floor · no rough edges / broken meshes · doors open fully · a path from every door to every room, bed side and window (grid A*) · walkways ≥ 30 in.",
+			"x": 1850,
+			"y": 70,
+			"width": 380,
+			"height": 196,
+			"color": "3"
+		},
+		{
+			"id": "p5_1",
+			"type": "text",
+			"text": "**5b · Design grade** (Decisions API)\nLight: daylight reach, lamps per zone, dark corners · Flow: paths, pinch points · Proportion: rug vs sofa, TV height, curtain length (Misplaced solvers) · Fit together: style / colour score across pieces.",
+			"x": 1850,
+			"y": 286,
+			"width": 380,
+			"height": 196,
+			"color": "3"
+		},
+		{
+			"id": "p5_2",
+			"type": "text",
+			"text": "**Split: 5a in code (exact, instant), 5b in Decisions**\nCode computes the numbers; Decisions answers the batch of yes/no + scores with probabilities → ranked advice.",
+			"x": 1850,
+			"y": 502,
+			"width": 380,
+			"height": 170,
+			"color": "5"
+		},
+		{
+			"id": "p5_3",
+			"type": "text",
+			"text": "**Show it**\nEach finding = marker in 3D (red `.mk` problem, green `.gr` fix) + one plain sentence + \"Show me\".",
+			"x": 1850,
+			"y": 692,
+			"width": 380,
+			"height": 144,
+			"color": "3"
+		},
+		{
+			"id": "p5_4",
+			"type": "text",
+			"text": "**Scope for demo: 6–8 checks**\nPath blocked · walkway too tight · door hits furniture · rug floats · dark corner · new piece clashes with the room.",
+			"x": 1850,
+			"y": 856,
+			"width": 380,
+			"height": 144,
+			"color": "3"
+		},
+		{
+			"id": "p5",
+			"type": "group",
+			"x": 1840,
+			"y": 0,
+			"width": 400,
+			"height": 1030,
+			"label": "5 · Analyse the room · MVP (scope it)"
+		},
+		{
+			"id": "p6_0",
+			"type": "text",
+			"text": "**Realtime voice**\n\"Does it fit by the window?\" · \"Try the other wall\" · \"What's wrong with this room?\"",
+			"x": 2310,
+			"y": 70,
+			"width": 380,
+			"height": 118,
+			"color": "6"
+		},
+		{
+			"id": "p6_1",
+			"type": "text",
+			"text": "**Tool calls**\n`place_item` · `move_item` · `analyse_room` · `render`\nDecisions routes each sentence: move / swap / ask / render.",
+			"x": 2310,
+			"y": 208,
+			"width": 380,
+			"height": 170,
+			"color": "6"
+		},
+		{
+			"id": "p6",
+			"type": "group",
+			"x": 2300,
+			"y": 0,
+			"width": 400,
+			"height": 408,
+			"color": "6",
+			"label": "6 · Voice: talk to your room · Stretch"
+		},
+		{
+			"id": "p7_0",
+			"type": "text",
+			"text": "**gpt-image edit**\nScreenshot of the 3D view + room photo → \"your room with this sofa, Sunday morning\".",
+			"x": 2770,
+			"y": 70,
+			"width": 380,
+			"height": 118,
+			"color": "6"
+		},
+		{
+			"id": "p7_1",
+			"type": "text",
+			"text": "**Backup: Blender Cycles**\n`hoskins_street_2026-09-26_photoreal.blend` already exists.",
+			"x": 2770,
+			"y": 208,
+			"width": 380,
+			"height": 118,
+			"color": "6"
+		},
+		{
+			"id": "p7",
+			"type": "group",
+			"x": 2760,
+			"y": 0,
+			"width": 400,
+			"height": 356,
+			"color": "6",
+			"label": "7 · Photoreal render · Stretch"
+		},
+		{
+			"id": "root",
+			"type": "text",
+			"text": "# Pocket Room\nYour flat in 3D. Any sofa you see (shop photo, screenshot) is built in 3D, dropped in, checked, and you can talk to your room about it.\nOpenAI: Vision · Decisions · Realtime voice · gpt-image\nFlow: 1 room + 2 piece → 4 place → 5 check → 6 talk / 7 render; 3 wraps it all",
+			"x": 0,
+			"y": -520,
+			"width": 700,
+			"height": 240,
+			"color": "5"
+		},
+		{
+			"id": "l0",
+			"type": "text",
+			"text": "🟩 exists / works",
+			"x": 780,
+			"y": -520,
+			"width": 380,
+			"height": 44,
+			"color": "4"
+		},
+		{
+			"id": "l1",
+			"type": "text",
+			"text": "🟧 in progress",
+			"x": 780,
+			"y": -468,
+			"width": 380,
+			"height": 44,
+			"color": "2"
+		},
+		{
+			"id": "l2",
+			"type": "text",
+			"text": "🟨 to do",
+			"x": 780,
+			"y": -416,
+			"width": 380,
+			"height": 44,
+			"color": "3"
+		},
+		{
+			"id": "l3",
+			"type": "text",
+			"text": "🟥 risk",
+			"x": 780,
+			"y": -364,
+			"width": 380,
+			"height": 44,
+			"color": "1"
+		},
+		{
+			"id": "l4",
+			"type": "text",
+			"text": "🟦 decision / rule",
+			"x": 780,
+			"y": -312,
+			"width": 380,
+			"height": 44,
+			"color": "5"
+		},
+		{
+			"id": "l5",
+			"type": "text",
+			"text": "🟪 stretch (if time)",
+			"x": 780,
+			"y": -260,
+			"width": 380,
+			"height": 44,
+			"color": "6"
+		},
+		{
+			"id": "demo",
+			"type": "text",
+			"text": "## Demo, 90 s\n1. Hackathon room appears in 3D from one photo (or the prebuilt flat)\n2. \"Analyse my room\" → 3 markers: path blocked, walkway tight, dark corner\n3. Share a sofa screenshot → built in 3D, lands to scale\n4. Verdict: \"Just fits. Long wall.\" It slides there\n5. (stretch) say it by voice · (stretch) photoreal Sunday-morning render",
+			"x": 1240,
+			"y": -560,
+			"width": 620,
+			"height": 360,
+			"color": "5"
+		},
+		{
+			"id": "qs",
+			"type": "text",
+			"text": "## Open questions\n- Hackathon date, team size, rules on non-OpenAI models (image → 3D)?\n- Decisions API access: public beta since 6 Oct per press; check the real docs\n- Do we get to photograph / measure the venue beforehand?\n- Name: Pocket Room is a placeholder",
+			"x": 1920,
+			"y": -560,
+			"width": 520,
+			"height": 360,
+			"color": "1"
+		},
+		{
+			"id": "p1_0",
+			"type": "text",
+			"text": "**My flat is already built** (26 Sep)\nHoskins Street, plan-accurate to ~1%\n`~/Documents/Work/AIInteriorDesigner/hoskins-street-flat/from_scratch_2026-09-26/viewer/model.glb` (3.4 MB) + `manifest.json` (room boxes)\nIFC with real walls & openings · drag-to-rearrange viewer",
+			"x": 10,
+			"y": 70,
+			"width": 380,
+			"height": 248,
+			"color": "4"
+		},
+		{
+			"id": "p1_1",
+			"type": "file",
+			"file": "attachments/hoskins_day_overview.jpg",
+			"x": 10,
+			"y": 338,
+			"width": 380,
+			"height": 214
+		},
+		{
+			"id": "p1_2",
+			"type": "text",
+			"text": "**Export to the app format**\nGLB + room graph JSON: walls, openings, door swings, radiators, existing furniture footprints, free floor.\nPlacement (4) and checks (5) read this, not the mesh.",
+			"x": 10,
+			"y": 588,
+			"width": 380,
+			"height": 196,
+			"color": "3"
+		},
+		{
+			"id": "p1_3",
+			"type": "text",
+			"text": "**Live hackathon room: rough box in ~1 min** ✅ possible\nPhoto / 10 s video → Vision → room W×L×H, doors, windows, big objects as boxes → `shell.js` (Misplaced) → 3D.\nRectangular, ±10–20 cm. Good enough to wow, not to measure.",
+			"x": 10,
+			"y": 804,
+			"width": 380,
+			"height": 222,
+			"color": "3"
+		},
+		{
+			"id": "p1_4",
+			"type": "text",
+			"text": "**Fun shortcut: photograph the fire-escape plan on the wall**\n`floorplan recognition pipeline`: plan image → graph.json in one VLM call, the rest local in seconds.",
+			"x": 10,
+			"y": 1046,
+			"width": 380,
+			"height": 170,
+			"color": "3"
+		},
+		{
+			"id": "p1_5",
+			"type": "text",
+			"text": "**Risk: the full floorplan-to-3d skill takes hours** (overlay checks), not live.\nBackup: pace / laser the hall the day before and prebuild; the live run only has to match it.",
+			"x": 10,
+			"y": 1236,
+			"width": 380,
+			"height": 170,
+			"color": "1"
+		},
+		{
+			"id": "p2_0",
+			"type": "text",
+			"text": "**Read the picture** (Vision)\nShop photo, tag or screenshot → category, style, colour, material, dimensions.\nNo size on it → category defaults (sofa 84 in, etc.), flagged as estimated.",
+			"x": 470,
+			"y": 70,
+			"width": 380,
+			"height": 170,
+			"color": "3"
+		},
+		{
+			"id": "p2_1",
+			"type": "text",
+			"text": "**Match from DB first**\nCatalogue of ready GLBs: `hoskins…/models` (plants, lamp, pillows), Misplaced `kit-real.js` parametric pieces (sofa, bed, rug, desk sized to any dims), Poly Haven.\nPick by embeddings + Decisions choice.",
+			"x": 470,
+			"y": 260,
+			"width": 380,
+			"height": 196,
+			"color": "3"
+		},
+		{
+			"id": "dev_group",
+			"type": "group",
+			"label": "Development plan · what runs in parallel, what waits",
+			"x": 0,
+			"y": 1636,
+			"width": 2400,
+			"height": 1318
+		},
+		{
+			"id": "dev_h0",
+			"type": "text",
+			"x": 40,
+			"y": 1696,
+			"width": 400,
+			"height": 60,
+			"text": "## Phase 0 · together",
+			"color": "5"
+		},
+		{
+			"id": "dev_h1",
+			"type": "text",
+			"x": 520,
+			"y": 1696,
+			"width": 400,
+			"height": 60,
+			"text": "## Phase 1 · parallel lanes",
+			"color": "5"
+		},
+		{
+			"id": "dev_h2",
+			"type": "text",
+			"x": 1000,
+			"y": 1696,
+			"width": 400,
+			"height": 60,
+			"text": "## Phase 2 · integration (dependent)",
+			"color": "5"
+		},
+		{
+			"id": "dev_h3",
+			"type": "text",
+			"x": 1480,
+			"y": 1696,
+			"width": 400,
+			"height": 60,
+			"text": "## Phase 3 · stretch",
+			"color": "5"
+		},
+		{
+			"id": "dev_h4",
+			"type": "text",
+			"x": 1960,
+			"y": 1696,
+			"width": 400,
+			"height": 60,
+			"text": "## Phase 4 · demo",
+			"color": "5"
+		},
+		{
+			"id": "dev_p0",
+			"type": "text",
+			"x": 40,
+			"y": 1786,
+			"width": 400,
+			"height": 352,
+			"text": "**Contract first, ~2 h, blocks everything**\n- `room.json`: walls, openings, door swings, radiators, furniture footprints, free floor (metres)\n- `piece.json`: category, dims, style tags, glb url, source\n- API: `/piece` (image → piece) · `/place` · `/analyse`\n- Fixtures by hand: Hoskins living room + 1 sofa\n- Repo skeleton: `app/`, `server/`, `rules/`, `room/`, `furniture/`",
+			"color": "3"
+		},
+		{
+			"id": "dev_A",
+			"type": "text",
+			"x": 520,
+			"y": 1786,
+			"width": 400,
+			"height": 118,
+			"text": "**A · Room** (part 1)\nHoskins → GLB + room.json · live box room from a photo · fire-plan shortcut",
+			"color": "3"
+		},
+		{
+			"id": "dev_B",
+			"type": "text",
+			"x": 520,
+			"y": 1924,
+			"width": 400,
+			"height": 170,
+			"text": "**B · Furniture** (part 2)\nVision read · DB match · image → 3D · normalise.\n⚠ Test the 3D vendor on day 1: slowest, riskiest lane",
+			"color": "3"
+		},
+		{
+			"id": "dev_C",
+			"type": "text",
+			"x": 520,
+			"y": 2114,
+			"width": 400,
+			"height": 144,
+			"text": "**C · App** (part 3)\nViewer loads GLB + room.json · camera / upload / share target · backend with the key · deploy",
+			"color": "3"
+		},
+		{
+			"id": "dev_D",
+			"type": "text",
+			"x": 520,
+			"y": 2278,
+			"width": 400,
+			"height": 118,
+			"text": "**D · Rules in code** (parts 4 + 5a)\nPlacement candidates + legal spots · model check: overlaps, doors, paths (A*), walkways",
+			"color": "3"
+		},
+		{
+			"id": "dev_E",
+			"type": "text",
+			"x": 520,
+			"y": 2416,
+			"width": 400,
+			"height": 144,
+			"text": "**E · Decisions** (parts 4 + 5b)\nVerdict + best wall · design-grade question set (light, flow, proportion, style) · tuned on fixtures",
+			"color": "3"
+		},
+		{
+			"id": "dev_F",
+			"type": "text",
+			"x": 520,
+			"y": 2580,
+			"width": 400,
+			"height": 144,
+			"text": "**F · Render** (part 7, stretch)\ngpt-image edit from a screenshot + room photo. Needs nothing else: anyone free can start it",
+			"color": "6"
+		},
+		{
+			"id": "dev_note",
+			"type": "text",
+			"x": 520,
+			"y": 2754,
+			"width": 400,
+			"height": 160,
+			"color": "5",
+			"text": "Each lane needs only the contract + fixtures, so all run at once.\n5 people: one lane each · 3 people: A+C · B · D+E"
+		},
+		{
+			"id": "dev_I1",
+			"type": "text",
+			"x": 1000,
+			"y": 1786,
+			"width": 400,
+			"height": 118,
+			"text": "**Add-a-piece loop** ★ the product\nimage → piece → placed in the room → verdict\nneeds A · B · C · D (+ E for the verdict)",
+			"color": "3"
+		},
+		{
+			"id": "dev_I2",
+			"type": "text",
+			"x": 1000,
+			"y": 1944,
+			"width": 400,
+			"height": 118,
+			"text": "**Analysis view**\nmarkers + advice list in 3D\nneeds C · D · E (A for the real room)",
+			"color": "3"
+		},
+		{
+			"id": "dev_V",
+			"type": "text",
+			"x": 1480,
+			"y": 1786,
+			"width": 400,
+			"height": 144,
+			"text": "**Voice** (part 6)\nRealtime tools call the same `/place` `/analyse`\nneeds the loop working",
+			"color": "6"
+		},
+		{
+			"id": "dev_R",
+			"type": "text",
+			"x": 1480,
+			"y": 1970,
+			"width": 400,
+			"height": 118,
+			"text": "**Render in the app**\nwire lane F into the viewer\nneeds C",
+			"color": "6"
+		},
+		{
+			"id": "dev_demo",
+			"type": "text",
+			"x": 1960,
+			"y": 1786,
+			"width": 400,
+			"height": 144,
+			"text": "**Demo**\nPre-generate hero pieces · prebuild / measure the venue room · rehearse the 90 s · record a fallback video",
+			"color": "3"
+		},
+		{
+			"id": "dev_crit",
+			"type": "text",
+			"x": 1960,
+			"y": 1970,
+			"width": 400,
+			"height": 170,
+			"text": "**Critical path**\ncontract → C viewer + A export → D placement → add-a-piece loop → demo.\nB runs beside it; if image → 3D fails, DB match carries the demo",
+			"color": "1"
+		}
+	],
+	"edges": [
+		{
+			"id": "e_root_p1",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p1",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p2",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p2",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p3",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p3",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p4",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p4",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p5",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p5",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p6",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p6",
+			"toSide": "top"
+		},
+		{
+			"id": "e_root_p7",
+			"fromNode": "root",
+			"fromSide": "bottom",
+			"toNode": "p7",
+			"toSide": "top"
+		},
+		{
+			"id": "d_p4_p5",
+			"fromNode": "p4",
+			"fromSide": "right",
+			"toNode": "p5",
+			"toSide": "left",
+			"color": "5",
+			"label": "new layout"
+		},
+		{
+			"id": "d_p5_p6",
+			"fromNode": "p5",
+			"fromSide": "right",
+			"toNode": "p6",
+			"toSide": "left",
+			"color": "5",
+			"label": "advice"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_A",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_A",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_B",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_B",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_C",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_C",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_D",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_D",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_E",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_E",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_p0_dev_F",
+			"fromNode": "dev_p0",
+			"fromSide": "right",
+			"toNode": "dev_F",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_A_dev_I1",
+			"fromNode": "dev_A",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_B_dev_I1",
+			"fromNode": "dev_B",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_C_dev_I1",
+			"fromNode": "dev_C",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_D_dev_I1",
+			"fromNode": "dev_D",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_E_dev_I1",
+			"fromNode": "dev_E",
+			"fromSide": "right",
+			"toNode": "dev_I1",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_D_dev_I2",
+			"fromNode": "dev_D",
+			"fromSide": "right",
+			"toNode": "dev_I2",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_E_dev_I2",
+			"fromNode": "dev_E",
+			"fromSide": "right",
+			"toNode": "dev_I2",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_I1_dev_V",
+			"fromNode": "dev_I1",
+			"fromSide": "right",
+			"toNode": "dev_V",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_I2_dev_V",
+			"fromNode": "dev_I2",
+			"fromSide": "right",
+			"toNode": "dev_V",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_F_dev_R",
+			"fromNode": "dev_F",
+			"fromSide": "right",
+			"toNode": "dev_R",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_I1_dev_demo",
+			"fromNode": "dev_I1",
+			"fromSide": "right",
+			"toNode": "dev_demo",
+			"toSide": "left"
+		},
+		{
+			"id": "dev_e_dev_V_dev_demo",
+			"fromNode": "dev_V",
+			"fromSide": "right",
+			"toNode": "dev_demo",
+			"toSide": "left",
+			"label": "if ready"
+		}
+	]
+}
