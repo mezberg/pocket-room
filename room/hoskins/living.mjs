@@ -66,14 +66,16 @@ export function livingRoom() {
       item("sofa", "Sofa", "sofa", 90),                       // back on the west wall, faces east
       item("ladder_bookshelf", "Ladder bookshelf", "shelf", 90), // leans on the west wall
       item("side_table", "Side table", "table", 90),
-      item("floor_lamp", "Floor lamp", "lamp", 90),           // arc reaches east over the sofa end
+      // the manifest box (0.26 × 0.53) is the arc's reach, which squashed the round shade flat: a 0.4 m round lamp
+      item("floor_lamp", "Floor lamp", "lamp", 90, { size: [0.4, 0.4, 1.562] }),
       item("coffee_table", "Coffee table", "table", 270, { h: 0.45 }),     // long side to the sofa
       item("tv_bench", "TV bench", "tv", 270, { h: 0.44 }),                // on the east wall, faces west
       item("bamboo", "Bamboo", "plant", 270, { onFloor: false }),   // on the TV bench
       // on the TV bench. Its manifest box (fronds, 0.74 m across) pokes 14 cm through the east wall face;
       // pulled in so the fronds stop at the wall (east face x = X(603), half depth 0.37, 1 cm gap).
       item("fern", "Fern", "plant", 270, { onFloor: false, at: [X(603) - 0.38, -3.372] }),
-      item("dining_table", "Dining table", "table", 0, { h: 0.747 }),
+      // round, 0.9 m across: the chairs at 60/125/215/320° tuck under its edge (a square top ran into their backs)
+      item("dining_table", "Dining table", "table", 0, { h: 0.747, name: "Round dining table" }),
       chair(1, 60), chair(2, 125), chair(3, 215), chair(4, 320),
       item("clothes_airer", "Clothes airer", "other", 270),   // against the east wall
       item("desk", "Desk", "desk", 180, { h: 0.75 }),                      // in front of the glazing, you sit on its north side

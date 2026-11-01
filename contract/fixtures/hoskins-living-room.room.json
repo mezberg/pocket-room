@@ -273,8 +273,8 @@
         -5.006
       ],
       "size": [
-        0.26,
-        0.53,
+        0.4,
+        0.4,
         1.562
       ],
       "rot": 90,
@@ -346,7 +346,7 @@
     },
     {
       "id": "dining_table",
-      "name": "Dining table",
+      "name": "Round dining table",
       "category": "table",
       "at": [
         2.125,
