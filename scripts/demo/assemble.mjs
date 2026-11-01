@@ -1,4 +1,4 @@
-// The final cut: the desktop flow, then the phone scene (the IKEA aisle photo beside the phone recording,
+// The final cut: a slide with the problem, the desktop flow, then the phone scene (the IKEA aisle photo beside the phone recording,
 // the camera's framing outlined), then two slides: the OpenAI APIs and what each does, and the board.
 //   node scripts/demo/assemble.mjs <desktop.mp4> <phone.mp4> <out.mp4>
 // desktop.mp4 and phone.mp4 come from compose.mjs with END=0 (no end card of their own).
@@ -12,7 +12,7 @@ const [desk, phone, out] = process.argv.slice(2).map((p) => resolve(p));
 const board = resolve("scripts/demo/board.jpg");           // Kate's screenshot of the Obsidian board, 940 × 1320
 const aisle = resolve("scripts/demo/ikea-aisle.jpg");     // 1000 × 625, the photo taken in the aisle
 const CROP = { x: 430, y: 160, w: 300, h: 380 };          // what the camera framed: ikea-side-table.jpg
-const W = 1440, H = 900, API_S = 6, BOARD_S = 6;
+const W = 1440, H = 900, INTRO_S = 6, API_S = 6, BOARD_S = 6;
 const work = mkdtempSync(join(tmpdir(), "pr-assemble-"));
 const dur = (f) => +execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f]).toString();
 
@@ -47,6 +47,14 @@ await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${
 </body>`);
 await pg.screenshot({ path: join(work, "apis.jpg"), type: "jpeg", quality: 92 });
 
+// slide 0, before the video: the problem
+await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#F1ECE4;color:#1d1a16;font-family:${font};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 150px;box-sizing:border-box">
+  <div style="font-size:22px;letter-spacing:.14em;color:#8a8175;font-weight:600">THE PROBLEM</div>
+  <div style="margin-top:28px;font-size:46px;line-height:1.32;font-weight:600;max-width:1100px">You walk into a furniture shop, a vintage market, your friend's place 🙂 You like a piece of furniture, but have no idea how it fits into the unfinished interior of your rented room.</div>
+  <div style="margin-top:46px;font-size:56px;font-weight:700;color:#b5452f">Now you know…</div>
+</body>`);
+await pg.screenshot({ path: join(work, "intro.jpg"), type: "jpeg", quality: 92 });
+
 // slide 2: the board, and how it was made (Kate's words, caption at twice the usual size)
 const bh = 820, bw = Math.round((bh * 940) / 1320);
 await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#16130f;font-family:${font};overflow:hidden">
@@ -59,16 +67,17 @@ await b.close();
 
 const dDesk = dur(desk), dPhone = dur(phone);
 const chain = [
+  `[5:v]fps=30,scale=${W}:${H},fade=t=in:st=0:d=0.5,fade=t=out:st=${INTRO_S - 0.5}:d=0.5,format=yuv420p,setsar=1[i]`,
   `[0:v]fps=30,format=yuv420p,setsar=1[d]`,
   `[1:v]scale=${ph.w}:${ph.h}:flags=lanczos,fps=30[p]`,
   `[2:v]fps=30,format=yuv420p[bg]`,
   `[bg][p]overlay=${ph.x}:${ph.y}:shortest=1,fade=t=in:st=0:d=0.4,format=yuv420p,setsar=1[s]`,
   `[3:v]fps=30,scale=${W}:${H},fade=t=in:st=0:d=0.5,format=yuv420p,setsar=1[a]`,
   `[4:v]fps=30,scale=${W}:${H},fade=t=in:st=0:d=0.5,fade=t=out:st=${BOARD_S - 0.6}:d=0.6,format=yuv420p,setsar=1[b]`,
-  `[d][s][a][b]concat=n=4:v=1:a=0[out]`,
+  `[i][d][s][a][b]concat=n=5:v=1:a=0[out]`,
 ];
 execFileSync("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error",
-  "-i", desk, "-i", phone, "-loop", "1", "-t", dPhone.toFixed(2), "-i", join(work, "scene.png"), "-loop", "1", "-t", String(API_S), "-i", join(work, "apis.jpg"), "-loop", "1", "-t", String(BOARD_S), "-i", join(work, "board.jpg"),
+  "-i", desk, "-i", phone, "-loop", "1", "-t", dPhone.toFixed(2), "-i", join(work, "scene.png"), "-loop", "1", "-t", String(API_S), "-i", join(work, "apis.jpg"), "-loop", "1", "-t", String(BOARD_S), "-i", join(work, "board.jpg"), "-loop", "1", "-t", String(INTRO_S), "-i", join(work, "intro.jpg"),
   "-filter_complex", chain.join(";"), "-map", "[out]", "-c:v", "libx264", "-preset", "slow", "-crf", process.env.CRF ?? "22",
   "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], { stdio: "inherit" });
-console.log(`${out}: ${(dDesk + dPhone + API_S + BOARD_S).toFixed(1)} s (desktop ${dDesk.toFixed(1)} + phone ${dPhone.toFixed(1)} + slides ${API_S} + ${BOARD_S})`);
+console.log(`${out}: ${(INTRO_S + dDesk + dPhone + API_S + BOARD_S).toFixed(1)} s (intro ${INTRO_S} + desktop ${dDesk.toFixed(1)} + phone ${dPhone.toFixed(1)} + slides ${API_S} + ${BOARD_S})`);

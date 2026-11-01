@@ -4,7 +4,7 @@ Drives the real app (live models, nothing mocked) in headless Google Chrome, sav
 (CDP screencast) with its time, then cuts the video: live waits on the models are sped up with their real
 length on screen, captions on the frames, the Photo view render full size, then two slides.
 
-The cut: Kate's living room → Check my room (pins) → Find for me "a floor lamp" (three real products, one
+The cut: a slide with the problem ("Now you know…") → Kate's living room → Check my room (pins) → Find for me "a floor lamp" (three real products, one
 placed) → Add piece: the Chesterfield photo (gpt-6-astra's model of that photo, from the library, so no
 stand-in) → tap an issue, the Decisions API's pick, Apply (furniture moves, room checked again) → fly to eye
 height → Photo view (gpt-image) → phone scene: in the IKEA aisle, Camera on the side table → "Doesn't fit"
