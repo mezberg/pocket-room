@@ -1097,8 +1097,8 @@
 			"y": 10917,
 			"width": 1500,
 			"height": 80,
-			"color": "5",
-			"text": "Session: Tap an issue, get a fix → finishes option B, then builds this flow. 🟪 = in progress, 🟩 = on main."
+			"color": "6",
+			"text": "Building now (1 Nov, after option B merged): 1) red highlights on the 3D · 2) top-3 advice · 3) place / move-then-place / replace with ghost plan. Pushed after each step. Session: Tap an issue, get a fix."
 		},
 		{
 			"id": "fiximg_0",
