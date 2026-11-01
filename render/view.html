@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Render test view</title>
+<!-- Lane F test bench, served at /api/render/view. The flat GLB with a piece swapped in, a fixed camera,
+     and a button that sends the canvas to POST /api/render. ?piece=chesterfield|sofa &preset=evening -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<style>
+  body { margin: 0; font: 14px system-ui, sans-serif; background: #f3efe8; color: #29221f; }
+  .row { display: flex; gap: 12px; padding: 12px; flex-wrap: wrap; align-items: start; }
+  canvas, img { width: min(768px, 100%); height: auto; display: block; background: #ddd; }
+  button { font: inherit; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <button id="go">Render</button>
+  <select id="preset"><option value="sunday-morning">Sunday morning</option><option value="evening">Evening, lamps on</option></select>
+  <span id="status">Loading the flat…</span>
+</div>
+<div class="row"><div id="stage"></div><img id="out" alt=""></div>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { sofa as kitSofa } from "/js/kit/kit-real.js";
+import { chesterfieldLoveseat } from "/js/kit/chesterfield.js";
+
+const q = new URLSearchParams(location.search);
+const W = 1536, H = 1152;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H, false);
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.getElementById("stage").append(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#dfe6ec");
+scene.add(new THREE.HemisphereLight("#fffaf2", "#c9bdae", 3.2));
+const sun = new THREE.DirectionalLight("#fff1dc", 2.4);
+sun.position.set(2, 6, 9);   // from the south (three z = -plan y), through the glazing
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 });
+scene.add(sun, sun.target);
+sun.target.position.set(1.8, 0, 3.5);
+
+const gltf = await new GLTFLoader().loadAsync("/room/hoskins-flat.glb");
+scene.add(gltf.scene);
+gltf.scene.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+
+// Swap the flat's own sofa for the new piece, on the same spot, back to the west wall, facing east.
+const old = gltf.scene.getObjectByName("Sofa");
+const box = new THREE.Box3().setFromObject(old);
+old.visible = false;
+gltf.scene.getObjectByName("Laptop").visible = false;  // sat on the old sofa
+const piece = q.get("piece") === "sofa"
+  ? kitSofa({ seats: 3, seatW: 0.62, depth: 0.92, color: "moss" })             // contract/fixtures/sofa-84
+  : chesterfieldLoveseat();                                      // the venue Chesterfield
+const pbox = new THREE.Box3().setFromObject(piece);
+piece.rotation.y = Math.PI / 2;                                  // front +z → +x (east)
+const depth = pbox.max.z - pbox.min.z;
+piece.position.set(box.min.x + depth / 2 + 0.02, box.min.y, (box.min.z + box.max.z) / 2);
+piece.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+scene.add(piece);
+
+// From the dining end, looking south down the room to the balcony (as previews/day_living_room_balcony.jpg).
+const camera = new THREE.PerspectiveCamera(72, W / H, 0.05, 50);
+camera.position.set(1.85, 1.45, 0.75);
+camera.lookAt(1.75, 1.0, 6.4);
+renderer.render(scene, camera);
+document.getElementById("status").textContent = "Ready";
+window.viewDataURL = () => renderer.domElement.toDataURL("image/jpeg", 0.85);
+
+document.getElementById("go").onclick = async () => {
+  const status = document.getElementById("status");
+  status.textContent = "Rendering…";
+  const t0 = performance.now();
+  const res = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ roomId: "hoskins-living", view: viewDataURL(), preset: document.getElementById("preset").value }) });
+  const out = await res.json();
+  if (out.image) document.getElementById("out").src = out.image;
+  status.textContent = out.error ?? `${out.model}, ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+};
+</script>
+</body>
+</html>
