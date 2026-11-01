@@ -1,6 +1,7 @@
 // A vision reading -> a rectangular room.json. All the arithmetic is here.
 // Frame: the first photo's camera stands at the south wall looking north. x east (right), y north (away).
 import { REFS, DEFAULT_SIZE } from "./refs.mjs";
+import { settle } from "./settle.mjs";
 
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -69,10 +70,6 @@ export function planExtents(reading, known = {}) {
 const FACING = { camera: 0, right: 90, away: 180, left: 270 };
 // A cupboard with no height read is a wardrobe (2 m) unless its name says it is low.
 const LOW = /\b(low|tv|television|media|sideboard|console|chest|drawers|dresser|credenza|bench)\b/i;
-// Photo positions are rough, but not this rough: a piece that needs a longer step to get clear is left
-// where it was read (the rules then show the overlap) rather than moved somewhere nobody saw it.
-const MAX_STEP = 0.6;
-const WALL = 0.05;
 
 // [[a, b], ...] sorted and merged, clipped to [0, len]
 function mergeSpans(spans, len) {
@@ -160,7 +157,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     if (spans) x.seen = spans; else delete x.seen;   // absent = the whole wall was seen
   }
 
-  const ids = {};
+  const ids = {}, guessed = new Set();
   const items = (reading.objects || []).slice(0, 30).map((o) => {
     const cat = DEFAULT_SIZE[o.category] ? o.category : "other";
     const [dw, dd, dh0] = DEFAULT_SIZE[cat];
@@ -174,15 +171,17 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     const at = [clamp(o.x * w, fx / 2, Math.max(fx / 2, w - fx / 2)), clamp(o.y * l, fy / 2, Math.max(fy / 2, l - fy / 2))];
     const base = (o.name || cat).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || cat;
     ids[base] = (ids[base] || 0) + 1;
+    const id = ids[base] > 1 ? `${base}_${ids[base]}` : base;
+    if (!metres(o.length)) guessed.add(id);   // nothing to measure it by: its footprint is the category's
     return {
-      id: ids[base] > 1 ? `${base}_${ids[base]}` : base, name: (o.name || cat) + (o.count > 1 ? ` x${o.count}` : ""), category: cat,
+      id, name: (o.name || cat) + (o.count > 1 ? ` x${o.count}` : ""), category: cat,
       at: at.map(r3), size: [width, depth, height].map(r3), rot, on_floor: cat !== "rug" && cat !== "tv",   // a TV stands on a unit or the wall
       ...(/^#[0-9a-f]{6}$/i.test(o.color ?? "") ? { color: o.color.toLowerCase() } : {}),
     };
   });
-  const moved = separate(items, w, l);
+  splitCornerSofas(items, w, l);
 
-  return {
+  const room = {
     id, name: name || `${reading.room_type || "Room"} (from photo)`,
     source: "photo",
     accuracy_m: r3(Math.max(W.err, L.err)),   // 0.15 when the photos show the room wall to wall
@@ -193,54 +192,40 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     furniture: items.filter((i) => i.category !== "column"),
     lights: [],
     style: { tags: reading.style?.tags || [], colors: (reading.style?.colors || []).filter((c) => /^#[0-9a-f]{6}$/i.test(c)) },
-    _derived: { width: { ...W, m: r3(w), err: r3(W.err) }, depth: { ...L, m: r3(l), err: r3(L.err) }, height: { ...Hh, m: r3(h), err: r3(Hh.err) }, caveats: reading.caveats || [], ...(moved.length ? { moved } : {}) },
+    _derived: { width: { ...W, m: r3(w), err: r3(W.err) }, depth: { ...L, m: r3(l), err: r3(L.err) }, height: { ...Hh, m: r3(h), err: r3(Hh.err) }, caveats: reading.caveats || [] },
   };
+  // The reading's positions and guessed sizes are rough: make it a room that can exist (settle.mjs).
+  const { repairs, left_out } = settle(room, guessed);
+  if (repairs.length) room._derived.repairs = repairs;
+  if (left_out.length) room._derived.caveats.push(...left_out);
+  return room;
 }
 
-// The footprint [x0, y0, x1, y1] of an item, turned by its rot.
-const box = (i) => {
-  const [fx, fy] = (((i.rot ?? 0) % 180) + 180) % 180 === 90 ? [i.size[1], i.size[0]] : [i.size[0], i.size[1]];
-  return [i.at[0] - fx / 2, i.at[1] - fy / 2, i.at[0] + fx / 2, i.at[1] + fy / 2];
-};
-const TUCKS = { chair: ["table", "desk"], table: ["chair"], desk: ["chair"] };
+const SEAT = 0.95;   // seat depth of a sectional's arm
+const CORNER = /\b(l[- ]?shaped|corner|sectional|u[- ]?shaped)\b/i;
 
 /**
- * Positions read from photos are rough, so pieces can come out overlapping, which no real room has.
- * Of each overlapping pair, move whichever piece gets clear by the shortest step, inside the walls. Rugs lie under
- * things and chairs tuck under tables, so those pairs are left. Returns what moved, for _derived.
+ * An L-shaped sofa read as one box covers the floor in its crook, where the coffee table stands. Make it two:
+ * the long arm along its back and the chaise at one end. The chaise goes at the end away from a table or rug
+ * the photo puts inside the box (that's the crook), else at the end nearer a wall.
  */
-export function separate(items, w, l, gap = 0.02) {
-  const moved = new Map();
-  const solid = items.filter((i) => i.on_floor !== false && i.category !== "rug");
-  for (let pass = 0; pass < 8; pass++) {
-    let any = false;
-    for (let a = 0; a < solid.length; a++) for (let b = a + 1; b < solid.length; b++) {
-      const A = solid[a], B = solid[b];
-      if (TUCKS[A.category]?.includes(B.category)) continue;
-      const p = box(A), q = box(B);
-      const ox = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), oy = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
-      if (ox <= 0.005 || oy <= 0.005) continue;
-      // the ways out for either piece, keeping it inside the walls; the shortest wins (the smaller piece on a tie)
-      const ways = [];
-      for (const [mover, still] of [[A, B], [B, A]]) {
-        const mb = box(mover), sb = box(still), f = [mb[2] - mb[0], mb[3] - mb[1]];
-        const inside = (axis, d) => mover.at[axis] + d - f[axis] / 2 >= -1e-6 && mover.at[axis] + d + f[axis] / 2 <= [w, l][axis] + 1e-6;
-        // a piece standing against a wall (a kitchen run, a wardrobe) slides along it, never off it
-        const onWall = (axis, d) => (d > 0 && mb[axis] <= WALL) || (d < 0 && mb[axis + 2] >= [w, l][axis] - WALL);
-        const small = mover.size[0] * mover.size[1] <= still.size[0] * still.size[1] ? 0 : 0.001;
-        for (const [axis, d] of [[0, sb[2] - mb[0] + gap], [0, sb[0] - mb[2] - gap], [1, sb[3] - mb[1] + gap], [1, sb[1] - mb[3] - gap]])
-          if (Math.abs(d) <= MAX_STEP && inside(axis, d) && !onWall(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
-      }
-      if (!ways.length) continue;
-      const { mover, still, axis, d } = ways.sort((u, v) => u.cost - v.cost)[0];
-      const from = moved.get(mover)?.from ?? [...mover.at];
-      mover.at = mover.at.map((v, i) => (i === axis ? r3(v + d) : v));
-      moved.set(mover, { from, by: still.id });
-      any = true;
-    }
-    if (!any) break;
+export function splitCornerSofas(items, w, l) {
+  for (const s of [...items]) {
+    if (s.category !== "sofa" || !CORNER.test(s.name) || s.size[0] < 1.4 || s.size[1] < SEAT + 0.6) continue;
+    const [W, D] = s.size, t = ((s.rot ?? 0) * Math.PI) / 180;
+    const ux = [Math.cos(t), Math.sin(t)], front = [Math.sin(t), -Math.cos(t)];
+    const local = (p) => [(p[0] - s.at[0]) * ux[0] + (p[1] - s.at[1]) * ux[1], (p[0] - s.at[0]) * front[0] + (p[1] - s.at[1]) * front[1]];
+    const inCrook = items.filter((i) => i !== s && ["table", "rug"].includes(i.category))
+      .map((i) => local(i.at)).filter(([u, v]) => Math.abs(u) < W / 2 && Math.abs(v) < D / 2);
+    const end = (k) => [s.at[0] + ux[0] * k * W / 2, s.at[1] + ux[1] * k * W / 2];
+    const toWall = (p) => Math.min(p[0], w - p[0], p[1], l - p[1]);
+    const side = inCrook.length && Math.abs(inCrook[0][0]) > 0.05 ? -Math.sign(inCrook[0][0]) : toWall(end(1)) <= toWall(end(-1)) ? 1 : -1;
+    const P = (u, v) => [r3(s.at[0] + ux[0] * u + front[0] * v), r3(s.at[1] + ux[1] * u + front[1] * v)];
+    const chaise = { ...s, id: `${s.id}_chaise`, name: `${s.name} (chaise end)`, size: [SEAT, r3(D - SEAT), s.size[2]],
+      at: P((side * (W - SEAT)) / 2, SEAT / 2) };
+    Object.assign(s, { size: [W, SEAT, s.size[2]], at: P(0, -(D - SEAT) / 2) });
+    items.splice(items.indexOf(s) + 1, 0, chaise);
   }
-  return [...moved].map(([i, x]) => `${i.id} moved ${Math.round(Math.hypot(i.at[0] - x.from[0], i.at[1] - x.from[1]) * 100)} cm off the ${x.by}`);
 }
 
 /**
