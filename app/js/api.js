@@ -20,6 +20,7 @@ export const api = {
   newPiece: (image, kind = "photo", hint) => call("POST", "/pieces", { image, kind, hint }),
   fromLink: (url) => call("POST", "/pieces/from-link", { url }),
   piece: (id) => call("GET", `/pieces/${encodeURIComponent(id)}`),
+  pieceLook: (id, view) => call("POST", `/pieces/${encodeURIComponent(id)}/look`, { view }),   // astra checks its model against its picture
   find: (body) => call("POST", "/agent/find", body),            // { roomId, query, wall?, room? }
   place: (body) => call("POST", "/place", body),                // { roomId, piece, room? } (scene-state.js placeBody)
   analyse: (body) => call("POST", "/analyse", body),            // { roomId, piece?, replaces?, room? } (analyseBody)

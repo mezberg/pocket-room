@@ -8,6 +8,8 @@ import { savePlan, runPipeline, PIPELINE } from "../../room/fireplan/run.mjs";
 import { checkRoom } from "../../room/schema-check.mjs";
 import { roomFromPlan } from "../../room/fireplan/convert.mjs";
 import { getRoom, saveRoom, listRooms } from "../rooms-store.mjs";
+import { savePhotos, startRoomModels } from "../../room/photo/models.mjs";
+import { createPieceForItem } from "../../furniture/pieces.mjs";
 
 const r = Router();
 
@@ -69,6 +71,9 @@ r.post("/from-photo", async (req, res, next) => {
     const room = roomFromReading(reading, { name, known });
     room._derived.ms = Date.now() - t0;
     room._derived.photos = images.length;
+    // the room's own furniture rebuilt in 3D from the photos, in the background (item.piece; the app swaps them in)
+    savePhotos(room.id, images);
+    await startRoomModels(room, images, { createPiece: createPieceForItem });
     saveRoom(room);
     res.json(room);
   } catch (e) { next(e); }
