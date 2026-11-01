@@ -745,6 +745,12 @@ function relayoutPanel() {
     list.append(b);
   }
   if (res.none && res.plans.length) { const p = document.createElement("p"); p.className = "meta"; p.textContent = res.none; card.append(p); }
+  // the ideas that didn't work, and why: what a designer would say before you ask
+  if (res.tried?.length) {
+    const p = document.createElement("p"); p.className = "meta";
+    p.textContent = `Also tried: ${res.tried.map((t) => `${t.head.charAt(0).toLowerCase()}${t.head.slice(1)} (${t.why})`).join("; ")}.`;
+    card.append(p);
+  }
   const sel = res.plans.find((p) => p.id === R.sel);
   const row = document.createElement("div");
   row.className = "row";
@@ -753,7 +759,8 @@ function relayoutPanel() {
   row.querySelector('[data-act="apply"]').onclick = () => { const plan = sel; state.relayout = null; applyOption(null, { steps: plan.steps, say: appliedWords(plan) }).catch((err) => toast(plain(err))); };
   if (sel?.shop) row.querySelector('[data-act="shop"]').onclick = () => { const [w, d] = sel.shop.size; closeRelayout(); findFor(`a ${sel.shop.name} about ${Math.round(w * 100)} × ${Math.round(d * 100)} cm`, { designer: true, replace: sel.swaps ?? null }); };
   row.querySelector('[data-act="cancel"]').onclick = closeRelayout;
-  card.append(list, row);
+  card.insertBefore(list, card.children[1] ?? null);
+  card.append(row);
 }
 
 // Apply: the room changes in 3D, the room is checked again (and the piece's verdict), Undo for 8 s.

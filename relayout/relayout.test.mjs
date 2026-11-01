@@ -65,16 +65,20 @@ test("every plan is what the rules measure once applied (through the app's own a
   }
 });
 
-test("the plans are different ideas, not one plan three times", () => {
+test("the plans are different ideas, not one plan three times; ideas that fail are named with why", () => {
   const r = hoskins();
-  assert.ok(r.plans.length >= 2);
-  const sofaAt = (p) => p.steps.find((s) => s.item === "sofa")?.at ?? null;
-  // one plan keeps the sofa where it stands, and says what that costs
-  const keep = r.plans.find((p) => /^Keep the sofa/.test(p.say));
-  assert.ok(keep && !sofaAt(keep), keep?.say);
-  // no two plans move the same zones to the same places
-  const sig = (p) => p.steps.filter((s) => ["sofa", "dining_table", "desk"].includes(s.item)).map((s) => `${s.item}@${s.at.map((v) => Math.round(v * 2)).join(",")}`).join(";");
+  // no two plans move the big pieces to the same places
+  const sig = (p) => p.steps.filter((s) => ["sofa", "dining_table", "desk"].includes(s.item)).map((s) => `${s.item}@${s.at.map((v) => Math.round(v * 2)).join(",")}`).join(";") + `|${p.steps.length}`;
   assert.equal(new Set(r.plans.map(sig)).size, r.plans.length);
+  // a quick version, when there is one, has fewer steps than the full plan
+  const quick = r.plans.find((p) => /^Quick version/.test(p.say));
+  if (quick) assert.ok(quick.moves.length < r.plans[0].moves.length);
+  // the designer's other ideas are tried and said: dining by the window, keeping the furniture
+  const heads = r.tried.map((t) => t.head).join(" | ");
+  assert.match(heads, /Dining table by the window/);
+  assert.ok(r.tried.every((t) => t.why && !/undefined/.test(t.why)));
+  // steps read like a person: no "nib" walls, distances in tens of cm
+  assert.ok(r.plans.flatMap((p) => p.moves).every((m) => !/nib|_/.test(m) && !/\b\d*[1-9] cm\b/.test(m)), r.plans.flatMap((p) => p.moves).join(" "));
 });
 
 test("a room built from photos: the 26 cm way by the dining table opens", () => {

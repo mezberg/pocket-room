@@ -6,12 +6,12 @@
 //   3. swap for a smaller one: when that isn't enough either, the size that would do (a Find for me hint);
 //   4. none: only when even that can't help, and why, in plain words.
 // Every number is measured; the Decisions API only picks which plan a designer would suggest first (pick.mjs).
-import { compass, cm, r2, footprint } from "../rules/geom.mjs";
+import { compass, cm, r2, footprint, outline, outside, overlap } from "../rules/geom.mjs";
 import { analyse } from "../rules/check.mjs";
 import { label } from "../rules/grid.mjs";
 import { byId, snap } from "../fixes/measure.mjs";
 import { goalFor } from "../fixes/search.mjs";
-import { annealMany, measure, movedZones, removeId, score, CLOSED } from "./search.mjs";
+import { annealMany, measure, movedZones, removeId, score, netCost, teleport, toWall, glazingOf, wallSpots, CLOSED } from "./search.mjs";
 import { zonesOf, stays, isTv } from "./zones.mjs";
 import { pickPlan } from "./pick.mjs";
 
@@ -61,24 +61,40 @@ function stepsFor(room0, room, ctx) {
       // the lead stayed: a piece of it stepped aside
       for (const id of z.items.filter((id) => items.includes(id))) {
         const p = byId(room0, id), q = byId(room, id), w = [q.at[0] - p.at[0], q.at[1] - p.at[1]];
-        says.push(`Move ${label(p)} ${cm(Math.hypot(...w))} ${compass(w)}.`);
+        says.push(`Move ${label(p)} ${whereTo(room, q, w, ctx)}.`);
       }
       told.add(z.id);
       continue;
     }
-    let s = `Move ${z.name} ${cm(d)} ${compass(v)}${towardsWindow(v, a.at, ctx.glazing)}`;
+    let s = z.kind === "piece" && !turn ? `Move ${z.name} ${whereTo(room, b, v, ctx)}`
+      : `Move ${z.name} ${ROUND(d)} ${compass(v)}${towardsWindow(v, a.at, ctx.glazing)}`;
     if (z.tv) {
       const t0 = byId(room0, ctx.byZone.get(z.tv).lead), t1 = byId(room, t0.id);
       const tv = [t1.at[0] - t0.at[0], t1.at[1] - t0.at[1]];
-      if (Math.hypot(...tv) > 0.02) s += `, and ${ctx.byZone.get(z.tv).name} ${cm(Math.hypot(...tv))} ${compass(tv)} so it still faces the sofa`;
+      if (Math.hypot(...tv) > 0.02) s += `, and ${ctx.byZone.get(z.tv).name} ${ROUND(Math.hypot(...tv))} ${compass(tv)} so it still faces the sofa`;
       told.add(z.tv);
     }
     if (turn) s += `, turned to face ${compass([-footprint(b).uy[0], -footprint(b).uy[1]])}`;
     says.push(`${s}.`);
     told.add(z.id);
   }
-  for (const id of items.filter((id) => !byId(room, id))) says.push(`Put ${label(byId(room0, id))} away.`);
+  const away = items.filter((id) => !byId(room, id)).map((id) => label(byId(room0, id)));
+  if (away.length) says.push(`Put ${away.length > 1 ? `${away.slice(0, -1).join(", ")} and ${away.at(-1)}` : away[0]} away.`);
   return { steps, items, say: says };
+}
+// Where a small piece goes, as a person would say it: beside a big piece, against a wall, or a short move.
+const ROUND = (m) => `${Math.max(10, Math.round(m * 10) * 10)} cm`;
+function whereTo(room, it, v, ctx) {
+  const d = Math.hypot(...v);
+  if (d < 0.6) return `${ROUND(d)} ${compass(v)}`;
+  const R = footprint(it);
+  const big = (room.furniture ?? []).filter((x) => x.id !== it.id && x.on_floor !== false && x.category !== "rug" && x.size[0] * x.size[1] > 0.4)
+    .map((x) => ({ x, g: -overlap(footprint(x), R).depth })).filter((t) => t.g < 0.35).sort((a, b) => a.g - b.g)[0];
+  if (big) return `beside ${label(big.x)}`;
+  const O = outline(room);
+  const w = O.walls.map((w) => ({ w, d: Math.abs((it.at[0] - w.a[0]) * w.n[0] + (it.at[1] - w.a[1]) * w.n[1]) })).sort((a, b) => a.d - b.d)[0];
+  if (w && w.d < Math.max(...it.size.slice(0, 2)) / 2 + 0.2) return `against the ${compass([-w.w.n[0], -w.w.n[1]])} wall`;
+  return `${ROUND(d)} ${compass(v)}`;
 }
 function towardsWindow(v, from, glazing) {
   if (!glazing.length) return "";
@@ -123,41 +139,53 @@ export function relayoutPlans(room, { focus = null, budgetMs = 15000, pinned = [
   const t0 = performance.now();
   const zones = zonesOf(room);
   const pins = new Set(pinned);
-  const run = annealMany(room, { budgetMs: budgetMs * 0.6, zones, pinned: pins, seeds: [7, 11, 23] });
+  const run = annealMany(room, { budgetMs: budgetMs * 0.45, zones, pinned: pins, seeds: [7, 11, 23], iters: 1100 });
   const { ctx, O } = run;
   const before = numbers(room, ctx, O);
   const s0 = snap(room, O);
   const open = (st) => st.m.closed < 0.5 && st.m.hard === 0;     // no door or piece cut off (a window may still be)
+  const rescore = (st) => { const m = measure(st.room, O, ctx); const c = netCost(room, st.room); return { ...st, m, cost: c, score: score(m, c) }; };
   const better = (st) => st.score < run.start.score - 1;
-  const good = run.best.filter(better);
   const plans = [];
 
-  // 1. rearrange: three different ideas, not three versions of one.
-  //   a. the best layout found;
-  //   b. the best that keeps a's main zone (the one it moves furthest) where it stands: a second search with it pinned;
-  //   c. the smallest change: only small pieces move (or are put away), or else the fewest zones.
-  const BIG = new Set(["seating", "dining", "work"]);
-  const opening = good.filter(open);
-  const A = opening[0] ?? good[0];
-  const picks = [];
-  if (A) picks.push({ st: A, head: "Rearrange the room" });
-  const main = A && mainZone(room, A.room, ctx);
-  let B = null;
-  if (main) {
-    const keepIds = [...main.items, ...(main.tv ? ctx.byZone.get(main.tv).items : [])];
-    const alt = annealMany(room, { budgetMs: budgetMs * 0.4, zones, pinned: new Set([...pins, ...keepIds]), seeds: [5, 13] });
-    // shown even when it can't open the room: then it says what keeping it costs
-    B = alt.best.filter(better)[0] ?? null;
-    if (B) picks.push({ st: B, head: `Keep ${main.name} where ${main.items.length > 1 ? "they are" : "it is"}` });
-    run.best.push(...alt.best);
+  // 1. rearrange, the way a designer starts: from different ideas for the room, each worked out by the search.
+  //    Code puts one zone somewhere new in one go (the living area by the window, the dining table by the window),
+  //    keeps it there, and the search fits everything else round it. Plus the light touch (the big pieces stay,
+  //    only clutter moves) and whatever the free search found, if it is a different idea.
+  const ideas = [], tried = [];
+  for (const c of concepts(room, ctx, O)) {
+    if (performance.now() - t0 > budgetMs * 0.85) break;
+    const r = annealMany(room, { budgetMs: budgetMs * 0.2, zones, pinned: new Set([...pins, ...c.pin]), seeds: [5, 13], iters: 900, from: c.room });
+    const st = r.best.map(rescore).sort((x, y) => x.score - y.score)[0];
+    if (st && better(st)) ideas.push({ st, head: c.head, why: c.why });
+    else tried.push({ head: c.head, why: "nothing round it fits well enough to beat the room as it is" });
   }
-  const bigMoved = (st) => movedZones(room, st.room, zones).filter((id) => BIG.has(ctx.byZone.get(id)?.kind)).length;
-  const others = run.best.filter(better).filter((st) => !picks.some((p) => p.st === st || sameIdea(room, p.st.room, st.room, zones)));
-  // as open as the best plan, with the fewest big zones moved, then the fewest moves
-  const pool = others.filter((st) => open(st) || !open(A));
-  const small = pool.sort((a, b) => bigMoved(a) - bigMoved(b) || movedZones(room, a.room, zones).length - movedZones(room, b.room, zones).length || a.score - b.score)[0];
-  if (small) picks.push({ st: small, head: bigMoved(small) ? "Smallest change" : "Smallest change: only small pieces move" });
-  for (const p of picks.slice(0, 3)) plans.push(planOf("rearrange", room, p.st, ctx, O, before, { head: p.head }));
+  const free = run.best.map(rescore).filter(better).sort((x, y) => x.score - y.score)[0];
+  if (free && !ideas.some((i) => sameIdea(room, i.st.room, free.room, zones))) ideas.push({ st: free, head: freeHead(room, free.room, ctx) });
+  // the quick version of the best idea: as open, with at least two fewer things to do
+  const open2 = (st) => st.m.closed < 0.5 && st.m.hard === 0;
+  const steps = (st) => stepsFor(room, settle(room, st.room), ctx).say.length;
+  if (free && open2(free)) {
+    const quick = run.best.map(rescore).filter((st) => better(st) && open2(st) && steps(st) <= steps(free) - 2).sort((a, b) => steps(a) - steps(b) || a.score - b.score)[0];
+    if (quick) ideas.push({ st: quick, head: `Quick version: ${steps(quick)} step${steps(quick) > 1 ? "s" : ""} instead of ${steps(free)}`, quick: true });
+  }
+  ideas.sort((x, y) => (x.quick ? 1 : 0) - (y.quick ? 1 : 0) || x.st.score - y.st.score);
+  const BIG = ["seating", "tv", "dining", "work"];
+  const keepBig = annealMany(room, { budgetMs: budgetMs * 0.1, zones, pinned: new Set([...pins, ...zones.filter((z) => BIG.includes(z.kind)).flatMap((z) => z.items)]), seeds: [3], iters: 600 });
+  const light = keepBig.best.map(rescore).filter(better).sort((x, y) => x.score - y.score)[0];
+  // Only ideas that really work are offered (no worse anywhere, fewer problems, and every way open if any idea opens
+  // them all); the rest are named under "Also tried" with what stopped them, as a designer would say.
+  const cands = [...ideas, ...(light ? [{ st: light, head: "Keep the furniture where it is, clear the clutter" }] : [])]
+    .map((p) => ({ ...p, plan: planOf("rearrange", room, p.st, ctx, O, before, { head: p.head }) }));
+  const ok = (a) => a.blocked <= before.blocked && a.overlaps <= before.overlaps && a.problems < before.problems;
+  const anyOpen = cands.some((c) => ok(c.plan.after) && c.plan.after.blocked === 0 && c.plan.after.overlaps === 0);
+  for (const c of cands) {
+    const a = c.plan.after;
+    if (ok(a) && (!anyOpen || (a.blocked === 0 && a.overlaps === 0)) && plans.length < 3) { plans.push(c.plan); continue; }
+    tried.push({ head: c.head, why: a.blocked ? `${a.blocked === 1 ? "one way stays" : `${a.blocked} ways stay`} blocked${a.narrowest_m != null ? ` (the narrowest is ${cm(a.narrowest_m)})` : ""}`
+      : a.overlaps ? "pieces would still stand in each other" : a.problems >= before.problems ? `it leaves ${a.problems} problems, as many as now` : "another plan does the same with less" });
+  }
+  const A = ideas[0]?.st ?? light ?? null;
 
   // 2. take something out: when no layout opens every way
   if (!plans.some((p) => p.after.blocked === 0 && p.after.overlaps === 0)) {
@@ -210,7 +238,7 @@ export function relayoutPlans(room, { focus = null, budgetMs = 15000, pinned = [
   if (!plans.length || !plans.some((p) => p.after.blocked === 0 && p.after.overlaps === 0) && before.blocked + before.overlaps > 0) {
     none = noneWhy(room, run, before);
   }
-  return { plans, none, before, zones: zones.map((z) => ({ id: z.id, kind: z.kind, name: z.name, items: z.items })),
+  return { plans, tried, none, before, zones: zones.map((z) => ({ id: z.id, kind: z.kind, name: z.name, items: z.items })),
     evals: run.evals, ms: Math.round(performance.now() - t0) };
 }
 
@@ -219,6 +247,116 @@ const smaller = (x) => {
   const d = x.category === "sofa" ? Math.max(0.8, x.size[1] - 0.1) : Math.max(0.3, r2(x.size[1] * 0.85));
   return [r2(w), r2(d), x.size[2]];
 };
+
+// ------------------------------------------------------------------ concepts
+// Ideas a designer would try, from the room's own geometry: the living area by the window (sofa back to a wall that
+// has no glass, as near the window as it stands; the TV across from it), the dining table in the daylight. Each is
+// a layout to start from and the zone to keep there.
+export function concepts(room, ctx, O, dbg = null) {
+  const glass = O.openings.filter((o) => o.kind === "window" || o.kind === "glazed_door");
+  if (!glass.length) return [];
+  const g = glass.reduce((a, b) => (b.width > a.width ? b : a));
+  const glassWalls = new Set(glass.map((o) => o.wall));
+  const dist = (p) => Math.hypot(p[0] - g.mid[0], p[1] - g.mid[1]);
+  const out = [];
+  const seat = ctx.zones.find((z) => z.kind === "seating");
+  if (seat) {
+    const sofa = byId(room, seat.lead), tvz = seat.tv && ctx.byZone.get(seat.tv);
+    const spots = wallSpots(O, sofa).filter((c) => c.wall && !glassWalls.has(c.wall) && dist(c.at) < dist(sofa.at) - 0.8)
+      .sort((a, b) => dist(a.at) - dist(b.at));
+    // spots near the window where the sofa (and its TV across the room, slid along its wall if a radiator or a
+    // built-in is in the way) stand clear of anything that can't move; a desk or dining set standing there swaps
+    // into the place the sofa leaves. The best of the first few, measured, is the idea.
+    const tries = [];
+    for (const c of spots) {
+      if (tries.length >= 4) break;
+      const r0 = teleport(room, seat.items, sofa.id, c.at, c.rot);
+      let placed = null;
+      if (!tvz) placed = { room: r0, pin: [...seat.items] };
+      else {
+        const S = footprint(byId(r0, sofa.id)), f = [-S.uy[0], -S.uy[1]], side = [S.ux[0], S.ux[1]];
+        const tv = byId(room, tvz.lead), d = toWall(O, S.c, f) - 0.05 - tv.size[1] / 2 - 0.02;   // toWall is good to 5 cm
+        if (d < 1.6) continue;
+        for (const k of [0, 0.2, -0.2, 0.4, -0.4, 0.6, -0.6]) {
+          const at = [S.c[0] + f[0] * d + side[0] * k, S.c[1] + f[1] * d + side[1] * k];
+          const r = teleport(r0, tvz.items, tv.id, at, (c.rot + 180) % 360);
+          const pin = [...seat.items, ...tvz.items];
+          if (!landsOnBig(room, r, pin, ctx, ["work", "dining"])) { placed = { room: r, pin }; break; }
+        }
+      }
+      if (!placed) continue;
+      const sw = swapOut(room, placed.room, placed.pin, sofa.at, ctx, O);
+      if (!sw) continue;
+      tries.push({ ...sw, swapped: sw.swapped });
+    }
+    const best = tries.map((t) => ({ ...t, s: score(measure(t.room, O, ctx), netCost(room, t.room)) })).sort((a, b) => a.s - b.s)[0];
+    if (best) out.push({ head: best.swapped ? `Living area by the window, ${best.swapped} where the sofa was` : "Living area by the window", room: best.room, pin: best.pin });
+  }
+  const din = ctx.zones.find((z) => z.kind === "dining");
+  if (din) {
+    const t = byId(room, din.lead);
+    if (dist(t.at) > 2) {
+      // the table a chair's depth plus a walkway in from the glass, in front of its middle
+      const k = 0.45 + 0.6 + Math.max(...t.size.slice(0, 2)) / 2;
+      const at = [g.mid[0] + g.n[0] * k, g.mid[1] + g.n[1] * k];
+      const r = teleport(room, din.items, t.id, at, t.rot ?? 0);
+      if (!landsOnBig(room, r, din.items, ctx, ["seating", "tv", "work"])) out.push({ head: "Dining table by the window", room: r, pin: [...din.items], why: "meals in the daylight" });
+    }
+  }
+  return out;
+}
+// Does a zone put somewhere new stand on a fixed piece, outside the walls, or on another big zone (other than
+// `allow`, which the search may move out of the way)? Small loose pieces may be under it: the search clears them.
+function landsOnBig(room0, room, ids, ctx, allow = []) {
+  const O = outline(room);
+  for (const id of ids) {
+    const it = byId(room, id);
+    if (!it || it.on_floor === false || it.category === "rug") continue;
+    const R = footprint(it);
+    if (outside(O, R) > 0.01) { landsOnBig.why = [id, "wall"]; return true; }
+    for (const o of [...(room.fixtures ?? []), ...(room.furniture ?? [])]) {
+      if (ids.includes(o.id) || o.on_floor === false || o.category === "rug") continue;
+      if (overlap(footprint(o), R).depth <= 0.01) continue;
+      const z = ctx.zoneOf.get(o.id);
+      if (!z || (z.kind !== "piece" && !allow.includes(z.kind))) { landsOnBig.why = [id, o.id]; return true; }
+    }
+  }
+  return false;
+}
+// A zone put somewhere new may stand on the desk or the dining set: that one goes where the zone came from (the
+// wall spot nearest `vacated` where it stands clear of what's now pinned). → { room, pin, swapped } or null
+function swapOut(room0, room, pin, vacated, ctx, O) {
+  let r = room;
+  const all = [...pin];
+  let swapped = null;
+  for (const z of ctx.zones.filter((z) => z.kind === "work" || z.kind === "dining")) {
+    const hit = z.items.some((id) => { const it = byId(r, id); return it && all.some((p) => { const q = byId(r, p); return q && q.on_floor !== false && q.category !== "rug" && overlap(footprint(q), footprint(it)).depth > 0.01; }); });
+    if (!hit) continue;
+    const lead = byId(r, z.lead);
+    const spots = z.kind === "work" ? wallSpots(O, lead) : [{ at: vacated, rot: lead.rot ?? 0 }];
+    const near = spots.filter((c) => c.wall !== undefined || z.kind !== "work").sort((a, b) => Math.hypot(a.at[0] - vacated[0], a.at[1] - vacated[1]) - Math.hypot(b.at[0] - vacated[0], b.at[1] - vacated[1]));
+    let done = false;
+    for (const c of near.slice(0, 40)) {
+      const r2 = teleport(r, z.items, z.lead, c.at, c.rot);
+      if (landsOnBig(room0, r2, [...all, ...z.items], ctx, [])) continue;
+      r = r2; all.push(...z.items); done = true;
+      swapped = z.kind === "work" ? "the desk" : "the dining table";
+      break;
+    }
+    if (!done) return null;
+  }
+  return { room: r, pin: all, swapped };
+}
+
+// A name for what the free search did: the zone it moved furthest.
+function freeHead(room0, room, ctx) {
+  const z = mainZone(room0, room, ctx);
+  if (!z) return "Rearrange the room";
+  const a = byId(room0, z.lead), b = byId(room, z.lead);
+  const what = z.kind === "seating" ? "living area" : z.kind === "dining" ? "dining table" : z.kind === "work" ? "desk" : "furniture";
+  const v = [b.at[0] - a.at[0], b.at[1] - a.at[1]];
+  return towardsWindow(v, a.at, ctx.glazing) ? `${sentence(what)} towards the window` : `Move the ${what} ${compass(v)}`;
+}
 
 // The zone a layout moves furthest among the big ones (seating, dining, desk), weighted by how much it holds.
 function mainZone(room0, room, ctx) {
@@ -269,6 +407,6 @@ export async function relayout(room, opts = {}) {
     res.plans.sort((a, b) => (b.best ? 1 : 0) - (a.best ? 1 : 0));
   }
   const strip = ({ room: _r, score: s, after, ...p }) => ({ ...p, score: Math.round(s * 10) / 10, after: { ...after, _findings: undefined } });
-  return { plans: res.plans.map(strip), ...(res.none ? { none: res.none } : {}), before: { ...res.before, _findings: undefined }, zones: res.zones,
+  return { plans: res.plans.map(strip), tried: res.tried, ...(res.none ? { none: res.none } : {}), before: { ...res.before, _findings: undefined }, zones: res.zones,
     decision: decision && { by: decision.by, ms: decision.ms, error: decision.error }, evals: res.evals, search_ms: res.ms, ms: res.ms + Math.round(performance.now() - t1) };
 }

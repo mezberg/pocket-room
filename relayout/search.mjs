@@ -2,7 +2,7 @@
 // the desk, single pieces), each layout measured by rules/ (the same overlaps, door swings, walls and walkway grid
 // as Check my room) and scored by code. A piece a zone bumps into is moved aside to the nearest free floor.
 // No model here: every number is measured.
-import { footprint, outline, outside, overlap, doorwayRect, hitsSwing, compass, cm, r2 } from "../rules/geom.mjs";
+import { footprint, outline, outside, overlap, doorwayRect, hitsSwing, compass, cm, r2, sdRoom } from "../rules/geom.mjs";
 import { blocksFloor, label } from "../rules/grid.mjs";
 import { candidates } from "../rules/place.mjs";
 import { snap, byId, bumped, allItems } from "../fixes/measure.mjs";
@@ -266,15 +266,16 @@ const PUT_AWAY_COST = 1.2;
 // Loose things a designer may simply put away (a bag, a box, a clothes airer): never furniture.
 export const canPutAway = (it) => it.category === "other" && it.on_floor !== false;
 
-export function anneal(room, { budgetMs = 6000, iters = 4000, seed = 7, pinned = new Set(), zones: zs, T0 = 15, T1 = 0.2 } = {}) {
+// `from`: a layout to start from (a concept: a zone already put somewhere new); costs still count from `room`.
+export function anneal(room, { budgetMs = 6000, iters = 4000, seed = 7, pinned = new Set(), zones: zs, T0 = 15, T1 = 0.2, from = null } = {}) {
   const t0 = performance.now();
   const O = outline(room);
   const zones = (zs ?? zonesOf(room)).filter((z) => !z.items.some((id) => pinned.has(id)));
   const ctx = { zones, byZone: new Map(zones.map((z) => [z.id, z])), zoneOf: new Map(zones.flatMap((z) => z.items.map((id) => [id, z]))), glazing: glazingOf(room, O), pinned, lamps: new Set((room.furniture ?? []).map((x) => x.id)) };
   const rand = rng(seed);
-  const m0 = measure(room, O, ctx);
+  const m0 = measure(from ?? room, O, ctx);
   const mk = (r, m) => ({ room: r, m, cost: netCost(room, r), score: score(m, netCost(room, r)) });
-  let cur = mk(room, m0);
+  let cur = mk(from ?? room, m0);
   const start = cur;
   const keep = new Map();   // best layout per set of zones moved
   const remember = (st) => {
@@ -371,3 +372,23 @@ export function annealMany(room, { seeds = [7, 11, 23, 41], budgetMs = 15000, it
   const best = [...by.values()].sort((a, b) => a.score - b.score);
   return { ...runs[0], best, evals: runs.reduce((s, r) => s + r.evals, 0), runs: runs.length, ms: Math.round(performance.now() - t0) };
 }
+
+// ------------------------------------------------------------------ concepts: a zone put somewhere new in one go
+// Turn a zone about its lead piece and put the lead at `at` facing `rot` (everything in it keeps its place relative to
+// the lead: the coffee table stays in front of the sofa, the chairs round the table).
+export function teleport(room, ids, leadId, at, rot) {
+  const lead = byId(room, leadId);
+  const dr = (((rot - (lead.rot ?? 0)) % 360) + 360) % 360, a = dr * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a);
+  return { ...room, furniture: room.furniture.map((x) => {
+    if (!ids.includes(x.id)) return x;
+    const d = [x.at[0] - lead.at[0], x.at[1] - lead.at[1]];
+    return { ...x, at: [r2(at[0] + c * d[0] - sn * d[1]), r2(at[1] + sn * d[0] + c * d[1])], rot: (((x.rot ?? 0) + dr) % 360 + 360) % 360 };
+  }) };
+}
+// How far from p, along dir, to the nearest wall.
+export function toWall(O, p, dir) {
+  let t = 0;
+  while (t < 20 && sdRoom(O, [p[0] + dir[0] * t, p[1] + dir[1] * t]) > 0) t += 0.05;
+  return t;
+}
+export { glazingOf, candidates as wallSpots };
