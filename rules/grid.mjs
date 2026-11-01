@@ -28,7 +28,13 @@ export function obstacles(room, { exclude = new Set(), extra = [] } = {}) {
   return out;
 }
 
-export function buildGrid(O, obs, res = RES) {
+// The walls-only grid depends on the outline alone, and the fix searches rebuild the grid for every
+// candidate move: keep it per outline and only stamp the pieces each time.
+const shells = new WeakMap();
+function shell(O, res) {
+  let byRes = shells.get(O);
+  if (!byRes) shells.set(O, (byRes = new Map()));
+  if (byRes.has(res)) return byRes.get(res);
   const m = 0.7;
   const [bx0, by0, bx1, by1] = O.bbox;
   const x0 = bx0 - m, y0 = by0 - m;
@@ -48,7 +54,14 @@ export function buildGrid(O, obs, res = RES) {
       clr[i] = d;
     }
   }
-  const G = { res, x0, y0, nx, ny, kind, clr };
+  const S = { res, x0, y0, nx, ny, kind, clr };
+  byRes.set(res, S);
+  return S;
+}
+
+export function buildGrid(O, obs, res = RES) {
+  const S = shell(O, res);
+  const G = { ...S, clr: Float32Array.from(S.clr) };
   for (const o of obs) stamp(G, o.R, G.clr);
   return G;
 }
@@ -58,11 +71,14 @@ export function stamp(G, R, clr) {
   const ext = Math.hypot(R.hw, R.hd) + CAP;
   const ix0 = Math.max(0, Math.floor((R.c[0] - ext - G.x0) / G.res)), ix1 = Math.min(G.nx - 1, Math.ceil((R.c[0] + ext - G.x0) / G.res));
   const iy0 = Math.max(0, Math.floor((R.c[1] - ext - G.y0) / G.res)), iy1 = Math.min(G.ny - 1, Math.ceil((R.c[1] + ext - G.y0) / G.res));
+  const p = [0, 0];
   for (let iy = iy0; iy <= iy1; iy++) {
+    p[1] = G.y0 + (iy + 0.5) * G.res;
     for (let ix = ix0; ix <= ix1; ix++) {
       const i = iy * G.nx + ix;
       if (!G.kind[i]) continue;
-      const d = sdRect(R, [G.x0 + (ix + 0.5) * G.res, G.y0 + (iy + 0.5) * G.res]);
+      p[0] = G.x0 + (ix + 0.5) * G.res;
+      const d = sdRect(R, p);
       if (d < clr[i]) clr[i] = Math.max(d, -CAP);
     }
   }

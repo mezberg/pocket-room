@@ -42,6 +42,9 @@ freeFloor(room)                  // -> clearance grid + free_m2 / floor_m2 / sha
 - `spot.narrows`: the walkway the piece narrows most `{ from, to, before_m, after_m, at }`.
 - `finding.width_m`, `finding.path` (walkway findings): the width and the way, as plan points, for drawing.
 - `spot.clearance_m` = the narrowest walkway the piece touches: any way it narrows and the way to reach it.
+- `spot.blocked`: a way that was already under 60 cm before the piece came and is still closed beside it
+  `{ from, to, before_m, after_m, at, already: true }`. Such a spot is "Just fits" at best, scores lower, and the
+  sentence says the way was already blocked, so the verdict agrees with Check my room.
 
 ## For lane E
 `server/routes/place.mjs` imports `decisions/hooks.mjs` if it exists; export `choose(room, piece, placement)`
@@ -50,4 +53,6 @@ to pick/reorder among `placement.spots` (all legal; scores here are geometric on
 
 ## Tests
 `npm test` (`rules.test.mjs`): geometry, the tiny / typical / crowded sample rooms, fixes that really fix,
-and the fixture sofa in the fixture living room. `place` takes ~0.1 s, `analyse` ~1 s on the fixture.
+and the fixture sofa in the fixture living room. `place` takes ~0.1 s, `analyse` ~0.4 s on the fixture (~0.5 s with a
+new sofa): the walls-only part of the grid is built once per outline and kept, each candidate only stamps the pieces.
+Tap-an-issue fixes beyond the one-move `fix` here: `fixes/`.

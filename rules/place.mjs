@@ -2,7 +2,7 @@
 // (back to the wall, front into the room) and sit in the room's centre. Legal = inside the walls, no overlap,
 // doorways and door swings clear, not over a radiator, enough room in front to use it, and no walkway
 // squeezed below 0.6 m. Lane E picks among the spots; we only measure.
-import { footprint, outline, outside, overlap, doorwayRect, hitsSwing, toWorld, RAD, cm, r2 } from "./geom.mjs";
+import { footprint, outline, outside, overlap, doorwayRect, hitsSwing, toWorld, sdRect, RAD, cm, r2 } from "./geom.mjs";
 import { obstacles, buildGrid, withRect, routes, clearanceAt, label, reachable, openingLabel } from "./grid.mjs";
 
 export const WALK_OK = 0.75, WALK_MIN = 0.6;
@@ -16,6 +16,8 @@ const SWAP = new Set(["sofa", "bed", "desk", "tv", "wardrobe", "dresser"]);
 
 const rotFacing = (f) => ((Math.round(Math.atan2(f[0], -f[1]) / RAD) % 360) + 360) % 360;
 const key = (r) => `${r.from}>${r.to}`;
+// Closed = under 60 cm, less the grid's ~1 cm sampling error (as in check.mjs).
+const CLOSED = WALK_MIN - 0.01;
 
 // Free distance in front of a rectangle, sampled across its width.
 export function frontSpace(G, R, max = 2) {
@@ -123,6 +125,13 @@ export function place(room, piece, opts = {}) {
         if (!b0 || r.width >= b0.width - 0.02) continue;
         if (!worst || r.width < worst.width) worst = { ...r, before: b0.width };
       }
+      // A way that was already closed (under 60 cm) before the piece came and is still closed right beside
+      // it: the piece doesn't make it worse, but the room around it doesn't work. Not a clean fit.
+      let stuck = null;
+      for (const r of rs) {
+        if (r.item === placed.id || r.width >= CLOSED || !r.at || sdRect(P, r.at) > Math.max(r.width / 2, 0) + 0.1) continue;
+        if (!stuck || r.width < stuck.width) stuck = { ...r, before: base.get(key(r))?.width ?? 0 };
+      }
       const hasAccess = rs.some((r) => r.item === placed.id);
       if (!hasAccess) access = Infinity;
       const clearance = Math.min(worst ? worst.width : Infinity, access, 2);
@@ -139,6 +148,7 @@ export function place(room, piece, opts = {}) {
       reasons.push(`${cm(Math.min(front, 2))}${front >= 2 ? "+" : ""} free in front`);
       if (worst) reasons.push(`The way from ${worst.fromLabel} to ${worst.toLabel} goes from ${cm(Math.min(worst.before, 2))} to ${cm(worst.width)}`);
       else reasons.push("Doesn't narrow any walkway");
+      if (stuck) reasons.push(`The way from ${stuck.fromLabel} to ${stuck.toLabel} was already blocked (${cm(Math.min(stuck.before, 2))}); with it here it's ${cm(stuck.width)}`);
       if (hasAccess) reasons.push(access >= 2 ? "Wide way to reach it" : `${cm(access)} way to reach it`);
       const cover = windowCover(O, P, h);
       for (const w of cover) reasons.push(`Stands in front of ${openingLabel(w.op)} (${Math.round(w.share * 100)}% of it)`);
@@ -149,11 +159,12 @@ export function place(room, piece, opts = {}) {
 
       const coverShare = cover.reduce((s, w) => Math.max(s, w.share), 0);
       const score = 0.45 * Math.min(1, (clearance - WALK_MIN) / 0.6) + 0.15 * (wall ? 1 : 0) + 0.15 * Math.min(1, front / 1.0)
-        + 0.15 * (1 - coverShare * (h > 1.2 ? 1 : 0.5)) + 0.1 * (worst ? 0 : 1);
+        + 0.15 * (1 - coverShare * (h > 1.2 ? 1 : 0.5)) + 0.1 * (worst ? 0 : 1) - (stuck ? 0.2 : 0);
       spots.push({
         at: [r2(c.at[0]), r2(c.at[1])], rot: c.rot, ...(wall ? { wall: wall.id } : {}),
-        score: Math.round(score * 100) / 100, clearance_m: r2(clearance), verdict: verdictFor(clearance), reasons,
+        score: Math.round(score * 100) / 100, clearance_m: r2(clearance), verdict: stuck ? "Just fits" : verdictFor(clearance), reasons,
         ...(swap ? { replaces: swap.id } : {}), front_m: r2(Math.min(front, 2)),
+        ...(stuck ? { blocked: { from: stuck.from, to: stuck.to, before_m: r2(Math.min(stuck.before, 2)), after_m: r2(stuck.width), at: stuck.at.map(r2), already: true } } : {}),
         ...(worst ? { narrows: { from: worst.from, to: worst.to, before_m: r2(Math.min(worst.before, 2)), after_m: r2(worst.width), at: worst.at.map(r2) } } : {}),
       });
     }
@@ -169,6 +180,11 @@ function sayPlacement(piece, best, O, misses, nearMiss) {
   if (best) {
     const where = best.wall ? `on the ${best.wall} wall` : "in the middle of the room";
     const swap = best.replaces ? `, replacing the old one,` : "";
+    if (best.blocked) {
+      const b = best.blocked;
+      const nice = (id) => `the ${id.replace(/[_-]+/g, " ").replace(/:front$/, "")}`;
+      return `Just fits ${where}${swap.replace(/,$/, "")}, but the way from ${nice(b.from)} to ${nice(b.to)} was already blocked: ${cm(b.after_m)} there. Check my room shows what to move.`;
+    }
     return best.verdict === "Fits"
       ? `Fits. Best ${where}${swap || ","} with ${cm(best.clearance_m)} to walk past.`
       : `Just fits. Put it ${where}${swap.replace(/,$/, "")}; the walkway there is ${cm(best.clearance_m)}.`;

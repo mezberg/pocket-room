@@ -19,8 +19,18 @@ export function distinctSpots(spots, max = MAX_CHOICES) {
   return [...seen.values()].slice(0, max);
 }
 
+// D's spot.blocked: a way that was already closed beside the chosen spot. The sentence must say so, so the
+// verdict here agrees with Check my room.
+const nice = (id) => `the ${id.replace(/[_-]+/g, " ").replace(/:front$/, "")}`;
+function withBlocked(placement) {
+  const b = placement.best?.blocked;
+  if (!b || /already blocked/.test(placement.say ?? "")) return placement;
+  return { ...placement, say: `${placement.say} But the way from ${nice(b.from)} to ${nice(b.to)} was already blocked: ${Math.round(b.after_m * 100)} cm there. Check my room shows what to move.` };
+}
+
 // D's say keeps "replacing the old one" when the chosen spot takes the old piece's place.
 function withReplace(placement) {
+  placement = withBlocked(placement);
   const best = placement.best;
   if (!best?.replaces || /replacing/.test(placement.say ?? "")) return placement;
   const say = (placement.say ?? "").replace(/^(.*?Put it (?:on the \S+ wall|at [^:]+))/, "$1, replacing the old one");

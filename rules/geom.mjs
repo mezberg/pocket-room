@@ -23,10 +23,12 @@ export function corners(R) {
 
 // Signed distance from a point to a rectangle: negative inside.
 export function sdRect(R, p) {
-  const d = sub(p, R.c);
-  const qx = Math.abs(dot(d, R.ux)) - R.hw;
-  const qy = Math.abs(dot(d, R.uy)) - R.hd;
-  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0);
+  // no temporaries: the grid calls this for every cell around every piece
+  const dx = p[0] - R.c[0], dy = p[1] - R.c[1];
+  const qx = Math.abs(dx * R.ux[0] + dy * R.ux[1]) - R.hw;
+  const qy = Math.abs(dx * R.uy[0] + dy * R.uy[1]) - R.hd;
+  const ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0;
+  return Math.sqrt(ox * ox + oy * oy) + Math.min(Math.max(qx, qy), 0);
 }
 
 // How far two rectangles overlap (separating axis test): > 0 is the depth, with the axis to push B out
