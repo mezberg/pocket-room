@@ -14,8 +14,10 @@ const mode = process.argv[2] ?? "desktop";
 const out = resolve(process.argv[3] ?? `/tmp/pocket-room-demo-${mode}`);
 const base = process.env.DEMO_URL ?? "http://localhost:8850";
 const phone = mode === "phone";
+const photos = mode === "photos";
 const sofaPhoto = resolve("furniture/test-images/chesterfield-2-seat-2026-11-01.jpg");
-const shopPhoto = resolve("scripts/demo/ikea-side-table.jpg");   // the IKEA aisle photo, framed on the side table
+const shopPhoto = resolve("scripts/demo/ikea-side-table.jpg");
+const listing = [1, 2, 3, 4, 5].map((n) => resolve(`docs/test-inputs/zoopla/room-a-openplan-${n}.jpg`));   // a Zoopla listing   // the IKEA aisle photo, framed on the side table
 mkdirSync(join(out, "frames"), { recursive: true });
 
 const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--enable-gpu", "--use-angle=metal", "--hide-scrollbars"] });
@@ -114,12 +116,12 @@ try {
   await page.goto(`${base}/?room=hoskins-living`);
   await page.waitForSelector(".view.ready", { timeout: 60_000 });
   await page.waitForTimeout(2000);   // first frames, textures
-  await tidyRoom();
+  if (!photos) await tidyRoom();
   await page.waitForTimeout(1500);
   await cdp.send("Page.startScreencast", { format: "jpeg", quality: 88, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
   await hold(300);
   mark("start");
-  if (phone) await phoneScene(); else await desktopFlow();
+  if (phone) await phoneScene(); else if (photos) await photosScene(); else await desktopFlow();
   mark("end");
 } catch (err) {
   mark("error", { text: String(err).slice(0, 300) });
@@ -258,4 +260,26 @@ async function phoneScene() {
   await hold(1000);
   await foldSheetIfPhone();
   await hold(3000);
+}
+
+// the opening scene: a room built from a listing's photos (New room → Photos → Build my room)
+async function photosScene() {
+  caption("Moving in? Build the room from the listing's photos");
+  await hold(800);
+  await page.click("#btn-new-room");
+  await hold(1200);
+  await page.setInputFiles("#room-upload", listing);
+  await hold(1800);
+  await page.click("#new-name");
+  await page.keyboard.type("Open-plan living, Zoopla listing", { delay: 35 });
+  await hold(500);
+  await page.click("#btn-build");
+  caption("OpenAI vision reads the 5 photos: walls, windows, doors, furniture, sizes");
+  await live("photos → room", () => page.waitForFunction(() => /Zoopla/.test(document.getElementById("room-name").textContent)
+    && !document.querySelector('[data-screen="room"]').hidden && document.querySelector(".view.ready"), null, { timeout: 180_000 }));
+  await hold(1500);
+  caption("The room in 3D, checked by the rules. Grey: what the photos didn't show");
+  await hold(1000);
+  await drag(240, 2600);
+  await hold(2500);
 }

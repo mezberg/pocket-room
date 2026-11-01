@@ -4,7 +4,8 @@ Drives the real app (live models, nothing mocked) in headless Google Chrome, sav
 (CDP screencast) with its time, then cuts the video: live waits on the models are sped up with their real
 length on screen, captions on the frames, the Photo view render full size, then two slides.
 
-The cut: a slide with the problem ("Now you know…") → Kate's living room → Check my room (pins) → Find for me "a floor lamp" (three real products, one
+The cut: a slide with the problem ("Now you know…") → a room built from a Zoopla listing's 5 photos
+(New room → Photos → Build my room) → Kate's living room → Check my room (pins) → Find for me "a floor lamp" (three real products, one
 placed) → Add piece: the Chesterfield photo (gpt-6-astra's model of that photo, from the library, so no
 stand-in) → tap an issue, the Decisions API's pick, Apply (furniture moves, room checked again) → fly to eye
 height → Photo view (gpt-image) → phone scene: in the IKEA aisle, Camera on the side table → "Doesn't fit"
@@ -18,9 +19,11 @@ cd scripts/demo && npm install && cd ../..                    # playwright-core 
 PORT=8850 node --env-file=.env server/index.mjs               # fresh server: Find caches answers for an hour
 node scripts/demo/record.mjs desktop /tmp/pr-desktop          # ~2.5 min, ~5 500 frames
 node scripts/demo/record.mjs phone /tmp/pr-phone
+node scripts/demo/record.mjs photos /tmp/pr-photos             # the room from the listing photos
+END=0 node scripts/demo/compose.mjs /tmp/pr-photos /tmp/photos.mp4
 END=0 node scripts/demo/compose.mjs /tmp/pr-desktop /tmp/desk.mp4 docs/demo/still
 END=0 CAPS=1.5 node scripts/demo/compose.mjs /tmp/pr-phone docs/demo/pocket-room-demo-phone.mp4
-node scripts/demo/assemble.mjs /tmp/desk.mp4 docs/demo/pocket-room-demo-phone.mp4 docs/demo/pocket-room-demo-desktop.mp4
+node scripts/demo/assemble.mjs /tmp/desk.mp4 docs/demo/pocket-room-demo-phone.mp4 docs/demo/pocket-room-demo-desktop.mp4 /tmp/photos.mp4
 ```
 
 Script-only touches (no UI for them): the eye-height camera uses the viewer's own `flyTo`, and the pins are
