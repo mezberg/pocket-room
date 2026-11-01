@@ -218,3 +218,17 @@ test("a low unit with no height read is low, a TV stays on its unit, long jumps 
   assert.deepEqual(separate(items, 4, 4), []);       // every way out is 92 cm or more: left for the rules to show
   assert.deepEqual(items[1].at, [2, 2]);
 });
+
+// Zoopla open-plan room in the app: the kitchen run and the tall oven housing were read at one spot on the
+// east wall, and the run was pulled 51 cm off the wall into the room.
+test("a piece against a wall is never pulled off it to clear an overlap", () => {
+  const items = [
+    { id: "kitchen", category: "cupboard", at: [4.957, 1.845], size: [3.69, 0.585, 0.888], rot: 270 },
+    { id: "oven", category: "cupboard", at: [4.95, 2.101], size: [0.615, 0.6, 2.142], rot: 270 },
+    { id: "table", category: "table", at: [4.4, 1.7], size: [0.9, 0.9, 0.74], rot: 0 },
+  ];
+  const moved = separate(items, 5.25, 5.0);
+  assert.equal(items[0].at[0], 4.957);
+  assert.equal(items[1].at[0], 4.95);
+  assert.deepEqual(moved, ["table moved 21 cm off the kitchen"]);
+});

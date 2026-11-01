@@ -72,6 +72,7 @@ const LOW = /\b(low|tv|television|media|sideboard|console|chest|drawers|dresser|
 // Photo positions are rough, but not this rough: a piece that needs a longer step to get clear is left
 // where it was read (the rules then show the overlap) rather than moved somewhere nobody saw it.
 const MAX_STEP = 0.6;
+const WALL = 0.05;
 
 // [[a, b], ...] sorted and merged, clipped to [0, len]
 function mergeSpans(spans, len) {
@@ -224,9 +225,11 @@ export function separate(items, w, l, gap = 0.02) {
       for (const [mover, still] of [[A, B], [B, A]]) {
         const mb = box(mover), sb = box(still), f = [mb[2] - mb[0], mb[3] - mb[1]];
         const inside = (axis, d) => mover.at[axis] + d - f[axis] / 2 >= -1e-6 && mover.at[axis] + d + f[axis] / 2 <= [w, l][axis] + 1e-6;
+        // a piece standing against a wall (a kitchen run, a wardrobe) slides along it, never off it
+        const onWall = (axis, d) => (d > 0 && mb[axis] <= WALL) || (d < 0 && mb[axis + 2] >= [w, l][axis] - WALL);
         const small = mover.size[0] * mover.size[1] <= still.size[0] * still.size[1] ? 0 : 0.001;
         for (const [axis, d] of [[0, sb[2] - mb[0] + gap], [0, sb[0] - mb[2] - gap], [1, sb[3] - mb[1] + gap], [1, sb[1] - mb[3] - gap]])
-          if (Math.abs(d) <= MAX_STEP && inside(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
+          if (Math.abs(d) <= MAX_STEP && inside(axis, d) && !onWall(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
       }
       if (!ways.length) continue;
       const { mover, still, axis, d } = ways.sort((u, v) => u.cost - v.cost)[0];
