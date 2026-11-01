@@ -279,7 +279,23 @@ async function photosScene() {
     && !document.querySelector('[data-screen="room"]').hidden && document.querySelector(".view.ready"), null, { timeout: 180_000 }));
   await hold(1500);
   caption("The room in 3D, checked by the rules. Grey: what the photos didn't show");
-  await hold(1000);
+  await hold(1500);
+  // the room's own furniture: gpt-6-astra builds each piece from its crop of the photos; models swap in as built
+  const building = () => page.evaluate(async () => {
+    const ids = [...new Set((window.pocketRoom.state.room.furniture ?? []).map((i) => i.piece).filter(Boolean))];
+    const ps = await Promise.all(ids.map((id) => fetch(`/api/pieces/${id}`).then((r) => r.json()).catch(() => null)));
+    return { all: ids.length, building: ps.filter((p) => p?.model?.status === "building" || p?.model?.status === "pending").length };
+  });
+  const b0 = await building();
+  console.log("room pieces to model:", b0);
+  if (b0.building) {
+    caption("gpt-6-astra rebuilds the room's own furniture from the photos");
+    await live("image → 3D", async () => {
+      for (let t = 0; t < 240; t += 3) { if (!(await building()).building) break; await hold(3000); }
+      await hold(4000);   // the last model loads and swaps in
+    });
+    caption("The room's furniture, as in the photos");
+  }
   await drag(240, 2600);
   await hold(2500);
 }
