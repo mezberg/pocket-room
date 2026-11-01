@@ -1020,6 +1020,85 @@
 			"height": 150,
 			"color": "5",
 			"text": "**The hackathon room from one venue photo**\nCorner guide · the room in 3D · grey = not in the photos"
+		},
+		{
+			"id": "flow_group",
+			"type": "group",
+			"label": "Designer flow",
+			"x": 0,
+			"y": 9977,
+			"width": 1760,
+			"height": 640
+		},
+		{
+			"id": "flow_head",
+			"type": "text",
+			"x": 40,
+			"y": 10037,
+			"width": 1500,
+			"height": 130,
+			"color": "5",
+			"text": "## The designer flow (Kate, 1 Nov) · being built\nTested only through the app's own pipeline and live models, on Kate's Zoopla screenshots and her flat. No hand-made rooms, pieces or fixes."
+		},
+		{
+			"id": "flow_1",
+			"type": "text",
+			"x": 40,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "4",
+			"text": "**1 · Build the room**\nCorner photos, a listing's photos (Zoopla) or a plan → room in 3D in ~16 s. Unseen parts grey."
+		},
+		{
+			"id": "flow_2",
+			"type": "text",
+			"x": 380,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**2 · Errors grab attention**\nOverlaps and blocked paths drawn on the 3D: red on the pieces, red band on the blocked way, a fix one tap away (option B)."
+		},
+		{
+			"id": "flow_3",
+			"type": "text",
+			"x": 720,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**3 · What's wrong: Decisions advice**\nRanked, top 3 first, plain words, each tied to a marker and a fix."
+		},
+		{
+			"id": "flow_4",
+			"type": "text",
+			"x": 1060,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**4 · Find a piece**\nShop photo · page, screenshot or link · or just ask: \"want a new sofa?\""
+		},
+		{
+			"id": "flow_5",
+			"type": "text",
+			"x": 1400,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**5 · Place it like a designer**\n(a) a free spot · (b) move furniture around, then place · (c) replace a piece.\nPlan as steps with ghosts + arrows, Decisions pick first with % and reason, Apply / Undo."
+		},
+		{
+			"id": "flow_who",
+			"type": "text",
+			"x": 40,
+			"y": 10497,
+			"width": 1500,
+			"height": 80,
+			"color": "5",
+			"text": "Session: Tap an issue, get a fix → finishes option B, then builds this flow. 🟪 = in progress, 🟩 = on main."
 		}
 	],
 	"edges": [
@@ -1245,6 +1324,34 @@
 			"fromSide": "bottom",
 			"toNode": "dev_T",
 			"toSide": "top"
+		},
+		{
+			"id": "flow_e0",
+			"fromNode": "flow_1",
+			"fromSide": "right",
+			"toNode": "flow_2",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e1",
+			"fromNode": "flow_2",
+			"fromSide": "right",
+			"toNode": "flow_3",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e2",
+			"fromNode": "flow_3",
+			"fromSide": "right",
+			"toNode": "flow_4",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e3",
+			"fromNode": "flow_4",
+			"fromSide": "right",
+			"toNode": "flow_5",
+			"toSide": "left"
 		}
 	]
 }
