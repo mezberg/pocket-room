@@ -55,7 +55,28 @@ Check my room on the rooms as built (fresh `POST /api/rooms/from-photo` runs, no
 The open-plan room is the hard case: five listing photos not taken corner to corner, so the balcony door and the
 entry door land on different walls run to run, and one run still has blocked ways there.
 
-## Fixed (room/, furniture/, contract), with tests — `npm test` 144/144
+## Kate's review 2: "this is ridiculously not like the kitchen on photo"
+Nothing in a photo room came from astra: the reading gave boxes, the app drew every cupboard as a white wardrobe kit,
+and nothing compared the 3D with the photo. Now:
+1. The reading says which photo shows each object, its box there and what it looks like; a fitted kitchen is one
+   run up to its wall units (`room/photo/read.mjs`).
+2. `room/photo/models.mjs` crops each big item out of its photo and astra builds it from the crop at the size code
+   computed (`furniture/pieces.mjs` `createPieceForItem`); `item.piece` links it, the app swaps it in when ready.
+3. Astra checks its own work: the app renders each model on its own (`viewer.modelShot`) and
+   `POST /api/pieces/:id/look` puts it next to the picture it was built from (`furniture/look.mjs`):
+   matches / wrong (what to fix) / can't tell. Wrong → rebuilt with that feedback, twice at most; each model is
+   checked once (the verdict is kept on the piece). Pieces added from shop photos get the same check.
+
+Zoopla open plan in the app (5 photos): room in 42 s (the read is slower with boxes and looks: 37–43 s against
+20–30 s), 7 models from crops in 13–31 s, checks 2–6 s each. 4 of 7 judged wrong and rebuilt once, then all matched:
+the kitchen ("smaller-scale herringbone; the tall cabinet at the end"), the L-sofa sections (arm on the wrong end,
+back cushions), the coffee table top colour. `docs/screens/zoopla-kitchen-photo-vs-3d.jpg`,
+`docs/screens/zoopla-desktop-6-room-a-astra-models.jpg`.
+Left: the oven tower stands apart from the run (the reading put the balcony door there, settle moved it); a check
+of the whole room against the photo needs the photo's viewpoint, which listing photos don't give (tried, judged
+"not visible" for everything, dropped).
+
+## Fixed (room/, furniture/, contract), with tests — `npm test` 148/148
 - **Colours lost** (the red sofa → beige): photo rooms kept no colour per piece, so the app painted every sofa linen.
   The reading now gives each object its colour; items carry `color` (contract: optional, additive, own commit).
 - **Heights and depths**: every cupboard was 2 m (low TV units, kitchen runs) and every table 0.74 × 0.8 m.

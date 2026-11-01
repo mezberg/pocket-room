@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createPiece, createPieceFromFacts, getPiece, modelFile, imageFile, rebuildPiece, pictureOf } from "../../furniture/pieces.mjs";
+import { createPiece, createPieceFromFacts, getPiece, modelFile, imageFile, rebuildPiece, pictureOf, noteLook } from "../../furniture/pieces.mjs";
 import { compareLook, decide } from "../../furniture/look.mjs";
 import { readLink } from "../../furniture/link.mjs";
 import { sofa as fixtureSofa } from "../fixtures.mjs";
@@ -41,8 +41,10 @@ r.post("/:id/look", async (req, res, next) => {
     const picture = pictureOf(p.id);
     if (!picture) return res.status(409).json({ error: "this piece's picture isn't on this server" });
     if (p.model?.status === "building") return res.status(409).json({ error: "still building" });
+    if (p.look && p.look.glb === p.model?.glb) return res.json({ ...p.look, color: null, rebuilding: false, rebuilds: p.rebuilds ?? 0, cached: true });
     const t0 = Date.now();
     const look = await compareLook(picture, view, p.name, p.notes);
+    noteLook(p.id, look);
     const { rebuild, color } = decide(p, look);
     const piece = rebuild ? rebuildPiece(p.id, rebuild, { color }) : p;
     res.json({ ...look, rebuilding: !!rebuild, rebuilds: piece?.rebuilds ?? 0, ms: Date.now() - t0 });

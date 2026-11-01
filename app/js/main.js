@@ -201,7 +201,7 @@ async function lookLoop(room) {
     let pieces = await viewer.loadItemModels(room);
     const checked = new Map();   // piece id → the model it was checked on: only new models are checked again
     for (let round = 0; round < 3 && state.room?.id === room.id; round++) {
-      const todo = pieces.filter((p) => p.model?.how === "image_to_3d" && p.model?.glb && checked.get(p.id) !== p.model.glb && viewer.models.has(p.id));
+      const todo = pieces.filter((p) => p.model?.how === "image_to_3d" && p.model?.glb && checked.get(p.id) !== p.model.glb && p.look?.glb !== p.model.glb && viewer.models.has(p.id));
       todo.forEach((p) => checked.set(p.id, p.model.glb));
       const results = await Promise.all(todo.map((p) => api.pieceLook(p.id, viewer.modelShot(p.id)).then((r) => ({ p, r })).catch(() => null)));
       if (state.room?.id !== room.id) return;

@@ -147,6 +147,12 @@ export function createPieceForItem(item, { image, notes }) {
 const CATEGORY_OF = { radiator: "other", column: "other" };
 
 // Build a piece's model again from its own picture, with what a look check said was wrong.
+// What the look check said about the piece's current model (so a model is checked once, not on every visit).
+export function noteLook(id, look) {
+  const p = getPiece(id);
+  return p ? save({ ...p, look: { glb: p.model?.glb ?? null, verdict: look.verdict, issues: look.issues } }) : null;
+}
+
 // The picture a piece was built from, as a data URL (a stored upload or room-photo crop), else null.
 export function pictureOf(id) {
   if (!existsSync(imageFile(id))) return null;
