@@ -2,22 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pocket Room</title>
+<meta name="description" content="Your flat in 3D. See a piece of furniture anywhere, and see it in your room, to scale.">
+<meta name="theme-color" content="#F1ECE4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
 } }
 </script>
-<style>body { margin: 0; font: 16px system-ui, sans-serif; background: #f3efe8; } main { padding: 16px; } pre { white-space: pre-wrap; font-size: 12px; }</style>
 </head>
 <body>
-<main>
-  <h1>Pocket Room</h1>
-  <p>Placeholder. Lane C builds the viewer here (three.js + the kit in <code>js/kit/</code>).</p>
-  <pre id="out">Loading the room…</pre>
-</main>
+<div class="view" id="view">
+  <div class="labels" id="labels"></div>
+  <div class="loading" id="loading"><span class="spin"></span>Building your room…</div>
+</div>
+
+<header class="top">
+  <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5V20H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="7.5" y="13" width="9" height="4" rx="1" fill="currentColor"/></svg>Pocket Room</div>
+  <div class="tools">
+    <button class="icon" id="btn-names" aria-pressed="true" title="Names"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button class="icon" id="btn-home" title="Whole room"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+</header>
+
+<section class="sheet" id="sheet" aria-live="polite">
+  <button class="grip" id="grip" aria-label="Fold the panel"></button>
+
+  <div class="screen" data-screen="room">
+    <div class="eyebrow">My room</div>
+    <h1 id="room-name">…</h1>
+    <p class="meta" id="room-meta"></p>
+    <div class="row">
+      <button class="btn primary" id="btn-check">Check my room</button>
+      <button class="btn" id="btn-photo">Photo view</button>
+    </div>
+    <img class="still" id="still" alt="A photo-like view of the room" hidden>
+  </div>
+
+  <div class="screen" data-screen="add" hidden>
+    <div class="eyebrow">Add piece</div>
+    <div id="add-pick">
+      <h1>Seen something you like?</h1>
+      <p class="meta">A shop photo, a price tag or a screenshot. We build it in 3D and put it in your room, to scale.</p>
+      <div class="grid">
+        <label class="tile"><input type="file" accept="image/*" capture="environment" id="in-camera" hidden>
+          <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Camera</label>
+        <label class="tile"><input type="file" accept="image/*" id="in-upload" hidden>
+          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-5 5m5-5 5 5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload</label>
+        <button class="tile" id="btn-sample"><svg viewBox="0 0 24 24"><path d="M4 12h16v5H4zM6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3M6 17v2M18 17v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Sample sofa</button>
+      </div>
+      <form class="find" id="find">
+        <input id="find-q" placeholder="Or ask: a green sofa under $1,500" autocomplete="off" enterkeyhint="search">
+        <button class="btn" type="submit">Find</button>
+      </form>
+      <p class="hint">On Android, share a screenshot from Instagram straight to Pocket Room.</p>
+    </div>
+    <div id="add-busy" hidden>
+      <div class="busy">
+        <img id="busy-img" alt="" hidden>
+        <div><span class="spin"></span><strong id="busy-step">Reading the photo…</strong><p class="meta" id="busy-sub"></p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" data-screen="verdict" hidden>
+    <div class="eyebrow">Verdict</div>
+    <div id="verdict-empty"><h1>Nothing placed yet</h1><p class="meta">Add a piece and it lands here with its verdict.</p></div>
+    <div id="verdict-body" hidden>
+      <div class="chip" id="verdict-chip"></div>
+      <p class="say" id="verdict-say"></p>
+      <p class="meta" id="verdict-piece"></p>
+      <ol class="findings" id="findings"></ol>
+      <div class="row">
+        <button class="btn" id="btn-next" hidden>Next spot</button>
+        <button class="btn" id="btn-remove">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" data-screen="talk" hidden>
+    <div class="eyebrow">Talk</div>
+    <h1>Talk to your room</h1>
+    <button class="mic" id="btn-mic" aria-label="Talk"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <p class="meta" id="talk-note">Voice is on its way. Soon you can ask “Would a bigger sofa fit by the window?” and hear the answer.</p>
+  </div>
+</section>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="room" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>My room</button>
+  <button data-tab="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Add piece</button>
+  <button data-tab="verdict"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Verdict<i class="dot" id="verdict-dot" hidden></i></button>
+  <button data-tab="talk"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Talk</button>
+</nav>
+
+<div class="toast" id="toast" role="status" hidden></div>
 <script type="module" src="/js/main.js"></script>
 </body>
 </html>
