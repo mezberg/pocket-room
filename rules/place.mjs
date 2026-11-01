@@ -3,7 +3,7 @@
 // doorways and door swings clear, not over a radiator, enough room in front to use it, and no walkway
 // squeezed below 0.6 m. Lane E picks among the spots; we only measure.
 import { footprint, outline, outside, overlap, doorwayRect, hitsSwing, toWorld, sdRect, RAD, cm, r2 } from "./geom.mjs";
-import { obstacles, buildGrid, withRect, routes, clearanceAt, label, reachable, openingLabel } from "./grid.mjs";
+import { obstacles, taken, buildGrid, withRect, routes, clearanceAt, label, reachable, openingLabel } from "./grid.mjs";
 
 export const WALK_OK = 0.75, WALK_MIN = 0.6;
 export const verdictFor = (w) => (w >= WALK_OK ? "Fits" : w >= WALK_MIN ? "Just fits" : "Doesn't fit");
@@ -110,11 +110,12 @@ export function place(room, piece, opts = {}) {
   for (const swap of swaps) {
     const exclude = new Set(swap ? [swap.id] : []);
     const obs = obstacles(room, { exclude });
+    const inUse = taken(room, { exclude });   // placing: every spot something stands in, on the floor or not
     const Gv = swap ? buildGrid(O, obs) : G0;
     // opts.at: measure just this one candidate ({ at, rot, wall }), e.g. a spot cleared by moving furniture
     for (const c of opts.at ? [opts.at] : candidates(O, piece)) {
       const P = footprint(piece, c.at, c.rot);
-      const b = blocked(O, obs, P, h, room.height);
+      const b = blocked(O, inUse, P, h, room.height);
       if (b) { misses[b.why]++; continue; }
       const front = frontSpace(Gv, P);
       if (front < need) { misses.front++; continue; }

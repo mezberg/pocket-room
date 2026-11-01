@@ -233,3 +233,11 @@ test("a new floor lamp takes the old lamp's place, not a spot beside it", () => 
   assert.equal(p.best.replaces, "floor_lamp");
   assert.ok(Math.hypot(p.best.at[0] - old.at[0], p.best.at[1] - old.at[1]) < 0.5);
 });
+
+test("placing: a spot taken by a piece not on the floor (a lamp the photos saw) is taken", async () => {
+  const { occupies, blocksFloor } = await import("./grid.mjs");
+  const lamp = { id: "lamp_1", name: "Table lamp", category: "lamp", at: [0, 0], size: [0.3, 0.3, 0.5], rot: 0, on_floor: false };
+  assert.equal(blocksFloor(lamp), false, "you can walk past it (it stands on something)");
+  assert.equal(occupies(lamp), true, "but nothing new may go into its spot");
+  assert.equal(occupies({ category: "rug" }), false, "a rug leaves its spot free");
+});

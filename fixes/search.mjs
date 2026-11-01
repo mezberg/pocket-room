@@ -5,7 +5,7 @@ import { footprint, outline, compass, cm, r2 } from "../rules/geom.mjs";
 import { blocksFloor, label } from "../rules/grid.mjs";
 import { WALK_OK, WALK_MIN } from "../rules/place.mjs";
 import { CHECKS } from "../decisions/design.mjs";
-import { lightsOf } from "../decisions/geom.mjs";
+import { lightsOf } from "../rules/room.mjs";
 import { snap, worse, legal, bumped, byId, routeKey, under } from "./measure.mjs";
 
 const CLOSED = WALK_MIN - 0.01;           // as in rules/check.mjs: within the grid's error of 60 cm is open
@@ -208,9 +208,11 @@ export function searchLamp(room, ctx = {}, { budgetMs = 2500 } = {}) {
   const before = dark(f0);
   if (!before) return { fixes: [] };
   const s0 = snap(room, O);
-  // never beside or inside a lamp that's already there: lamps read as standing on furniture don't block the floor
-  const LAMP_GAP = 0.6;
-  const taken = [...lightsOf(room).map((l) => l.at), ...(room.furniture ?? []).filter((it) => it.category === "lamp").map((it) => it.at)];
+  // An add fix only where nothing already does the job: no light (a lamp standing there counts) within reach of
+  // the spot. Overlapping a piece that's already there is ruled out by legal() (every standing piece takes its spot).
+  const SERVED = 0.6;
+  const lit = lightsOf(room);
+  const served = (at) => lit.some((l) => Math.hypot(l.at[0] - at[0], l.at[1] - at[1]) < SERVED);
   const n = (room.furniture ?? []).filter((it) => String(it.id).startsWith(LAMP.id)).length;
   const id = n ? `${LAMP.id}_${n + 1}` : LAMP.id;   // a second added lamp must not replace the first (the app swaps by id)
   const targets = [
@@ -233,7 +235,7 @@ export function searchLamp(room, ctx = {}, { budgetMs = 2500 } = {}) {
     pts.sort((a, b) => a.d - b.d);
     for (const { at, d } of pts) {
       if (performance.now() - t0 > budgetMs) break;
-      if (taken.some((p) => Math.hypot(p[0] - at[0], p[1] - at[1]) < LAMP_GAP)) continue;
+      if (served(at)) continue;
       const lamp = { ...LAMP, id, at };
       const light = { id, kind: "floor_lamp", at, h: 1.4 };
       const room2 = { ...room, furniture: [...room.furniture, lamp], lights: [...(room.lights ?? []), light] };

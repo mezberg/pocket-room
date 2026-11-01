@@ -1,4 +1,5 @@
 // The shared room store and the routes that read it (rooms, place/analyse). No network: lane E's hook is faked.
+import { normalizeRoom } from "../rules/room.mjs";
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
@@ -41,7 +42,7 @@ test("resolveRoom: body room wins, then the store, then D's samples; unknown id 
   const own = box("unsaved", 2, 2);
   assert.equal(resolveRoom({ room: own, roomId: "photo-2" }).id, "unsaved");
   assert.equal(resolveRoom({ roomId: "photo-2" }).id, "photo-2");
-  assert.deepEqual(resolveRoom({ roomId: "typical" }), typical());
+  assert.deepEqual(resolveRoom({ roomId: "typical" }), normalizeRoom(typical()));   // every room comes out consistent (lamps are lights)
   assert.equal(resolveRoom({}).id, "hoskins-living");
   assert.equal(resolveRoom({ roomId: "missing" }), null);
 });
@@ -108,4 +109,13 @@ test("rooms built from photos land in the same store /place reads", async () => 
   saveRoom(box("photo-4", 3, 3));
   const r = await (await fetch(`${base}/rooms/photo-4`)).json();
   assert.equal(r.id, "photo-4");
+});
+
+test("a room from photos: the lamps it saw come out as lights too", () => {
+  const r = box("photo-lamp", 4, 4);
+  r.furniture = [...(r.furniture ?? []), { id: "lamp_1", name: "Floor lamp", category: "lamp", at: [1, 1], size: [0.35, 0.35, 1.6], rot: 0, on_floor: true }];
+  r.lights = [];
+  saveRoom(r);
+  const got = resolveRoom({ roomId: "photo-lamp" });
+  assert.deepEqual(got.lights.map((l) => [l.id, l.kind]), [["lamp_1", "floor_lamp"]]);
 });

@@ -4,6 +4,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { room as livingFixture } from "./fixtures.mjs";
 import * as samples from "../rules/sample-rooms.mjs";
+import { normalizeRoom } from "../rules/room.mjs";
 
 const HOSKINS = new URL("../room/hoskins/rooms/", import.meta.url);
 export const DEFAULT_ROOM = "hoskins-living";
@@ -24,7 +25,7 @@ function prebuilt() {
 const built = new Map();   // rooms made from photos / plans this session
 
 // A fresh copy, so a route can't change the stored room by accident.
-const copy = (r) => (r ? structuredClone(r) : null);
+const copy = (r) => (r ? normalizeRoom(structuredClone(r)) : null);
 
 export function getRoom(id) {
   if (!id) return null;
@@ -33,7 +34,7 @@ export function getRoom(id) {
 
 export function saveRoom(room) {
   if (!room?.id) throw new Error("a room needs an id");
-  built.set(room.id, structuredClone(room));
+  built.set(room.id, normalizeRoom(structuredClone(room)));
   return room;
 }
 
@@ -47,8 +48,8 @@ export function listRooms() {
  * rooms (tiny / typical / crowded, for tests) → the default room when no id is given. An unknown id is null.
  */
 export function resolveRoom({ room, roomId } = {}) {
-  if (room && Array.isArray(room.walls)) return room;
-  if (roomId) return getRoom(roomId) ?? samples[roomId]?.() ?? null;
+  if (room && Array.isArray(room.walls)) return normalizeRoom(room);
+  if (roomId) return getRoom(roomId) ?? normalizeRoom(samples[roomId]?.() ?? null);
   return getRoom(DEFAULT_ROOM);
 }
 

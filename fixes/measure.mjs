@@ -1,7 +1,7 @@
 // One cheap measurement of a room, and what got worse between two of them. Everything comes from rules/:
 // the same footprints, overlap test, door swings and walkway grid that Check my room uses.
 import { outline, footprint, overlap, outside, doorwayRect, hitsSwing } from "../rules/geom.mjs";
-import { obstacles, buildGrid, routes, reachable, blocksFloor } from "../rules/grid.mjs";
+import { obstacles, buildGrid, routes, reachable, blocksFloor, occupies, stacked } from "../rules/grid.mjs";
 import { WALK_OK } from "../rules/place.mjs";
 
 export const allItems = (room) => [...(room.fixtures ?? []), ...(room.furniture ?? [])];
@@ -60,12 +60,12 @@ export function legal(room0, room2, ids, O = outline(room2)) {
   const all = allItems(room2);
   for (const id of ids) {
     const it = all.find((x) => x.id === id);
-    if (!it || !blocksFloor(it)) continue;
+    if (!it || !occupies(it)) continue;
     const R = footprint(it);
     if (outside(O, R) > 0.01) return false;
     const was = byId(room0, id);
     for (const o of all) {
-      if (o.id === id || !blocksFloor(o) || tucked(o, it)) continue;
+      if (o.id === id || !occupies(o) || tucked(o, it) || stacked(o, it)) continue;
       const o0 = byId(room0, o.id) ?? o;
       const before = was ? overlap(footprint(o0), footprint(was)).depth : 0;
       if (overlap(footprint(o), R).depth > Math.max(0.01, before + 0.001)) return false;
@@ -76,9 +76,9 @@ export function legal(room0, room2, ids, O = outline(room2)) {
 
 // The pieces that a change in `ids` newly runs into.
 export function bumped(room0, room2, ids) {
-  return (room2.furniture ?? []).concat(room2.fixtures ?? []).filter((o) => !ids.includes(o.id) && blocksFloor(o) && ids.some((id) => {
+  return (room2.furniture ?? []).concat(room2.fixtures ?? []).filter((o) => !ids.includes(o.id) && occupies(o) && ids.some((id) => {
     const it = byId(room2, id);
-    if (!it || !blocksFloor(it) || tucked(o, it)) return false;
+    if (!it || !occupies(it) || tucked(o, it) || stacked(o, it)) return false;
     const w = byId(room0, id), o0 = byId(room0, o.id) ?? o;
     const was = w ? overlap(footprint(o0), footprint(w)).depth : 0;
     return overlap(footprint(o), footprint(it)).depth > Math.max(0.01, was + 0.001);

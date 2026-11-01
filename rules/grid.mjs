@@ -20,6 +20,31 @@ export function blocksFloor(item) {
   return item.on_floor !== false || item.category === "radiator";
 }
 
+// Whether a spot is taken, for placing, moving or adding a piece. A different question from walking: anything
+// standing in the room takes its spot, on the floor or not (a table lamp, a TV, something the photos showed
+// standing on another piece), so a new piece never goes into it. Only a rug leaves its spot free.
+export function occupies(item) {
+  return item.category !== "rug";
+}
+
+// A piece standing on top of another (a lamp on a side table): its spot lies inside the one under it, and the two
+// don't count as running into each other.
+export function onTop(a, b) {
+  if (a.on_floor !== false || !occupies(b) || b.on_floor === false) return false;
+  const B = footprint(b), d = [a.at[0] - B.c[0], a.at[1] - B.c[1]];
+  return Math.abs(d[0] * B.ux[0] + d[1] * B.ux[1]) <= B.hw && Math.abs(d[0] * B.uy[0] + d[1] * B.uy[1]) <= B.hd;
+}
+export const stacked = (a, b) => onTop(a, b) || onTop(b, a);
+
+// Every spot that's taken (see occupies), for the placement checks; obstacles() stays the walking question.
+export function taken(room, { exclude = new Set(), extra = [] } = {}) {
+  const out = [];
+  for (const it of room.fixtures ?? []) if (occupies(it)) out.push({ item: it, fixed: true, R: footprint(it) });
+  for (const it of room.furniture ?? []) if (!exclude.has(it.id) && occupies(it)) out.push({ item: it, fixed: false, R: footprint(it) });
+  for (const it of extra) out.push({ item: it, fixed: false, R: footprint(it) });
+  return out;
+}
+
 export function obstacles(room, { exclude = new Set(), extra = [] } = {}) {
   const out = [];
   for (const it of room.fixtures ?? []) if (blocksFloor(it)) out.push({ item: it, fixed: true, R: footprint(it) });

@@ -6,7 +6,7 @@
 // Code finds and measures every plan; the Decisions API picks one with a probability and the reason that
 // decided it (designer/pick.mjs). Plans come back as steps the app can preview and apply.
 import { footprint, outline, overlap, outside, doorwayRect, hitsSwing, compass, cm, r2 } from "../rules/geom.mjs";
-import { obstacles, blocksFloor, label } from "../rules/grid.mjs";
+import { obstacles, blocksFloor, occupies, stacked, label } from "../rules/grid.mjs";
 import { place, candidates, WALK_MIN, WALK_OK } from "../rules/place.mjs";
 import { snap, worse, byId, under } from "../fixes/measure.mjs";
 
@@ -111,13 +111,13 @@ function groupOf(room, it) {
 // the nearest one in each direction, nearest first.
 function relocations(room, O, group, P, taken) {
   const ids = new Set(group.map((x) => x.id));
-  const others = [...(room.fixtures ?? []), ...(room.furniture ?? [])].filter((o) => !ids.has(o.id) && blocksFloor(o));
+  const others = [...(room.fixtures ?? []), ...(room.furniture ?? [])].filter((o) => !ids.has(o.id) && occupies(o));
   const fits = (moved) => moved.every((m) => {
     const R = footprint(m);
     if (outside(O, R) > 0.01 || overlap(R, P).depth > -0.05) return false;
     for (const op of O.openings) if (op.passable && (overlap(doorwayRect(op, 0.5), R).depth > 0.005 || hitsSwing(op, R))) return false;
     for (const o of [...others, ...taken]) {
-      if (ids.has(o.id) || under(m, o) || under(o, m)) continue;
+      if (ids.has(o.id) || under(m, o) || under(o, m) || stacked(m, o)) continue;
       if (overlap(footprint(o), R).depth > 0.01) return false;
     }
     return true;

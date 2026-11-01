@@ -4,19 +4,7 @@ const rad = (d) => (d * Math.PI) / 180;
 export const r2 = (v) => Math.round(v * 100) / 100;
 export const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
-// The room's light: the lights recorded with it plus every lamp standing in it. Rooms built from photos or a plan
-// record no lights (lights: []) but keep the lamps they saw as furniture; without this a lamp by the sofa doesn't
-// count, the sofa reads as dark and the fix search puts a new lamp right where the old one stands.
-export function lightsOf(room) {
-  const lights = [...(room.lights ?? [])];
-  for (const it of room.furniture ?? []) {
-    if (it.category !== "lamp" || !it.at) continue;
-    if (lights.some((l) => l.id === it.id || dist(l.at, it.at) < 0.5)) continue;
-    const onTable = it.on_floor === false;
-    lights.push({ id: it.id, kind: onTable ? "table_lamp" : "floor_lamp", at: it.at, h: onTable ? 1.0 : 1.4, from_item: true });
-  }
-  return lights;
-}
+export { lightsOf } from "../rules/room.mjs";   // a lamp standing in the room is a light (one rule for all)
 
 export const front = (rot) => [Math.sin(rad(rot)), -Math.cos(rad(rot))];
 
