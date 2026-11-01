@@ -21,6 +21,22 @@ const CATEGORIES = [
   [/tv (unit|bench|stand)|media unit/i, "tv"], [/desk/i, "desk"], [/table/i, "table"],
   [/chair/i, "chair"], [/bed\b/i, "bed"], [/rug/i, "rug"], [/lamp/i, "lamp"],
 ];
+// The widest a piece of each category comes in the shops (cm). A long wall (a 10 m hall) must not ask for a
+// 9 m armchair: the search range is the free run capped at this.
+const WIDEST_CM = { sofa: 320, armchair: 120, chair: 80, shelf: 220, cupboard: 240, tv: 240, desk: 220, table: 260, bed: 220, rug: 400, lamp: 80, other: 250 };
+const DEEPEST_CM = { sofa: 180, armchair: 120, chair: 80, shelf: 60, cupboard: 70, tv: 60, desk: 100, table: 140, bed: 240, rug: 400, lamp: 80, other: 150 };
+
+/** The width / depth range to search for, from the free run and the category. */
+export function searchSize(run, category) {
+  const max = Math.min(Math.floor(run.length * 100), WIDEST_CM[category] ?? WIDEST_CM.other);
+  const runMin = Math.max(0, Math.round((run.length - 0.9) * 10) * 10);
+  // run.depth is for a piece filling the whole run; a piece much shorter than the run can stand in its open
+  // stretch (fitIn checks the exact spot afterwards)
+  const room = max < run.length * 100 - 1 && run.open != null ? Math.max(run.depth, run.open) : run.depth;
+  const deep = Math.min(Math.floor((room + 0.15) * 100), DEEPEST_CM[category] ?? DEEPEST_CM.other);
+  return { minWidthCm: runMin < max - 40 ? runMin : 0, maxWidthCm: max, maxDepthCm: deep };
+}
+
 export const categoryOf = (query) => CATEGORIES.find(([re]) => re.test(query))?.[1] ?? "other";
 
 /**
@@ -43,11 +59,10 @@ export async function find(room, { query, wall, count = 3 }, { openai, models, f
   const reject = (url, why) => { rejected.push({ url, why }); log(`✗ ${url} — ${why}`); };
 
   // 1. Search. Ask for things a bit smaller than the run so most of what comes back can fit.
-  const found = await searchProducts(openai, models.text, {
-    query, category, style: style.summary,
-    minWidthCm: Math.max(0, Math.round((run.length - 0.9) * 10) * 10), maxWidthCm: Math.floor(run.length * 100), maxDepthCm: Math.floor((run.depth + 0.15) * 100),
-    shops: UK_SHOPS.map((s) => s.name), count: 10,
-  });
+  const ask = { query, category, style: style.summary, ...searchSize(run, category), shops: UK_SHOPS.map((s) => s.name), count: 10 };
+  let found = await searchProducts(openai, models.text, ask);
+  // a room's style words ("coworking, concrete floor") can make the search come back empty: once more without them
+  if (!found.length && ask.style) found = await searchProducts(openai, models.text, { ...ask, style: "" });
   const urls = [...new Map(found.map((p) => [p.url.split("#")[0], p])).values()];
   log(`search: ${urls.length} product pages`);
 

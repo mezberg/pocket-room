@@ -223,3 +223,14 @@ test("fitByRules: lane D's verdict, the wall asked for, Doesn't fit for a sofa w
   assert.equal(huge.fits, false);
   assert.match(huge.say, /Doesn't fit/);
 });
+
+test("search size: a long wall doesn't ask for a 9 m armchair; a short one keeps its range", async () => {
+  const { searchSize } = await import("./find.mjs");
+  // a sofa stands in front of part of a 10 m wall: depth for the whole run is 0, the open stretch is 5.75 m
+  const big = searchSize({ length: 10, depth: 0, open: 5.75 }, "armchair");
+  assert.equal(big.maxWidthCm, 120);
+  assert.equal(big.minWidthCm, 0);
+  const short = searchSize({ length: 2.4, depth: 1.1 }, "sofa");
+  assert.deepEqual(short, { minWidthCm: 150, maxWidthCm: 240, maxDepthCm: 125 });
+  assert.equal(big.maxDepthCm, 120);
+});
