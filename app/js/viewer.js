@@ -72,8 +72,10 @@ export class Viewer {
   }
 
   // ---------------------------------------------------------------- room
-  async setRoom(room) {
+  // keepView: the same room rebuilt (resized, an object taken out); a view the reader turned stays put
+  async setRoom(room, { keepView = false } = {}) {
     this.roomData = room;
+    for (const k of Object.keys(this.labels)) if (k.startsWith("item:")) this.unlabel(k);
     if (this.room) this.scene.remove(this.room);
     if (this.items) this.scene.remove(this.items);
     this.room = buildRoom(room);
@@ -88,7 +90,7 @@ export class Viewer {
     this.scene.add(this.room, this.items);
     if (!this.rig) { this.rig = rig(this.room, { floor: false }); this.scene.add(this.rig); }
     else fitRig(this.rig, this.room);
-    this.home();
+    if (!keepView || this.homed !== false) this.home();   // re-fit unless the reader has turned the view
     await this.real.compile(this.scene, this.camera);
     this.request();
   }

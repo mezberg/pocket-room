@@ -161,3 +161,57 @@ h1 { font: 700 22px/1.15 var(--display); letter-spacing: .01em; margin: 4px 0 6p
   .cards img { width: 96px; height: 96px; }
 }
 @media (prefers-reduced-motion: reduce) { .sheet, .tag, .loading, .screen, .view { transition: none; } }
+
+/* ---------------------------------------------------------------- New room, the room switcher, fix the room */
+.rooms { display: flex; gap: 6px; overflow-x: auto; margin: 8px -16px 4px; padding: 2px 16px 4px; scrollbar-width: none; }
+.rooms::-webkit-scrollbar { display: none; }
+.rooms button { flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; color: var(--mut); cursor: pointer; white-space: nowrap; }
+.rooms button[aria-current="true"] { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+.rooms button.built::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-left: 6px; vertical-align: 1px; }
+.rooms button.new { color: var(--fg); border-style: dashed; }
+.sure { display: flex; align-items: center; gap: 8px; margin: -4px 0 8px; font-size: 13.5px; font-weight: 600; }
+.sure-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); flex: none; }
+.sure.ok .sure-dot { background: var(--amber); } .sure.rough .sure-dot { background: var(--red); }
+.nudge { background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 0 0 4px; }
+.nudge p { margin: 0; font-size: 13.5px; }
+.row.tight { margin-top: 8px; }
+.btn.small { padding: 7px 12px; font-size: 13px; }
+.fix { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.fix summary, .measured summary { cursor: pointer; font-weight: 700; font-size: 14.5px; padding: 4px 0; }
+.fix[open] summary { margin-bottom: 6px; }
+.opt { color: var(--mut); font-weight: 400; }
+.steppers { display: grid; gap: 8px; margin: 6px 0 10px; }
+.stepper { display: grid; grid-template-columns: 64px 40px 1fr 40px; grid-template-rows: auto auto; align-items: center; column-gap: 6px; }
+.stepper .lab { font-weight: 600; font-size: 13.5px; }
+.stepper .step { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 20px; line-height: 1; cursor: pointer; }
+.stepper .step:active { transform: scale(.94); }
+.stepper input { min-width: 0; text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; font: 600 16px var(--sans); background: var(--card); color: var(--fg); }
+.stepper small { grid-column: 3; text-align: center; color: var(--mut); font-size: 11.5px; margin-top: 2px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; margin: 4px 0 10px; cursor: pointer; }
+.check input { width: 18px; height: 18px; }
+.objs { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.objs li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 10px; background: var(--bg); font-size: 13.5px; }
+.objs li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.objs li small { color: var(--mut); font-size: 12px; white-space: nowrap; }
+.objs li button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--card); cursor: pointer; font-size: 17px; line-height: 1; color: var(--mut); flex: none; }
+.objs li button:hover { color: var(--red); }
+.plan-rooms .chips { margin: 6px 0 0; }
+
+.shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 8px; }
+.shot { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--bg); }
+.shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot b { position: absolute; left: 6px; top: 6px; font: 700 11px/18px var(--display); width: 18px; text-align: center; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; }
+.shot button { position: absolute; right: 4px; top: 4px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+.shots .add-shot { aspect-ratio: 1; min-height: 0; font-size: 12px; }
+.shots .add-shot svg { width: 22px; height: 22px; }
+.plan-pick { display: flex; gap: 12px; align-items: center; margin: 12px 0; }
+.plan-pick img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; background: var(--bg); flex: none; }
+.plan-pick .meta { margin: 4px 0 0; }
+.measured { margin: 12px 0 4px; }
+.units { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin: 8px 0 4px; }
+.units button { border: 0; background: var(--card); padding: 6px 14px; font-weight: 600; font-size: 13px; cursor: pointer; color: var(--mut); }
+.units button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.field { display: grid; gap: 4px; margin: 10px 0 0; font-size: 13px; color: var(--mut); }
+.field input { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: 16px var(--sans); background: var(--card); color: var(--fg); }
+.field small { min-height: 14px; font-size: 12px; }
+.field small.bad { color: var(--red); }

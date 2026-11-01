@@ -57,13 +57,64 @@
 
   <div class="screen" data-screen="room">
     <div class="eyebrow">My room</div>
+    <div class="rooms" id="room-switch" role="list" aria-label="Your rooms"></div>
     <h1 id="room-name">…</h1>
     <p class="meta" id="room-meta"></p>
+    <p class="sure" id="room-sure" hidden><span class="sure-dot"></span><span class="sure-text"></span></p>
+    <div class="nudge" id="room-nudge" hidden><p></p>
+      <div class="row tight"><button class="btn small" id="nudge-measure">Type a measurement</button><button class="btn small" id="nudge-photo">Add a photo</button></div></div>
     <div class="row">
       <button class="btn primary" id="btn-check">Check my room</button>
       <button class="btn" id="btn-photo">Photo view</button>
     </div>
     <img class="still" id="still" alt="A photo-like view of the room" hidden>
+    <div class="plan-rooms" id="plan-rooms" hidden><p class="meta">Other rooms on this plan:</p><div class="chips"></div></div>
+    <details class="fix" id="room-fix" hidden>
+      <summary>Fix the room</summary>
+      <p class="meta">Wrong size or a chair that isn't there? Change it here; the room rebuilds at once.</p>
+      <div class="steppers" id="steppers">
+        <div class="stepper" data-dim="width"><span class="lab">Width</span><button class="step" data-d="-1" aria-label="Narrower">−</button><input inputmode="decimal" aria-label="Width in metres"><button class="step" data-d="1" aria-label="Wider">+</button><small></small></div>
+        <div class="stepper" data-dim="depth"><span class="lab">Length</span><button class="step" data-d="-1" aria-label="Shorter">−</button><input inputmode="decimal" aria-label="Length in metres"><button class="step" data-d="1" aria-label="Longer">+</button><small></small></div>
+        <div class="stepper" data-dim="height"><span class="lab">Height</span><button class="step" data-d="-1" aria-label="Lower">−</button><input inputmode="decimal" aria-label="Ceiling height in metres"><button class="step" data-d="1" aria-label="Higher">+</button><small></small></div>
+      </div>
+      <label class="check"><input type="checkbox" id="fix-measured"> I measured the width and length with a tape</label>
+      <p class="meta objs-lead" id="objs-lead">What the photo found (tap × to take out a wrong one):</p>
+      <ul class="objs" id="objs"></ul>
+    </details>
+  </div>
+
+  <div class="screen" data-screen="newroom" hidden>
+    <div class="eyebrow">New room</div>
+    <div id="newroom-pick">
+      <h1>Your room in 3D</h1>
+      <p class="meta">Stand in a corner and get two walls in each photo. One photo works; 3–4 from different corners make it true to a few centimetres.</p>
+      <div class="shots" id="shots">
+        <label class="tile add-shot" id="add-shot"><input type="file" accept="image/*" multiple id="in-room" hidden>
+          <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Add photos</span></label>
+      </div>
+      <p class="hint" id="plan-entry" hidden>Got a fire-escape or floor plan on the wall? <label class="linkish"><input type="file" accept="image/png,image/jpeg,image/webp" id="in-plan" hidden>Use a photo of the plan</label> instead.</p>
+      <div class="plan-pick" id="plan-pick" hidden><img alt="The floor plan"><div><strong>Floor plan</strong><p class="meta">We trace the walls and doors and build the biggest room. <button class="linkish" id="plan-clear" type="button">Use photos instead</button></p></div></div>
+      <details class="measured" id="measured">
+        <summary>I measured two walls <span class="opt">(optional)</span></summary>
+        <div class="units" role="radiogroup" aria-label="Units">
+          <button type="button" data-unit="m" aria-pressed="true">m</button><button type="button" data-unit="ft" aria-pressed="false">ft / in</button>
+        </div>
+        <label class="field"><span>Width: the wall facing you in the first photo</span><input id="m-width" inputmode="decimal" placeholder="e.g. 4.2" autocomplete="off"><small></small></label>
+        <label class="field"><span>Length: the wall running away from you</span><input id="m-depth" inputmode="decimal" placeholder="e.g. 3.6" autocomplete="off"><small></small></label>
+      </details>
+      <label class="field"><span>Name <span class="opt">(optional)</span></span><input id="room-name-in" placeholder="Hackathon room" autocomplete="off" maxlength="60"></label>
+      <div class="row">
+        <button class="btn primary" id="btn-build" disabled>Build my room</button>
+        <button class="btn" id="btn-newroom-cancel">Cancel</button>
+      </div>
+    </div>
+    <div id="newroom-busy" class="busy-box" hidden>
+      <div class="busy">
+        <img id="newroom-busy-img" alt="" hidden>
+        <div><span class="spin"></span><strong class="busy-step"></strong><p class="meta busy-sub"></p></div>
+      </div>
+      <div class="busy-error" hidden><p class="err"></p><div class="row"><button class="btn primary retry">Try again</button><button class="btn back">Back</button></div></div>
+    </div>
   </div>
 
   <div class="screen" data-screen="add" hidden>

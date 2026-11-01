@@ -12,13 +12,18 @@ async function call(method, path, body) {
 
 export const api = {
   room: (id) => call("GET", `/rooms/${encodeURIComponent(id)}`),
+  rooms: () => call("GET", "/rooms"),
+  roomOptions: () => call("GET", "/rooms/options"),                 // { photo, plan }
+  fromPhoto: (body) => call("POST", "/rooms/from-photo", body),     // { images, hint?, name? }
+  fromPlan: (body) => call("POST", "/rooms/from-plan", body),       // { image, room?, name? }
+  saveRoom: (room) => call("PUT", `/rooms/${encodeURIComponent(room.id)}`, room),
   newPiece: (image, kind = "photo", hint) => call("POST", "/pieces", { image, kind, hint }),
   fromLink: (url) => call("POST", "/pieces/from-link", { url }),
   piece: (id) => call("GET", `/pieces/${encodeURIComponent(id)}`),
   find: (body) => call("POST", "/agent/find", body),            // { roomId, query, wall?, room? }
   place: (body) => call("POST", "/place", body),                // { roomId, piece, room? } (scene-state.js placeBody)
   analyse: (body) => call("POST", "/analyse", body),            // { roomId, piece?, replaces?, room? } (analyseBody)
-  render: (roomId, view, prompt) => call("POST", "/render", { roomId, view, prompt }),
+  render: (roomId, view, prompt, photo) => call("POST", "/render", { roomId, view, prompt, photo }),   // photo: a real one, for materials
 };
 
 // poll a piece until its model is ready or failed; onTick(piece) each time

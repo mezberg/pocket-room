@@ -1,28 +1,33 @@
-// Pocket Room app: the screens (My room · Add piece · Find for me · Verdict · Talk) round the 3D view.
+// Pocket Room app: the screens (My room · New room · Add piece · Find for me · Verdict · Talk) round the 3D view.
 // Works against the API in contract/api.md.
 import { firstPaint } from "./kit/real.js";
 import { Viewer } from "./viewer.js";
 import { api, untilBuilt, imageToDataURL } from "./api.js";
 import { roomStats } from "./room3d.js";
 import { spotOf, hiddenIds, analyseBody, placeBody, chanceWords, sizeCm } from "./scene-state.js";
+import { resizeRoom, removeItem, dims, parseLength, feetInches, sureWords, bothMeasured, LIMITS } from "./room-edit.js";
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const ROOM_ID = params.get("room") || "hoskins-living";
+const DEFAULT_ROOM = "hoskins-living";
+const ROOM_ID = params.get("room") || DEFAULT_ROOM;
 const desktop = matchMedia("(min-width: 900px)");
 
-const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0 };
+// saved: the server keeps this room as it is (the prebuilt flat). Rooms built here go whole in each call, so an
+// edit, a server restart or another server instance never loses them. revs: edits per room (Find's cache).
+const state = { room: null, saved: true, piece: null, placement: null, spot: 0, findings: [], run: 0, revs: {}, list: [] };
 
 await firstPaint();
 const viewer = new Viewer($("view"), $("labels"));
-window.pocketRoom = { viewer, state, setFindings: (f) => { setFindings(f); renderVerdict(); } };   // for the console and tests
+window.pocketRoom = { viewer, state, draft: () => draft, setFindings: (f) => { setFindings(f); renderVerdict(); } };   // for the console and tests
 
 // ---------------------------------------------------------------- tabs and sheet
 const sheet = $("sheet");
 function show(tab) {
   for (const s of document.querySelectorAll(".screen")) s.hidden = s.dataset.screen !== tab;
+  const tabOf = tab === "newroom" ? "room" : tab;   // New room opens from My room
   for (const b of document.querySelectorAll(".tabs button")) {
-    if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    if (b.dataset.tab === tabOf) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
   sheet.classList.remove("folded");
   if (tab === "verdict") $("verdict-dot").hidden = true;
@@ -32,7 +37,7 @@ function show(tab) {
 $("tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-tab]");
   if (!b) return;
-  const current = b.getAttribute("aria-current") === "page";
+  const current = !document.querySelector(`.screen[data-screen="${b.dataset.tab}"]`).hidden;
   if (current && !desktop.matches) { sheet.classList.toggle("folded"); layout(); } else show(b.dataset.tab);
 });
 $("grip").onclick = () => { sheet.classList.toggle("folded"); layout(); };
@@ -71,7 +76,7 @@ function busyBox(scope) {
   let timers = [];
   const stop = () => { timers.forEach(clearTimeout); timers = []; };
   const api = {
-    // steps: [[ms, text], ...] move the sub line on while the call runs
+    // steps: [[ms, text, heading?], ...] move the sub line (and the heading) on while the call runs
     show(text, subText = "", { img, steps } = {}) {
       stop();
       box.classList.remove("failed");
@@ -82,7 +87,7 @@ function busyBox(scope) {
       sub.textContent = subText;
       const im = box.querySelector("img");
       if (im && img !== undefined) { im.hidden = !img; if (img) im.src = img; }
-      for (const [ms, t] of steps ?? []) timers.push(setTimeout(() => (sub.textContent = t), ms));
+      for (const [ms, t, head] of steps ?? []) timers.push(setTimeout(() => { sub.textContent = t; if (head) step.textContent = head; }, ms));
     },
     hide() { stop(); box.hidden = true; pick.hidden = false; },
     fail(err, retry) {
@@ -101,7 +106,7 @@ function busyBox(scope) {
   };
   return api;
 }
-const addBusy = busyBox("add"), findBusy = busyBox("find");
+const addBusy = busyBox("add"), findBusy = busyBox("find"), roomBusy = busyBox("newroom");
 
 // ---------------------------------------------------------------- header tools
 $("btn-names").onclick = (e) => {
@@ -112,20 +117,324 @@ $("btn-names").onclick = (e) => {
 $("btn-home").onclick = () => viewer.home(true);
 
 // ---------------------------------------------------------------- My room
-async function loadRoom() {
+// rooms built in this browser, kept so a reload or a restarted server still has them
+const BUILT_KEY = "pocket-room:built";
+function builtRooms() {
+  try { return JSON.parse(localStorage.getItem(BUILT_KEY)) || {}; } catch { return {}; }
+}
+function keepBuilt(room) {
+  try { localStorage.setItem(BUILT_KEY, JSON.stringify({ ...builtRooms(), [room.id]: room })); } catch {}
+}
+function forgetBuilt(id) {
+  try { const all = builtRooms(); delete all[id]; localStorage.setItem(BUILT_KEY, JSON.stringify(all)); } catch {}
+}
+const isBuilt = (room) => room && room.source !== "prebuilt";
+
+// the server's copy, else this browser's (sent back to the server so place / find / analyse know it by id too)
+async function fetchRoom(id) {
+  const local = builtRooms()[id];
+  try {
+    const room = await api.room(id);
+    return local && isBuilt(room) ? local : room;   // this browser's edits are the latest
+  } catch (err) {
+    if (!local) throw err;
+    api.saveRoom(local).catch(() => {});
+    return local;
+  }
+}
+
+async function loadRoom(id = ROOM_ID) {
   const t0 = performance.now();
-  const room = await api.room(ROOM_ID);
-  state.room = room;
-  state.saved = true;   // it came from the server's room store
-  const s = roomStats(room);
-  $("room-name").textContent = room.name;
-  const est = room.accuracy_m >= 0.1 ? ` · ±${Math.round(room.accuracy_m * 100)} cm` : "";
-  $("room-meta").textContent = `${s.W.toFixed(2)} × ${s.D.toFixed(2)} m · ${s.area.toFixed(1)} m² · ${room.height ?? 2.4} m ceiling · ${room.furniture?.length ?? 0} pieces${est}`;
-  layout();
-  await viewer.setRoom(room);
-  $("view").classList.add("ready");
+  let room;
+  try { room = await fetchRoom(id); }
+  catch (err) { if (id === DEFAULT_ROOM) throw err; toast("That room isn't here any more. Showing the living room."); room = await fetchRoom(DEFAULT_ROOM); }
+  await openRoom(room);
   console.log(`[pocket-room] room ready ${Math.round(performance.now() - t0)} ms after the script ran, ${Math.round(performance.now())} ms after navigation`);
 }
+
+// Make a room "my room": the 3D, the sheet, the switcher; any piece on show goes (it was placed in the old room).
+async function openRoom(room, { keepView = false } = {}) {
+  state.run++;
+  Object.assign(state, { room, saved: !isBuilt(room), piece: null, placement: null, spot: 0, findings: [] });
+  viewer.clearPiece();
+  viewer.clearFindings();
+  viewer.setHidden([]);
+  $("verdict-building").hidden = true;
+  if (!keepView) $("still").hidden = true;
+  if (isBuilt(room)) keepBuilt(room);
+  if (!state.list.some((r) => r.id === room.id)) state.list.push({ id: room.id, name: room.name, source: room.source });
+  renderRoomInfo();
+  renderSwitcher();
+  renderVerdict();
+  const q = new URLSearchParams(location.search);
+  if (room.id === DEFAULT_ROOM) q.delete("room"); else q.set("room", room.id);
+  q.delete("tab");
+  history.replaceState(null, "", `${location.pathname}${q.size ? `?${q}` : ""}`);
+  layout();
+  await viewer.setRoom(room, { keepView });
+  $("view").classList.add("ready");
+}
+
+const m2 = (v) => `${v.toFixed(2)} m`;
+function renderRoomInfo() {
+  const room = state.room, s = roomStats(room), d = dims(room);
+  $("room-name").textContent = room.name;
+  const n = (room.furniture?.length ?? 0) + (room.fixtures?.length ?? 0);
+  $("room-meta").textContent = `${s.W.toFixed(2)} × ${s.D.toFixed(2)} m (${feetInches(s.W)} × ${feetInches(s.D)}) · ${s.area.toFixed(1)} m² · ${d.height.toFixed(2)} m ceiling · ${n} ${n === 1 ? "piece" : "pieces"}`;
+  const built = isBuilt(room);
+  const sure = sureWords(room);
+  $("room-sure").hidden = !built || !sure.text;
+  $("room-sure").className = `sure ${sure.level}`;
+  $("room-sure").querySelector(".sure-text").textContent = `Size ${sure.text}`;
+  $("room-nudge").hidden = !built || !sure.nudge;
+  $("room-nudge").querySelector("p").textContent = sure.nudge;
+  $("nudge-photo").hidden = room.source !== "photo";
+  $("room-fix").hidden = !built;
+  if (built) renderFix();
+  renderPlanRooms();
+}
+
+// ---------------------------------------------------------------- room switcher
+const shortName = (r) => r.name.replace(/, Hoskins Street$/, "").replace(/ \(from (photo|plan)\)$/, "");
+function renderSwitcher() {
+  const el = $("room-switch");
+  const add = document.createElement("button");
+  add.className = "new";
+  add.textContent = "+ New room";
+  add.onclick = () => startNewRoom();
+  // rooms built here first (newest first, next to "New room"), then the flat
+  const rooms = [...state.list.filter((r) => r.source !== "prebuilt").reverse(), ...state.list.filter((r) => r.source === "prebuilt")];
+  // the same room built twice gets a number: "Room r0", "Room r0 · 2"
+  const seenName = {};
+  const label = new Map([...rooms].reverse().map((r) => { const n = shortName(r); seenName[n] = (seenName[n] ?? 0) + 1; return [r.id, seenName[n] > 1 ? `${n} · ${seenName[n]}` : n]; }));
+  const chips = rooms.map((r) => {
+    const b = document.createElement("button");
+    b.setAttribute("role", "listitem");
+    b.textContent = label.get(r.id);
+    b.title = r.name;
+    if (r.source !== "prebuilt") b.classList.add("built");
+    if (r.id === state.room?.id) b.setAttribute("aria-current", "true");
+    b.onclick = async () => {
+      if (r.id === state.room?.id) return;
+      try { await openRoom(await fetchRoom(r.id)); } catch (err) { toast(plain(err)); }
+    };
+    return b;
+  });
+  el.replaceChildren(add, ...chips);
+  el.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+async function loadRoomList() {
+  let server = [];
+  try { ({ rooms: server } = await api.rooms()); } catch {}
+  const local = Object.values(builtRooms()).map(({ id, name, source }) => ({ id, name, source }));
+  const seen = new Set();
+  state.list = [...server, ...local, ...state.list].filter((r) => !seen.has(r.id) && seen.add(r.id));
+  renderSwitcher();
+}
+
+// ---------------------------------------------------------------- fix the room (code only: no model call)
+const STEP = { width: 0.1, depth: 0.1, height: 0.05 };
+function renderFix() {
+  const d = dims(state.room);
+  for (const el of document.querySelectorAll(".stepper")) {
+    const k = el.dataset.dim, input = el.querySelector("input");
+    if (document.activeElement !== input) input.value = d[k].toFixed(2);
+    el.querySelector("small").textContent = feetInches(d[k]);
+    el.querySelector('[data-d="-1"]').disabled = d[k] <= LIMITS[k][0];
+    el.querySelector('[data-d="1"]').disabled = d[k] >= LIMITS[k][1];
+  }
+  $("fix-measured").checked = bothMeasured(state.room);
+  const items = [...(state.room.furniture ?? []), ...(state.room.fixtures ?? [])];
+  $("objs-lead").textContent = items.length ? `What the ${state.room.source === "floorplan" ? "plan" : "photo"} found (tap × to take out a wrong one):` : "No furniture in this room yet.";
+  $("objs").replaceChildren(...items.map((it) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span></span><small></small><button aria-label="Take it out">×</button>`;
+    li.querySelector("span").textContent = it.name;
+    li.querySelector("small").textContent = sizeCm(it.size.slice(0, 2));
+    li.querySelector("button").onclick = () => { editRoom(removeItem(state.room, it.id)); toast(`${it.name} taken out.`); };
+    return li;
+  }));
+}
+
+let saveTimer;
+async function editRoom(room) {
+  state.revs[room.id] = (state.revs[room.id] ?? 0) + 1;
+  await openRoom(room, { keepView: true });
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => api.saveRoom(state.room).catch((e) => console.warn("[pocket-room] room not saved on the server:", e.message)), 500);
+}
+const measuredNow = () => ($("fix-measured").checked ? ["width", "depth"] : []);
+$("steppers").addEventListener("click", (e) => {
+  const b = e.target.closest(".step");
+  if (!b) return;
+  const k = b.closest(".stepper").dataset.dim;
+  const v = Math.round((dims(state.room)[k] + Number(b.dataset.d) * STEP[k]) * 100) / 100;
+  editRoom(resizeRoom(state.room, { [k]: v }, { measured: measuredNow() }));
+});
+$("steppers").addEventListener("change", (e) => {
+  const input = e.target.closest("input");
+  if (!input) return;
+  const k = input.closest(".stepper").dataset.dim, v = parseLength(input.value, "m");
+  if (v) editRoom(resizeRoom(state.room, { [k]: v }, { measured: measuredNow() }));
+  else { input.value = dims(state.room)[k].toFixed(2); toast("Type a size in metres, like 4.2."); }
+  input.blur();
+});
+$("fix-measured").onchange = () => editRoom(resizeRoom(state.room, {}, { measured: measuredNow() }));
+$("nudge-measure").onclick = () => {
+  $("room-fix").open = true;
+  $("room-fix").scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => $("steppers").querySelector("input")?.focus(), 350);
+  toast("Type the width and length you measured, then tick “I measured”.", 4500);
+};
+$("nudge-photo").onclick = () => { startNewRoom({ more: true }); $("in-room").click(); };
+
+// a plan with more than one room: build another one from the same plan (the pipeline caches it: instant)
+const planImages = {};   // room id → the plan it came from (kept in memory only)
+const roomPhotos = {};   // room id → its first photo, for Photo view (memory only)
+function renderPlanRooms() {
+  const box = $("plan-rooms"), room = state.room, plan = planImages[room.id];
+  const others = (room._plan_rooms ?? []).filter((r) => !r.picked && r.area_m2 >= 2);
+  box.hidden = !plan || !others.length;
+  if (box.hidden) return;
+  box.querySelector(".chips").replaceChildren(...others.map((r) => {
+    const b = document.createElement("button");
+    b.className = "chip-btn";
+    b.textContent = `${r.id.toUpperCase()} · ${r.area_m2.toFixed(0)} m²`;
+    b.onclick = async () => {
+      b.disabled = true;
+      try {
+        const next = await api.fromPlan({ image: plan, room: r.id });
+        planImages[next.id] = plan;
+        await openRoom(next);
+      } catch (err) { toast(plain(err)); b.disabled = false; }
+    };
+    return b;
+  }));
+}
+
+// ---------------------------------------------------------------- New room
+// draft: up to 4 room photos (JPEG data URLs) or one plan; replaces = the room these photos built before
+const draft = { photos: [], plan: null, replaces: null, unit: "m" };
+const MAX_SHOTS = 4;
+let options = { photo: true, plan: false };
+api.roomOptions().then((o) => { options = o; $("plan-entry").hidden = !o.plan; }).catch(() => {});
+
+function startNewRoom({ more = false } = {}) {
+  if (!more || draft.replaces !== state.room?.id) {
+    // a new room starts from an empty form (the last room's measurements would stretch this one)
+    Object.assign(draft, { photos: [], plan: null, replaces: null });
+    for (const id of ["m-width", "m-depth", "room-name-in"]) $(id).value = "";
+    for (const id of ["m-width", "m-depth"]) readMeasured(id);
+    $("measured").open = false;
+  }
+  if (more && isBuilt(state.room)) $("room-name-in").value = state.room.name.replace(/ \(from (photo|plan)\)$/, "");
+  roomBusy.hide();
+  renderDraft();
+  show("newroom");
+}
+
+function renderDraft() {
+  const shots = draft.photos.map((src, i) => {
+    const d = document.createElement("div");
+    d.className = "shot";
+    d.innerHTML = `<img alt="Room photo ${i + 1}"><b>${i + 1}</b><button aria-label="Remove photo ${i + 1}">×</button>`;
+    d.querySelector("img").src = src;
+    d.querySelector("button").onclick = () => { draft.photos.splice(i, 1); renderDraft(); };
+    return d;
+  });
+  const add = $("add-shot");
+  add.hidden = !!draft.plan || draft.photos.length >= MAX_SHOTS;
+  add.querySelector("span").textContent = draft.photos.length ? "Another corner" : "Take or add photos";
+  $("shots").replaceChildren(...shots, add);
+  $("shots").hidden = !!draft.plan;
+  $("plan-pick").hidden = !draft.plan;
+  if (draft.plan) $("plan-pick").querySelector("img").src = draft.plan;
+  $("plan-entry").hidden = !options.plan || !!draft.plan;
+  $("btn-build").disabled = !draft.photos.length && !draft.plan;
+  $("btn-build").textContent = draft.plan ? "Build from the plan" : draft.photos.length > 1 ? `Build from ${draft.photos.length} photos` : "Build my room";
+}
+
+$("in-room").onchange = async (e) => {
+  const files = [...e.target.files].slice(0, MAX_SHOTS - draft.photos.length);
+  e.target.value = "";
+  if (e.target.files.length > files.length) toast(`Up to ${MAX_SHOTS} photos; we kept the first ${files.length}.`);
+  draft.plan = null;
+  for (const f of files) {
+    try { draft.photos.push(await imageToDataURL(f, 1280)); } catch { toast("That file isn't a photo we can read."); }
+    renderDraft();
+  }
+};
+$("in-plan").onchange = async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  try { draft.plan = await imageToDataURL(f, 2000); draft.photos = []; } catch { toast("That file isn't a picture we can read."); }
+  renderDraft();
+};
+$("plan-clear").onclick = () => { draft.plan = null; renderDraft(); };
+$("btn-newroom-cancel").onclick = () => show("room");
+
+// measured walls: metres or feet and inches
+const unitButtons = document.querySelectorAll(".units button");
+for (const b of unitButtons) b.onclick = () => {
+  draft.unit = b.dataset.unit;
+  unitButtons.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  for (const id of ["m-width", "m-depth"]) { $(id).placeholder = draft.unit === "ft" ? `e.g. ${id === "m-width" ? "13' 9\"" : "11' 10\""}` : `e.g. ${id === "m-width" ? "4.2" : "3.6"}`; readMeasured(id); }
+};
+function readMeasured(id) {
+  const input = $(id), small = input.nextElementSibling, text = input.value.trim();
+  const v = parseLength(text, draft.unit);
+  const ok = v && v >= LIMITS.width[0] && v <= LIMITS.width[1];
+  small.className = text && !ok ? "bad" : "";
+  small.textContent = !text ? "" : ok ? `= ${m2(v)} (${feetInches(v)})` : draft.unit === "ft" ? "Type it like 13' 9\" or 13 9" : "Type it in metres, like 4.2";
+  return ok ? v : null;
+}
+for (const id of ["m-width", "m-depth"]) $(id).oninput = () => readMeasured(id);
+
+$("btn-build").onclick = async () => {
+  const width = readMeasured("m-width"), depth = readMeasured("m-depth");
+  const name = $("room-name-in").value.trim() || undefined;
+  const plan = draft.plan, photos = [...draft.photos], replaces = draft.replaces;
+  const go = async () => {
+    const t0 = performance.now();
+    try {
+      let room;
+      if (plan) {
+        roomBusy.show("Reading the plan…", "Tracing the walls and doors…", { img: plan, steps: [
+          [5000, "Sizing it from the door widths…"], [10000, "Turning the trace into walls…", "Building your room…"], [30000, "Still tracing: a big plan takes longer…"]] });
+        room = await api.fromPlan({ image: plan, name });
+        planImages[room.id] = plan;
+        // a wall the reader taped pins the scale (code, not the model)
+        const measured = [width && "width", depth && "depth"].filter(Boolean);
+        if (measured.length) {
+          room = resizeRoom(room, { width: width ?? undefined, depth: depth ?? undefined }, { measured });
+          api.saveRoom(room).catch(() => {});
+        }
+      } else {
+        const n = photos.length;
+        roomBusy.show("Reading the walls…", `${n === 1 ? "One photo" : `${n} photos`}: counting door widths, bricks and chairs along each wall…`, { img: photos[0], steps: [
+          [5000, "Finding the doors, windows and big furniture…"], [10000, "Turning the counts into metres…", "Building your room…"],
+          [17000, "Putting the furniture in…"], [30000, "Still reading: more photos take a little longer…"]] });
+        const hint = width || depth ? { width_m: width ?? undefined, depth_m: depth ?? undefined } : undefined;
+        room = await api.fromPhoto({ images: photos, hint, name });
+        roomPhotos[room.id] = photos[0];
+      }
+      const secs = Math.round((performance.now() - t0) / 100) / 10;
+      console.log(`[pocket-room] built ${room.id} in ${secs} s (${plan ? "plan" : `${photos.length} photo${photos.length > 1 ? "s" : ""}`}), ±${room.accuracy_m} m`);
+      if (replaces && replaces !== room.id) {   // more photos of the same room: the new build takes its place
+        forgetBuilt(replaces);
+        state.list = state.list.filter((r) => r.id !== replaces);
+      }
+      Object.assign(draft, { replaces: plan ? null : room.id });
+      await openRoom(room);
+      roomBusy.hide();
+      show("room");
+      toast(`Built in ${secs} s. Turn it with a finger; fix the size below if it's off.`, 5000);
+    } catch (err) { roomBusy.fail(err, go); }
+  };
+  await go();
+};
 
 $("btn-check").onclick = async (e) => {
   const b = e.currentTarget;
@@ -161,7 +470,8 @@ $("btn-photo").onclick = async (e) => {
   b.disabled = true;
   b.innerHTML = `<span class="spin small"></span>Making a photo of this view… ~15 s`;
   try {
-    const { image } = await api.render(state.room.id, viewer.snapshot());
+    // a room built from photos lends its own first photo, so the picture keeps its real floor and walls
+    const { image } = await api.render(state.room.id, viewer.snapshot(), undefined, roomPhotos[state.room.id]);
     if (image) { $("still").src = image; $("still").hidden = false; show("room"); }
   } catch (err) { toast(plain(err)); }
   b.disabled = false;
@@ -258,6 +568,7 @@ const size = (p) => `${p.size[0].toFixed(2)} × ${p.size[1].toFixed(2)} × ${p.s
 // ---------------------------------------------------------------- Find for me
 const PLURAL = { sofa: "sofas", armchair: "armchairs", chair: "chairs", bookcase: "bookcases", shelf: "shelves", sideboard: "sideboards",
   desk: "desks", table: "tables", bed: "beds", rug: "rugs", lamp: "lamps", cabinet: "cabinets" };
+const searched = new Set();
 async function findFor(q) {
   show("find");
   $("find-results").hidden = true;
@@ -268,7 +579,11 @@ async function findFor(q) {
         [7000, "Opening each product page…"], [14000, "Reading the stated sizes off each page…"],
         [22000, "Checking each one against your walls and walkways…"], [32000, "Picking three that suit your room…"],
         [55000, "Still going: some shops are slow…"]] });
-      const out = await api.find({ roomId: state.room.id, query: q, room: state.saved ? undefined : state.room });
+      // an edited room keeps its id: ask afresh the first time after an edit, not the cached answer
+      const key = `${state.room.id}:${state.revs[state.room.id] ?? 0}:${q.trim().toLowerCase()}`;
+      const fresh = (state.revs[state.room.id] ?? 0) > 0 && !searched.has(key);
+      const out = await api.find({ roomId: state.room.id, query: q, room: state.saved ? undefined : state.room, fresh: fresh || undefined });
+      searched.add(key);
       if (!out.pieces?.length) throw new Error(out.say || `Nothing we found fits this room. Try other words, or a smaller ${what ?? "piece"}.`);
       findBusy.hide();
       $("find-pick").hidden = true;
@@ -431,9 +746,11 @@ async function takeShared() {
 layout();
 try {
   await loadRoom();
+  loadRoomList();
 } catch (err) {
   $("loading-text").textContent = `Couldn't load the room: ${plain(err)}`;
   throw err;
 }
 if (params.has("shared")) await takeShared();
+else if (params.get("tab") === "newroom") startNewRoom();
 else if (params.get("tab")) show(params.get("tab"));
