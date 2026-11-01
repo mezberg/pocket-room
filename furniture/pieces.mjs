@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readPicture } from "./vision.mjs";
-import { resolveSize } from "./sizes.mjs";
-import { kitFor } from "./parametric.mjs";
+import { resolveSize, CATEGORIES } from "./sizes.mjs";
+import { kitFor, templateFor } from "./parametric.mjs";
 import { astraBuild, model3d } from "./astra3d.mjs";
 import { meshyAvailable, meshyBuild } from "./meshy.mjs";
 import { normalise, toGLB, fromGLB } from "./glb.mjs";
@@ -123,13 +123,63 @@ export async function createPieceFromFacts(facts, { image, kitRead = {} } = {}) 
   return save(piece);
 }
 
-async function build(piece, image, route) {
+// A piece standing in a room built from photos: its size is the room's (computed by code), its picture a crop
+// of the room photo, `notes` says which object and what it looks like. Builds in the background like any piece;
+// with no image-to-3D route it stays a kit piece.
+export function createPieceForItem(item, { image, notes }) {
+  const id = randomUUID().slice(0, 8);
+  writeFileSync(imageFile(id), Buffer.from(image.split(",")[1], "base64"));
+  const category = CATEGORY_OF[item.category] ?? item.category;
+  const piece = {
+    id, category: CATEGORIES.includes(category) ? category : "other", name: item.name, size: [...item.size], size_source: "vision_estimate", size_text: null,
+    style: { tags: [], colors: item.color ? [item.color] : [], material: undefined },
+    source: { kind: "photo", image: `/api/pieces/${id}/image`, room_item: item.id },
+    model: { status: "pending" }, timing: { read_ms: 0 }, notes,
+  };
+  const kit = kitFor(piece, { kit_template: templateFor(piece.category, piece.size) });
+  const route = imageTo3dRoute();
+  if (route === "astra") {
+    piece.model = { status: "building", how: "image_to_3d", glb: null, parametric: kit, job: `astra:${id}` };
+    build(piece, image, route, notes);
+  } else piece.model = { status: kit ? "ready" : "failed", how: kit ? "parametric" : null, glb: null, parametric: kit, job: null };
+  return save(piece);
+}
+const CATEGORY_OF = { radiator: "other", column: "other" };
+
+// Build a piece's model again from its own picture, with what a look check said was wrong.
+// What the look check said about the piece's current model (so a model is checked once, not on every visit).
+export function noteLook(id, look) {
+  const p = getPiece(id);
+  return p ? save({ ...p, look: { glb: p.model?.glb ?? null, verdict: look.verdict, issues: look.issues } }) : null;
+}
+
+// The picture a piece was built from, as a data URL (a stored upload or room-photo crop), else null.
+export function pictureOf(id) {
+  if (!existsSync(imageFile(id))) return null;
+  const buf = readFileSync(imageFile(id));
+  const type = buf[0] === 0x89 ? "png" : buf[0] === 0x52 ? "webp" : "jpeg";
+  return `data:image/${type};base64,${buf.toString("base64")}`;
+}
+
+export function rebuildPiece(id, feedback, { color } = {}) {
+  const p = getPiece(id);
+  const image = p && pictureOf(id);
+  if (!image || imageTo3dRoute() !== "astra") return null;
+  const notes = `${p.notes ?? ""}\nA check compared your last model with the picture and found: ${feedback} Fix that; keep what was right.`;
+  const style = color ? { ...p.style, colors: [color, ...(p.style?.colors ?? []).slice(1)] } : p.style;
+  const piece = save({ ...p, style, model: { ...p.model, status: "building" }, rebuilds: (p.rebuilds ?? 0) + 1, feedback: [...(p.feedback ?? []), feedback] });
+  build(piece, image, "astra", notes);
+  return piece;
+}
+
+async function build(piece, image, route, notes) {
   const t0 = Date.now();
   try {
     let doc;
-    if (route === "astra") doc = (await astraBuild(image, piece)).doc;
+    if (route === "astra") doc = (await astraBuild(image, piece, { notes })).doc;
     else doc = await fromGLB((await meshyBuild(image)).bytes);
-    const glb = await writeModel(piece.id, doc, piece.size);
+    let glb = await writeModel(piece.id, doc, piece.size);
+    if (piece.rebuilds) glb += `?v=${piece.rebuilds}`;   // a new model at the same path: bust the app's cache
     save({ ...piece, model: { ...piece.model, status: "ready", glb }, timing: { ...piece.timing, model_ms: Date.now() - t0 } });
   } catch (err) {
     console.error(`piece ${piece.id}: ${route} failed:`, err.message);

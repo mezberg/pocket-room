@@ -20,7 +20,7 @@ const PART = {
 };
 const SCHEMA = { type: "object", additionalProperties: false, required: ["parts"], properties: { parts: { type: "array", items: PART } } };
 
-const PROMPT = ({ name, size }) => `Rebuild the ${name} in this picture as a 3D model made of primitives, as a CAD modeller would.
+const PROMPT = ({ name, size }, notes) => `Rebuild the ${name} in this picture as a 3D model made of primitives, as a CAD modeller would.${notes ? `\n${notes}` : ""}
 Overall size: width ${size[0]} m (x), height ${size[2]} m (y), depth ${size[1]} m (z).
 Frame: y up, floor at y = 0, the front of the piece faces +z, centred on x = 0, z = 0.
 Use 15-60 parts. Get the silhouette and proportions right first (base, seat, back, arms, legs, doors, top),
@@ -29,13 +29,14 @@ Colours sampled from the photo; use slightly different shades for parts that mee
 Only the piece: no floor, wall, tag, props or people.`;
 
 // → { doc, parts, ms, usage }
-export async function astraBuild(image, piece, { effort = "low" } = {}) {
+// notes: extra text for the modeller (which object in a room photo, what it looks like, what a check said was wrong)
+export async function astraBuild(image, piece, { effort = "low", notes } = {}) {
   const t0 = Date.now();
   const { openai } = await import("../server/openai.mjs");   // lazy: tests and keyless runs never build a client
   const res = await openai.responses.create({
     model: model3d(),
     reasoning: { effort },
-    input: [{ role: "user", content: [{ type: "input_text", text: PROMPT(piece) }, { type: "input_image", image_url: image }] }],
+    input: [{ role: "user", content: [{ type: "input_text", text: PROMPT(piece, notes) }, { type: "input_image", image_url: image }] }],
     text: { format: { type: "json_schema", name: "parts", strict: true, schema: SCHEMA } },
   });
   const parts = cleanParts(JSON.parse(res.output_text).parts);

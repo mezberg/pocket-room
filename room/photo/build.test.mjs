@@ -314,3 +314,30 @@ test("a measured sofa across an opening stays; the opening slides along its wall
   assert.match(repairs.join(";"), /opening_1 moved \d+ cm along its wall/);
   assert.deepEqual(broken(room), []);
 });
+
+// In the app the coffee table was pushed 75 cm off the sofa "to leave a way": that gap is legroom.
+test("the gap between a sofa and its coffee table is left alone", () => {
+  const room = { id: "t", height: 2.5, fixtures: [], furniture: [], walls: [
+    { id: "south", a: [0, 0], b: [5, 0], openings: [] }, { id: "east", a: [5, 0], b: [5, 5], openings: [] },
+    { id: "north", a: [5, 5], b: [0, 5], openings: [] }, { id: "west", a: [0, 5], b: [0, 0], openings: [] }] };
+  room.furniture = [
+    { id: "sofa", name: "Sofa", category: "sofa", at: [2.5, 4.55], size: [2.2, 0.9, 0.8], rot: 0 },
+    { id: "coffee", name: "Coffee table", category: "table", at: [2.5, 3.425], size: [1.0, 0.5, 0.42], rot: 0 },
+  ];
+  settle(room);
+  assert.deepEqual(room.furniture[1].at, [2.5, 3.425]);   // 45 cm from the sofa's front, as read
+});
+
+// A real build of the Zoopla open plan (5 listing photos, POST /api/rooms/from-photo, 1 Nov 2026), as the
+// server returned it before the walkway step: "no proper way from the door 1 to the tall oven cabinet: 26 cm,
+// by the round glass dining table".
+test("the rules' walkway check names the pinch; a short move opens it", () => {
+  const room = JSON.parse(readFileSync(new URL("./fixtures/zoopla-openplan-blocked.room.json", import.meta.url)));
+  const fails = (r) => analyse(r).findings.filter((f) => f.id === "path_blocked" && !f.pass && f.severity === "fail");
+  assert.equal(fails(room).length, 1);
+  const { repairs, left_out } = settle(room);
+  assert.deepEqual(left_out, []);
+  assert.deepEqual(fails(room), []);
+  assert.deepEqual(broken(room), []);
+  assert.match(repairs.join(";"), /round_glass_dining_table moved \d+ cm to open the way/);
+});

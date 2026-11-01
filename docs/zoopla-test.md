@@ -32,7 +32,51 @@ by hand. Inputs (≤1600 px) are in `docs/test-inputs/zoopla/`, the request log 
 | STYRSPEL, POÄNG in `hoskins-living` | API place | "Doesn't fit" (POÄNG: best spot leaves 48 cm by the balcony door) | 0.1–1.3 s | plausible: the room already holds 19 pieces |
 | Place + Check my room in rooms A, B | API + app | run; findings include overlaps and doorways caused by rough photo positions | place 0.9 s, analyse 4–7 s | rules right on the data they get |
 
-## Fixed (room/, furniture/, contract), with tests — `npm test` 121/121
+## Kate's review: the room as built must pass Check my room
+"The table is half the room, there are overlaps in the basic model, caught by the check." Right: before anything
+was added, Check my room found pieces through each other, a kitchen in a door and a guessed 1.6 m table in a 3 m
+room. That is a build bug, not "rough positions". `room/photo/settle.mjs` now runs after every photo build with the
+rules' own geometry (`rules/geom.mjs`) and walkway check (`rules/check.mjs`), and repairs what the reading got wrong:
+short legal moves (never off a wall), a kitchen run cut back to the door it runs into, guessed sizes shrink
+(default dining table 1.6 → 1.2 m), an L-shaped sofa as arm + chaise (chaise away from the coffee table in its
+crook), a door slid along its wall when a measured piece stands in it, pieces a little off a wall put back, gaps
+under 60 cm opened, and the pinches the walkway check names opened by ≤ 30 cm. A piece is left out only when nothing
+else works, and the caveats say so. `_derived.repairs` lists every change. Cost: 1–3 s on a 20–35 s build.
+
+Check my room on the rooms as built (fresh `POST /api/rooms/from-photo` runs, no piece added):
+
+| room | before | after (runs) |
+|---|---|---|
+| Room B, 1 photo | sofa / table overlap 20 cm, plant overlaps, 1.6 m table | 0 rule findings (4 runs) |
+| Room A, photo 1 | coffee table "on" the L-sofa, sofa in the bedroom opening | no overlap / door / wall; 1 tight walkway warning, 1 run with a 35 cm warning |
+| Room A, 5 photos | 3 overlaps, kitchen in the glazed door, 3 blocked ways | no overlap / door / wall, nothing left out (3 runs); 2 of 3 with no blocked way, one with 3 around the balcony door |
+| Venue | — | 0 (3 runs); red chesterfields keep `#80272e` / `#74272d` |
+
+The open-plan room is the hard case: five listing photos not taken corner to corner, so the balcony door and the
+entry door land on different walls run to run, and one run still has blocked ways there.
+
+## Kate's review 2: "this is ridiculously not like the kitchen on photo"
+Nothing in a photo room came from astra: the reading gave boxes, the app drew every cupboard as a white wardrobe kit,
+and nothing compared the 3D with the photo. Now:
+1. The reading says which photo shows each object, its box there and what it looks like; a fitted kitchen is one
+   run up to its wall units (`room/photo/read.mjs`).
+2. `room/photo/models.mjs` crops each big item out of its photo and astra builds it from the crop at the size code
+   computed (`furniture/pieces.mjs` `createPieceForItem`); `item.piece` links it, the app swaps it in when ready.
+3. Astra checks its own work: the app renders each model on its own (`viewer.modelShot`) and
+   `POST /api/pieces/:id/look` puts it next to the picture it was built from (`furniture/look.mjs`):
+   matches / wrong (what to fix) / can't tell. Wrong → rebuilt with that feedback, twice at most; each model is
+   checked once (the verdict is kept on the piece). Pieces added from shop photos get the same check.
+
+Zoopla open plan in the app (5 photos): room in 42 s (the read is slower with boxes and looks: 37–43 s against
+20–30 s), 7 models from crops in 13–31 s, checks 2–6 s each. 4 of 7 judged wrong and rebuilt once, then all matched:
+the kitchen ("smaller-scale herringbone; the tall cabinet at the end"), the L-sofa sections (arm on the wrong end,
+back cushions), the coffee table top colour. `docs/screens/zoopla-kitchen-photo-vs-3d.jpg`,
+`docs/screens/zoopla-desktop-6-room-a-astra-models.jpg`.
+Left: the oven tower stands apart from the run (the reading put the balcony door there, settle moved it); a check
+of the whole room against the photo needs the photo's viewpoint, which listing photos don't give (tried, judged
+"not visible" for everything, dropped).
+
+## Fixed (room/, furniture/, contract), with tests — `npm test` 148/148
 - **Colours lost** (the red sofa → beige): photo rooms kept no colour per piece, so the app painted every sofa linen.
   The reading now gives each object its colour; items carry `color` (contract: optional, additive, own commit).
 - **Heights and depths**: every cupboard was 2 m (low TV units, kitchen runs) and every table 0.74 × 0.8 m.
@@ -40,9 +84,7 @@ by hand. Inputs (≤1600 px) are in `docs/test-inputs/zoopla/`, the request log 
   is not on the floor (it sits on its unit).
 - **Misread references**: a reading 1.5× off the median of three or more is dropped and marked in `_derived`;
   the prompt says table_height means a dining table, not a coffee table. Room A photo 1: ±1.33 → ±0.60 m.
-- **Overlapping pieces** from rough positions: pushed apart by the shortest step (either piece), inside the walls,
-  never more than 60 cm, never pulling a piece off the wall it stands against; chairs may stay tucked under tables,
-  rugs under things. `_derived.moved` lists each move.
+- **The room as built fails Check my room** (overlaps, doorways, guessed sizes, blocked ways): see above.
 - **Chair height range** 1.2 → 1.5 m (office chairs with a headrest).
 
 ## Left for the other areas (not edited here)
@@ -53,9 +95,9 @@ by hand. Inputs (≤1600 px) are in `docs/test-inputs/zoopla/`, the request log 
 - **App/furniture handoff**: the stand-in for an office chair is a dining chair kit piece (kit has no office chair
   template; `app/js/furniture.js` has `officeChair()` only for room items).
 - **Place**: "Fits. Put it there, where your photos show the room." names no wall or spot (room B).
-- **Rules/analyse**: an L-shaped sectional is one box, so it "overlaps" the coffee table in its crook and
-  "stands in" a nearby opening. Room side could split it into two boxes later; rules could tolerate rug/table in
-  a sofa's crook.
+- **Rules/analyse**: a window behind a 40 cm media unit counts as unreachable ("no way from the glazed door to
+  window 1, by the low media unit"); a coffee table 40–50 cm in front of a sofa is legroom, not a blocked way.
+- **App**: walkway warnings (60–62 cm, "Rule") get the same red markers as failures.
 - **Decisions**: "No lights are recorded for this room yet" still grades as a 100% fail in every photo room.
 - **Test flake**: `server/rooms-store.test.mjs` "/analyse without the replace" fails with "fetch failed" about one
   run in two under the full `npm test`; passes 4/4 alone.
@@ -66,20 +108,21 @@ by hand. Inputs (≤1600 px) are in `docs/test-inputs/zoopla/`, the request log 
   the product picture (lane G's `readProductPage`).
 
 ## Request log (proof the app did the work)
-`docs/test-inputs/zoopla/requests-2026-11-01.jsonl`, 15:19–15:54, 211 lines: every `/api` request (method, path,
+`docs/test-inputs/zoopla/requests-2026-11-01.jsonl`, 15:19–16:16, 380 lines: every `/api` request (method, path,
 status, ms) and every OpenAI call (model, ms, tokens). One terra call is marked `diag`: a direct read to see the
 model's raw chair estimate before the clamp. One raw-PNG room read went to another session's server on the same
 port and is not in this log.
 
 | call | n | median s | max s | tokens in / out |
 |---|---|---|---|---|
-| POST /api/rooms/from-photo | 11 | 19.7 | 29.5 | |
+| POST /api/rooms/from-photo | 46 | 20.6 | 36.9 | |
 | POST /api/pieces | 6 | 5.2 | 5.9 | |
 | POST /api/pieces/from-link | 2 | 3.9 | 3.9 | |
 | POST /api/place | 8 | 0.9 | 7.2 | |
-| POST /api/analyse | 6 | 4.0 | 6.8 | |
+| POST /api/analyse | 42 | 0.7 | 6.8 | |
+| POST /api/fixes (the app, after Check my room) | 15 | 0.3 | 1.1 | |
 | GET /api/pieces/:id (poll) | 120 | 0.0 | 0.0 | |
-| PUT /api/rooms/:id (app puts rooms back after a restart) | 4 | 0.0 | 0.0 | |
-| OpenAI gpt-6.1-terra (room + piece + page reads) | 19 | 15.5 | 29.5 | 87,162 / 19,359 |
+| PUT /api/rooms/:id (app puts rooms back after a restart) | 6 | 0.0 | 0.0 | |
+| OpenAI gpt-6.1-terra (room + piece + page reads) | 54 | 19.2 | 31.9 | 306,422 / 76,725 |
 | OpenAI gpt-6-astra (3D parts) | 8 | 37.3 | 49.4 | 22,190 / 27,162 |
-| OpenAI gpt-6-luna (Decisions) | 12 | 0.9 | 4.0 | 11,268 / 0 |
+| OpenAI gpt-6-luna (Decisions) | 52 | 0.7 | 5.2 | 47,134 / 0 |

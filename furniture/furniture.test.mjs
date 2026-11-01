@@ -115,3 +115,13 @@ test("an office chair with a headrest keeps its estimated height", () => {
   assert.equal(r.size_source, "vision_estimate");
   assert.equal(resolveSize({ category: "chair", estimate_m: { w: 0.5, d: 0.5, h: 2.4 } }).size[2], 1.5);
 });
+
+// Astra checks its own work (look.mjs). Zoopla: a whole-room check said "not visible, can't compare" for 7 models
+// and all 7 were rebuilt. Only "wrong" rebuilds, twice at most.
+test("look check: only a wrong model is rebuilt, twice at most; can't-tell changes nothing", async () => {
+  const { decide } = await import("./look.mjs");
+  assert.deepEqual(decide({ rebuilds: 0 }, { verdict: "wrong", issues: "Add the wall cabinets.", color: "#C9A77B" }), { rebuild: "Add the wall cabinets.", color: "#c9a77b" });
+  assert.deepEqual(decide({ rebuilds: 2 }, { verdict: "wrong", issues: "Add the wall cabinets.", color: null }), { rebuild: null, color: null });
+  assert.deepEqual(decide({}, { verdict: "cant_tell", issues: "Not visible.", color: "#ffffff" }), { rebuild: null, color: null });
+  assert.deepEqual(decide({}, { verdict: "matches", issues: "", color: null }), { rebuild: null, color: null });
+});
