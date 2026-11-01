@@ -328,7 +328,9 @@ export class Viewer {
 }
 
 const fmt = (m) => m.toFixed(2);
-const pieceLabel = (p) => `${p.name} · ${fmt(p.size[0])} × ${fmt(p.size[1])} m${p.model?.status === "building" ? " · building 3D…" : ""}`;
+// shop names run long ("Hutch Fabric Round Arm 3 Seater Sofa - Oat"): the label keeps the part before " - ", ≤ 26 chars
+const short = (n = "") => { const s = n.split(" - ")[0]; return s.length > 26 ? `${s.slice(0, 25).trim()}…` : s; };
+const pieceLabel = (p) => `${short(p.name)} · ${fmt(p.size[0])} × ${fmt(p.size[1])} m${p.model?.status === "building" ? " · building 3D…" : ""}`;
 function bounce(k) {
   // fall, then a small bounce
   if (k < 0.7) return (k / 0.7) ** 2;

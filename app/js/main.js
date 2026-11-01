@@ -141,9 +141,10 @@ $("btn-check").onclick = async (e) => {
 
 async function checkRoom() {
   const run = state.run;
-  $("verdict-empty").hidden = true;
-  $("verdict-body").hidden = false;
-  $("findings-busy").hidden = false;
+  const busyEl = $("findings-busy");
+  busyEl.lastChild.textContent = state.piece ? " Checking the room with it in…" : " Checking your room: walkways, doors, light, flow…";
+  busyEl.hidden = false;
+  renderVerdict();
   try {
     const spot = state.piece ? spotOf(state.placement, state.spot) : null;
     const { findings } = await api.analyse(analyseBody(state.room, state.piece, spot, { saved: state.saved }));
@@ -303,8 +304,12 @@ function renderCards(out) {
     a.onclick = (e) => e.stopPropagation();
     const pick = async () => {
       document.querySelectorAll(".cards li").forEach((x) => x.classList.toggle("on", x === li));
-      try { await addPiece(async () => p, { show: () => {}, hide: () => {} }); }
-      catch (err) { toast(plain(err)); }
+      const acts = li.querySelector(".acts"), was = [...acts.childNodes];
+      const note = (html) => { const s = document.createElement("span"); s.innerHTML = html; acts.replaceChildren(s); };
+      const box = { show: () => note(`<span class="spin small"></span>Putting it in your room…`), hide: () => acts.replaceChildren(...was) };
+      box.show();
+      try { await addPiece(async () => p, box); }
+      catch (err) { box.hide(); toast(plain(err)); }
     };
     li.onclick = pick;
     return li;

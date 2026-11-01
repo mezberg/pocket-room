@@ -30,7 +30,8 @@ export function analyseBody(room, piece, spot, { saved = true } = {}) {
   if (!saved) body.room = room;
   const placed = placedPiece(piece, spot);
   if (placed) {
-    body.piece = { id: placed.id, name: placed.name, category: placed.category, size: placed.size, at: placed.at, rot: placed.rot,
+    // findings name it "the new sofa": shop names ("EKHOLMA 3-seat sofa - Kilanda light beige") make long sentences
+    body.piece = { id: placed.id, name: `New ${placed.category === "other" ? "piece" : placed.category}`, product: placed.name, category: placed.category, size: placed.size, at: placed.at, rot: placed.rot,
       style: placed.style, source: placed.source?.image?.startsWith("https:") ? { image: placed.source.image } : undefined };
     if (spot.replaces) body.replaces = spot.replaces;
   }
