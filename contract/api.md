@@ -18,6 +18,7 @@ the prebuilt Hoskins rooms and rooms built this session); a `room` in the body w
 | `POST /api/agent/find` | G | `{ roomId, room?, wall?, query }` | `{ pieces: [piece] }`, each already known to fit |
 | `POST /api/place` | D + E | `{ roomId, room?, piece, replace? }` | `placement` |
 | `POST /api/analyse` | D + E | `{ roomId, room?, piece?, replaces? }` | `{ findings: [finding] }` (piece with `at`/`rot` = the new piece in its spot; `replaces` = the item it takes out) |
+| `POST /api/fixes` | fixes/ | `{ roomId, room?, piece?, replaces?, finding }` | `fixes` for one finding from `/api/analyse` (same room and piece) |
 | `POST /api/render` | F | `{ roomId, view: dataURL, photo?, prompt? }` | `{ image: dataURL }` |
 
 ```ts
@@ -40,4 +41,24 @@ finding = {
   say: string,              // "The walkway by the door is 55 cm. Move the chair 20 cm."
   fix?: { item: string, at: [x, y], rot?: number }
 }
+
+fixes = {                   // POST /api/fixes: each option is measured (clears the finding, nothing else worse)
+  finding: string,          // the finding's id
+  options: option[],        // 0–3, the Decisions pick first
+  none?: string,            // no option: why, in plain words ("No easy fix: …")
+  decision?: { by: string, ms?: number, error?: string }   // by = model, or "rules" (one option, or the call failed)
+}
+option = {
+  id: string, kind: "move" | "turn" | "remove" | "add" | "resize" | "shop",
+  say: string,              // "Move the dining chair 3 10 cm north."
+  steps: step[],            // empty for "shop": a hint, nothing to apply
+  items: string[],
+  best?: true, probability?: number,   // the Decisions pick
+  after_m?: number,         // walkway findings: the width once applied
+  shop?: { category, name, size: [w, d, h] }
+}
+step = { item, at, rot } | { item, remove: true } | { item, size: [w, d, h] } | { add: item, light?: light }
 ```
+
+`spot.blocked` (optional, from `/api/place`): a way that was already under 60 cm before the piece came and is
+still closed beside this spot, `{ from, to, before_m, after_m, at, already: true }`. Such a spot is never `Fits`.

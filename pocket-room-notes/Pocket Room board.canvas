@@ -7,7 +7,7 @@
 			"x": 0,
 			"y": 8951,
 			"width": 1720,
-			"height": 826
+			"height": 1226
 		},
 		{
 			"id": "prog_group",
@@ -971,8 +971,8 @@
 			"y": 9011,
 			"width": 520,
 			"height": 326,
-			"color": "6",
-			"text": "**Tap an issue → get a suggested fix** 🟪 building option B (Kate's pick)\nCode search finds 2–3 checked fixes (moves, turns, multi-step moves, add a lamp); the Decisions API picks the designer's first choice (\"82% sure\"). Tap → ghost + arrow preview → Apply re-checks, marker turns green → 8 s Undo. 'No easy fix: why…' where nothing works.\nAlso fixing: placement said 'Just fits' while the check said paths blocked; room check 3.7 s → under 2 s.\nRejected: model proposes fixes (slow, 0 of 4 hard cases)."
+			"color": "4",
+			"text": "**Tap an issue → get a suggested fix** 🟩 on main (option B)\nUp to 3 fixes per issue, each checked by code to clear it without making anything worse; the Decisions API picks the designer's first choice (\"97% sure\"). Ghost preview → Apply re-checks → Undo.\nRoom check 2.4 s → 0.36 s; placement now says when a way was already blocked. 132/132 tests."
 		},
 		{
 			"id": "p3_cost",
@@ -1026,7 +1026,7 @@
 			"type": "group",
 			"label": "Designer flow",
 			"x": 0,
-			"y": 9977,
+			"y": 10397,
 			"width": 1760,
 			"height": 640
 		},
@@ -1034,7 +1034,7 @@
 			"id": "flow_head",
 			"type": "text",
 			"x": 40,
-			"y": 10037,
+			"y": 10457,
 			"width": 1500,
 			"height": 130,
 			"color": "5",
@@ -1044,7 +1044,7 @@
 			"id": "flow_1",
 			"type": "text",
 			"x": 40,
-			"y": 10207,
+			"y": 10627,
 			"width": 300,
 			"height": 260,
 			"color": "4",
@@ -1054,17 +1054,17 @@
 			"id": "flow_2",
 			"type": "text",
 			"x": 380,
-			"y": 10207,
+			"y": 10627,
 			"width": 300,
 			"height": 260,
-			"color": "6",
-			"text": "**2 · Errors grab attention**\nOverlaps and blocked paths drawn on the 3D: red on the pieces, red band on the blocked way, a fix one tap away (option B)."
+			"color": "4",
+			"text": "**2 · Errors grab attention**\nOverlaps and blocked paths drawn on the 3D: red on the pieces, red band on the blocked way, a fix one tap away (option B) ✅ fixes on main; red highlight on the 3D still to do."
 		},
 		{
 			"id": "flow_3",
 			"type": "text",
 			"x": 720,
-			"y": 10207,
+			"y": 10627,
 			"width": 300,
 			"height": 260,
 			"color": "6",
@@ -1074,7 +1074,7 @@
 			"id": "flow_4",
 			"type": "text",
 			"x": 1060,
-			"y": 10207,
+			"y": 10627,
 			"width": 300,
 			"height": 260,
 			"color": "6",
@@ -1084,7 +1084,7 @@
 			"id": "flow_5",
 			"type": "text",
 			"x": 1400,
-			"y": 10207,
+			"y": 10627,
 			"width": 300,
 			"height": 260,
 			"color": "6",
@@ -1094,11 +1094,29 @@
 			"id": "flow_who",
 			"type": "text",
 			"x": 40,
-			"y": 10497,
+			"y": 10917,
 			"width": 1500,
 			"height": 80,
-			"color": "5",
-			"text": "Session: Tap an issue, get a fix → finishes option B, then builds this flow. 🟪 = in progress, 🟩 = on main."
+			"color": "6",
+			"text": "Building now (1 Nov, after option B merged): 1) red highlights on the 3D · 2) top-3 advice · 3) place / move-then-place / replace with ghost plan. Pushed after each step. Session: Tap an issue, get a fix."
+		},
+		{
+			"id": "fiximg_0",
+			"type": "file",
+			"file": "attachments/fix_options.jpg",
+			"x": 40,
+			"y": 9797,
+			"width": 544,
+			"height": 340
+		},
+		{
+			"id": "fiximg_1",
+			"type": "file",
+			"file": "attachments/fix_applied_phone.jpg",
+			"x": 614,
+			"y": 9797,
+			"width": 157,
+			"height": 340
 		}
 	],
 	"edges": [

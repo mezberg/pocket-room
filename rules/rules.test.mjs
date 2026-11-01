@@ -22,7 +22,7 @@ function assertLegal(room, piece, spot) {
     assert.ok(!hitsSwing(op, P), `spot ${spot.at} is in ${op.id}'s swing`);
   }
   assert.ok(spot.clearance_m >= WALK_MIN);
-  assert.equal(spot.verdict, spot.clearance_m >= WALK_OK ? "Fits" : "Just fits");
+  assert.equal(spot.verdict, spot.blocked ? "Just fits" : spot.clearance_m >= WALK_OK ? "Fits" : "Just fits");
   assert.ok(spot.score >= 0 && spot.score <= 1);
   assert.ok(spot.reasons.length >= 2);
 }
@@ -169,4 +169,49 @@ test("fixture living room: the sofa gets sensible spots, analyse finds real prob
   findings.forEach(assertFindingShape);
   assert.ok(findings.length >= 2);
   assert.ok(findings.some((f) => f.id === "overlap" && f.items.includes("coffee_table")));
+});
+
+// --- the walls-only grid is kept per outline; place() and analyse() agree on ways already blocked ----------
+
+test("a cached grid gives the same walkways as a fresh one", async () => {
+  const { buildGrid, obstacles, routes } = await import("./grid.mjs");
+  const { reachable } = await import("./grid.mjs");
+  const room = fixtureRoom();
+  const items = [...room.fixtures, ...room.furniture].filter(reachable);
+  const O1 = outline(room), O2 = outline(room);   // two outline objects: the second builds its own shell
+  const a = routes(buildGrid(O1, obstacles(room)), O1, items);
+  buildGrid(O1, obstacles(room));                  // the shell again, from the cache
+  const b = routes(buildGrid(O1, obstacles(room)), O1, items);
+  const c = routes(buildGrid(O2, obstacles(room)), O2, items);
+  assert.deepEqual(b.map((r) => r.width), a.map((r) => r.width));
+  assert.deepEqual(c.map((r) => r.width), a.map((r) => r.width));
+});
+
+test("a spot beside a way that was already blocked is never a clean Fits, and the sentence says so", () => {
+  const room = fixtureRoom();
+  const p = place(room, fixtureSofa());
+  assert.ok(p.best, "the fixture sofa has a spot");
+  const blocked = p.spots.filter((s) => s.blocked);
+  assert.ok(blocked.length, "the fixture flat has a way that was blocked before the sofa came");
+  for (const s of blocked) {
+    assert.equal(s.verdict, "Just fits");
+    assert.equal(s.blocked.already, true);
+    assert.ok(s.blocked.after_m < WALK_MIN);
+    assert.ok(s.reasons.some((r) => /already blocked/.test(r)));
+  }
+  if (p.best.blocked) assert.match(p.say, /already blocked/);
+  // and analyse() on the same room with the sofa in reports that way closed
+  const r = { ...room, furniture: [...room.furniture.filter((f) => f.id !== p.best.replaces), { ...fixtureSofa(), id: "new", at: p.best.at, rot: p.best.rot, on_floor: true }] };
+  if (p.best.blocked) assert.ok(analyse(r).findings.some((f) => f.id === "path_blocked"));
+});
+
+test("analyse is well under 2 s on the flat with a new sofa in", () => {
+  const room = fixtureRoom();
+  const p = place(room, fixtureSofa());
+  const r = { ...room, furniture: [...room.furniture.filter((f) => f.id !== p.best.replaces), { ...fixtureSofa(), id: "new", at: p.best.at, rot: p.best.rot, on_floor: true }] };
+  analyse(r);   // warm
+  const t0 = performance.now();
+  analyse(r);
+  const ms = performance.now() - t0;
+  assert.ok(ms < 1500, `analyse took ${Math.round(ms)} ms`);
 });
