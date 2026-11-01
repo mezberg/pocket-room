@@ -215,3 +215,11 @@ test("analyse is well under 2 s on the flat with a new sofa in", () => {
   const ms = performance.now() - t0;
   assert.ok(ms < 1500, `analyse took ${Math.round(ms)} ms`);
 });
+
+test("a new floor lamp takes the old lamp's place, not a spot beside it", () => {
+  const room = fixtureRoom();
+  const old = room.furniture.find((f) => f.id === "floor_lamp");
+  const p = place(room, { id: "new", name: "Floor lamp", category: "lamp", size: [0.35, 0.35, 1.55] });
+  assert.equal(p.best.replaces, "floor_lamp");
+  assert.ok(Math.hypot(p.best.at[0] - old.at[0], p.best.at[1] - old.at[1]) < 0.5);
+});

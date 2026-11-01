@@ -12,7 +12,10 @@ const STEP = 0.1, GAP = 0.02, RADIATOR_GAP = 0.1;
 // Space needed in front to use the piece (sit down, open doors, pull out a chair).
 const FRONT = { sofa: 0.3, armchair: 0.3, bed: 0.3, desk: 0.6, wardrobe: 0.6, cupboard: 0.6, dresser: 0.6, shelf: 0.4, tv: 0.5 };
 // Usually one per room: offer to put the new one in the old one's place.
-const SWAP = new Set(["sofa", "bed", "desk", "tv", "wardrobe", "dresser"]);
+const SWAP = new Set(["sofa", "bed", "desk", "tv", "wardrobe", "dresser", "lamp"]);
+// A room wants one of these where the old one stood: a new floor lamp takes the old lamp's place (spots
+// within a metre of it score up), it isn't added beside it.
+const REPLACE_FIRST = new Set(["lamp"]);
 
 const rotFacing = (f) => ((Math.round(Math.atan2(f[0], -f[1]) / RAD) % 360) + 360) % 360;
 const key = (r) => `${r.from}>${r.to}`;
@@ -159,7 +162,8 @@ export function place(room, piece, opts = {}) {
 
       const coverShare = cover.reduce((s, w) => Math.max(s, w.share), 0);
       const score = 0.45 * Math.min(1, (clearance - WALK_MIN) / 0.6) + 0.15 * (wall ? 1 : 0) + 0.15 * Math.min(1, front / 1.0)
-        + 0.15 * (1 - coverShare * (h > 1.2 ? 1 : 0.5)) + 0.1 * (worst ? 0 : 1) - (stuck ? 0.2 : 0);
+        + 0.15 * (1 - coverShare * (h > 1.2 ? 1 : 0.5)) + 0.1 * (worst ? 0 : 1) - (stuck ? 0.2 : 0)
+        + (swap && REPLACE_FIRST.has(piece.category) ? 0.6 * Math.max(0, 1 - Math.hypot(c.at[0] - swap.at[0], c.at[1] - swap.at[1])) : 0);
       spots.push({
         at: [r2(c.at[0]), r2(c.at[1])], rot: c.rot, ...(wall ? { wall: wall.id } : {}),
         score: Math.round(score * 100) / 100, clearance_m: r2(clearance), verdict: stuck ? "Just fits" : verdictFor(clearance), reasons,
