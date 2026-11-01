@@ -186,6 +186,8 @@ async function loadRoom(id, { fresh } = {}) {
   layout();
   await viewer.setRoom(room);
   $("view").classList.add("ready");
+  // the room is checked as soon as it's in: its problems show on the 3D at once
+  checkRoom().catch((err) => console.warn("check failed", err));
   console.log(`[pocket-room] room ${room.id} ready ${Math.round(performance.now() - t0)} ms after the script ran, ${Math.round(performance.now())} ms after navigation`);
 }
 

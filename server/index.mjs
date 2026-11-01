@@ -12,6 +12,12 @@ import fixes from "./routes/fixes.mjs";       // tap an issue → fixes
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const app = express();
 app.use(express.json({ limit: "25mb" }));     // images arrive as data URLs
+// one line per API call: method, path, status, time (the run log)
+app.use("/api", (req, res, next) => {
+  const t0 = Date.now();
+  res.on("finish", () => console.log(`[api] ${new Date().toISOString()} ${req.method} ${req.originalUrl.split("?")[0]} ${res.statusCode} ${Date.now() - t0} ms`));
+  next();
+});
 
 app.use("/api/rooms", rooms);
 app.use("/api/pieces", pieces);

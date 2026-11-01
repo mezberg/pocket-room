@@ -7,6 +7,7 @@ import { Real, rig, fitRig, onDemand, orbiting } from "./kit/real.js";
 import { placeLabels } from "./kit/labels.js";
 import { buildRoom, cutaway, roomStats } from "./room3d.js";
 import { buildItem, buildPiece, standAt, toWorld } from "./furniture.js";
+import { highlightsOf } from "./highlight.js";
 
 const RED = "#C8444D", GREEN = "#4F9A5E", AMBER = "#D08B2E";
 export const VERDICT_COLOR = { "Fits": GREEN, "Just fits": AMBER, "Doesn't fit": RED };
@@ -247,6 +248,15 @@ export class Viewer {
     });
   }
 
+  // back to the plan (Undo): the piece leaves its spot and waits, invisible
+  hidePiece() {
+    if (this.pieceObj) this.pieceObj.visible = false;
+    if (this.footprint) this.scene.remove(this.footprint);
+    this.footprint = null;
+    this.unlabel("piece");
+    this.request();
+  }
+
   // the verdict changed (a fix applied): the footprint takes its colour
   setFootprintColor(verdict) {
     const color = VERDICT_COLOR[verdict] ?? AMBER;
@@ -268,6 +278,7 @@ export class Viewer {
   // onTap(finding) when its bubble is tapped.
   showFindings(findings, onTap) {
     this.clearFindings();
+    this.highlight(findings);
     findings.forEach((f, i) => {
       if (!f.at) return;
       const bad = !f.pass;
@@ -278,7 +289,20 @@ export class Viewer {
     this.request();
   }
 
+  // Problems drawn on the room itself: pieces in each other (or in a doorway) glow red; a blocked way is a red
+  // band along the floor where it squeezes through, a tight one amber.
+  highlight(findings) {
+    for (const obj of this.glowing ?? []) unglow(obj);
+    this.glowing = [];
+    const h = highlightsOf(findings);
+    for (const id of h.glow) { const obj = this.objectOf(id); if (obj) { glow(obj, RED); this.glowing.push(obj); } }
+    for (const b of h.bands) this.markers.add(band(b.path, b.color === "red" ? RED : AMBER, b.width / 2));
+    this.request();
+  }
+
   clearFindings() {
+    for (const obj of this.glowing ?? []) unglow(obj);
+    this.glowing = [];
     this.markers.clear();
     for (const k of Object.keys(this.labels)) if (k.startsWith("finding:") || k.startsWith("fix:")) this.unlabel(k);
     this.request();
@@ -299,6 +323,7 @@ export class Viewer {
       }
       const item = m.add ?? { ...m.item, at: m.to, rot: m.rot, size: m.size ?? m.item.size };
       const ghostObj = m.piece && this.pieceObj ? this.pieceObj.clone(true) : buildItem({ ...item, on_floor: true }, 0);
+      ghostObj.visible = true;   // the new piece waits invisible until its plan is applied
       standAt(ghostObj, m.to, m.rot, 0);
       if (m.size && !m.piece) ghostObj.scale.multiply(new THREE.Vector3(m.size[0] / m.item.size[0], 1, m.size[1] / m.item.size[1]));
       tint(ghostObj, GREEN, 0.62);
@@ -447,6 +472,31 @@ function footprint([w, d], color) {
   g.add(fill, edge);
   g.traverse((o) => { o.userData.noEdge = true; o.raycast = () => {}; });
   return g;
+}
+
+// a red glow on a piece (its own materials, an emissive tint); unglow puts them back
+function glow(obj, color) {
+  obj.traverse((m) => {
+    if (!m.isMesh || !m.material) return;
+    m.userData.matG ??= m.material;
+    m.material = m.userData.matG.clone();
+    if (m.material.emissive) { m.material.emissive = new THREE.Color(color); m.material.emissiveIntensity = 0.55; }
+    else m.material.color?.lerp(new THREE.Color(color), 0.5);
+  });
+}
+function unglow(obj) { obj.traverse((m) => { if (m.isMesh && m.userData.matG) { m.material = m.userData.matG; delete m.userData.matG; } }); }
+
+// a band on the floor along a walkway (plan points), as a flat tube
+function band(path, color, r) {
+  const pts = path.map((p) => toWorld(p, 0.03));
+  const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal");
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(8, pts.length * 4), r, 6, false),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, depthWrite: false, depthTest: false }));
+  mesh.scale.y = 0.25;
+  mesh.position.y = 0.02 * 0.75;
+  mesh.userData.noEdge = true;
+  mesh.renderOrder = 2;
+  return mesh;
 }
 
 // see-through, tinted towards a colour; untint puts the materials back
