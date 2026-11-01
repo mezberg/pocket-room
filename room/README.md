@@ -38,6 +38,12 @@ Venue test (`room/venue/venue-chesterfields-2026-11-01.jpg`, one photo of one wa
 9–11 x 6–6.5 x 4.1–4.2 m with three windows, the chesterfields, tables and a column. `accuracy_m` comes out near 3 m
 because most of the room is out of frame. Take 3–4 photos from the corners (or measure two walls) for a tighter box.
 
+In the app: My room → "+ New room" (1–4 photos, or a plan photo when `GET /api/rooms/options` says `plan`;
+optional measured width / length in m or ft/in; optional name). The built room becomes "my room". "Fix the room"
+resizes it and takes out wrong objects in code (`app/js/room-edit.js`, no model call) and saves it back with
+`PUT /api/rooms/:id`. The app also keeps built rooms in the browser and sends them whole with each call, so a
+restarted server doesn't lose them.
+
 `schema-check.mjs`: a small JSON Schema checker for the contract (no dependency).
 
 ## From a fire-escape or estate-agent plan (`fireplan/`)

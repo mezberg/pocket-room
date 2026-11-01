@@ -8,6 +8,12 @@ import { join } from "node:path";
 
 export const PIPELINE = process.env.FLOORPLAN_PIPELINE || join(homedir(), "Desktop/Coding projects/floorplan recognition pipeline");
 
+/** Can a plan run here? The pipeline and a Python for it (not on a hosted server). */
+export function pipelineReady() {
+  if (process.env.FLOORPLAN_OFF) return false;
+  return existsSync(join(PIPELINE, "run_pipeline.py")) && (!!process.env.FLOORPLAN_PYTHON || existsSync(join(PIPELINE, "venv/bin/python")));
+}
+
 /** dataURL -> a file in the temp folder, named by content so a re-sent plan reuses the pipeline's cache. */
 export function savePlan(dataUrl) {
   const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/s.exec(dataUrl || "");
