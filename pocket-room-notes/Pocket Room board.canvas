@@ -1,6 +1,15 @@
 {
 	"nodes": [
 		{
+			"id": "p3_group",
+			"type": "group",
+			"label": "Phase 3 · next",
+			"x": 0,
+			"y": 8951,
+			"width": 1720,
+			"height": 400
+		},
+		{
 			"id": "prog_group",
 			"type": "group",
 			"x": 0,
@@ -946,53 +955,34 @@
 			"height": 320
 		},
 		{
-			"id": "p3_group",
-			"type": "group",
-			"label": "Phase 3",
-			"x": 0,
-			"y": 8951,
-			"width": 1600,
-			"height": 592
-		},
-		{
-			"id": "p3_head",
-			"type": "text",
-			"x": 40,
-			"y": 9011,
-			"width": 1500,
-			"height": 80,
-			"color": "5",
-			"text": "## Phase 3 · polish and the demo opener · started 1 Nov, 15:20"
-		},
-		{
 			"id": "p3_room",
 			"type": "text",
 			"x": 40,
-			"y": 9131,
-			"width": 480,
-			"height": 326,
+			"y": 9011,
+			"width": 520,
+			"height": 248,
 			"color": "6",
-			"text": "**New room: build a room from photos or a plan** 🟪 in progress\nThe server can already do it (from-photo, from-plan); the app had no screen for it.\nBuilding: guided corner photos or a fire-escape plan photo, optional two measured walls, the room appears in 3D in ~15–20 s and becomes \"my room\", room switcher, every scenario works in it.\nWhy first: the demo opens with the hackathon room appearing in 3D.\nSession: New room flow · branch `new-room-flow`"
+			"text": "**Next · New room flow** 🟪 session running\nThe server can build a room from photos or a floor plan, but the app has no screen for it.\nAdding: \"New room\" → 1–4 corner photos or a fire-escape plan + optional two measured walls → room in 3D in ~15 s with how sure it is → adjust size, remove wrong objects → every scenario works in it.\nFor the demo opening: the hackathon room appears in 3D."
 		},
 		{
 			"id": "p3_fix",
 			"type": "text",
-			"x": 560,
-			"y": 9131,
-			"width": 480,
-			"height": 352,
+			"x": 600,
+			"y": 9011,
+			"width": 520,
+			"height": 300,
 			"color": "6",
-			"text": "**Tap an issue → get a suggested fix** 🟪 options being explored\nTap a marker or finding in Check my room → a fix: move / rotate / remove a piece, add a lamp, a different size.\nOptions compared: code search in rules/ · code proposes + Decisions picks · model proposes + code verifies · pick from 2–3 with 3D preview, apply, undo.\n**Kate decides the path** before it's built (quick prototype first).\nSession: Tap an issue, get a fix · branch `issue-fix-options`"
+			"text": "**Next · Tap an issue → fix suggested** 🟪 options being explored\nTap any finding in Check my room and get a fix (move, rotate, remove, swap, add a lamp, or a product that fits the gap), shown in 3D with Apply / undo.\nA session compares 3–4 ways (code search, Decisions API choosing, reasoning model + code check, products) on cost, speed and demo risk, plus cutting 10 findings to the top 3.\n**Kate decides the path before it's built.**"
 		},
 		{
-			"id": "p3_next",
+			"id": "p3_cost",
 			"type": "text",
-			"x": 1080,
-			"y": 9131,
-			"width": 480,
-			"height": 170,
-			"color": "3",
-			"text": "**Then** 🟨\nTop 3 findings first, the rest folded · voice (Talk tab) · deploy to a long-running host (needs Kate's OK) · prebuild the venue room as a backup · real-phone test of camera + share"
+			"x": 1160,
+			"y": 9011,
+			"width": 520,
+			"height": 196,
+			"color": "5",
+			"text": "**Cost per action (measured / list prices)**\nFurniture 3D (astra): ~$0.09 per new model, ~20 s.\nReading a picture or a room (terra): under $0.01.\nDecisions (luna): well under $0.01.\nPhoto view (image): ~$0.05.\nFind for me: web-search fees, not measured yet."
 		}
 	],
 	"edges": [
