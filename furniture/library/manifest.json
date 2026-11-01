@@ -1,0 +1,10 @@
+[
+  {
+    "id": "chesterfield-loveseat-astra",
+    "category": "sofa",
+    "tags": ["chesterfield", "tufted", "leather", "rolled-arm", "traditional", "vintage"],
+    "must": "chesterfield",
+    "glb": "chesterfield-loveseat-astra.glb",
+    "from": "gpt-6-astra parts model of test-images/chesterfield-2-seat-2026-11-01.jpg (piece aa6ef220), 2026-11-01"
+  }
+]

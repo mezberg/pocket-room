@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piece viewer</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --bg: #f3f1ec; --ink: #2b2a27; --muted: #77746d; --line: #dcd8cf; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; color: var(--ink); background: var(--bg); display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+  aside { padding: 16px; border-right: 1px solid var(--line); overflow: auto; }
+  aside img { width: 100%; border-radius: 6px; display: block; }
+  h1 { font-size: 16px; margin: 12px 0 4px; }
+  .muted { color: var(--muted); }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 10px 0; }
+  dt { color: var(--muted); }
+  button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); background: white; border-radius: 4px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: white; }
+  #view { position: relative; }
+  canvas { display: block; width: 100%; height: 100%; }
+  form { display: grid; gap: 6px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+  @media (max-width: 700px) { body { grid-template-columns: 1fr; grid-template-rows: auto 60vh; height: auto; } }
+</style>
+</head>
+<body>
+<aside>
+  <img id="photo" alt="">
+  <h1 id="name">…</h1>
+  <div id="status" class="muted"></div>
+  <dl id="facts"></dl>
+  <div id="modes"></div>
+  <form id="upload">
+    <strong>New piece</strong>
+    <input type="file" name="file" accept="image/*" required>
+    <select name="kind"><option>photo</option><option>shop_tag</option><option>screenshot</option></select>
+    <select name="mode"><option>auto</option><option>parametric</option><option>image_to_3d</option></select>
+    <button>Read picture</button>
+  </form>
+</aside>
+<div id="view"></div>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const $ = (s) => document.querySelector(s);
+const view = $("#view");
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+view.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#f3f1ec");
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
+camera.position.set(2.2, 1.6, 3.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.4, 0);
+scene.add(new THREE.HemisphereLight("#fffaf2", "#cfc8bc", 1.6));
+const sun = new THREE.DirectionalLight("#fff3e2", 2.2);
+sun.position.set(2, 4, 3); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.18 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+scene.add(new THREE.GridHelper(6, 24, "#cfc8bc", "#e2ddd3"));
+const holder = new THREE.Group(); scene.add(holder);
+function resize() { const r = view.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+
+// Fit an object built by the kit to the piece's size: kit heights are fixed, the piece's size is the truth.
+function fitTo(obj, [w, d, h]) {
+  const b = new THREE.Box3().setFromObject(obj, true), s = b.getSize(new THREE.Vector3());
+  obj.scale.multiply(new THREE.Vector3(w / s.x, h / s.y, d / s.z));   // some kit pieces scale their own root
+  const b2 = new THREE.Box3().setFromObject(obj, true), c = b2.getCenter(new THREE.Vector3());
+  obj.position.set(-c.x, -b2.min.y, -c.z);
+  return obj;
+}
+function show(obj) {
+  holder.clear(); holder.add(obj);
+  obj.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+  const b = new THREE.Box3().setFromObject(holder, true), s = b.getSize(new THREE.Vector3());
+  window.__piece = { ok: true, bbox: [s.x, s.z, s.y].map(v => +v.toFixed(3)), meshes: holder.getObjectsByProperty("isMesh", true).length };
+  $("#status").textContent += ` · loaded, box ${window.__piece.bbox.join(" × ")} m`;
+  controls.target.set(0, s.y / 2, 0);
+}
+async function loadGlb(url) { return (await new GLTFLoader().loadAsync(url)).scene; }
+async function loadKit({ template, module, args }, size) {
+  const kit = await import(`/js/kit/${module}`);
+  return fitTo(kit[template](args), size);
+}
+
+let piece = null;
+async function render(mode) {
+  window.__piece = null;
+  const m = piece.model;
+  $("#status").textContent = `model: ${m.status}${m.how ? ` (${m.how})` : ""}${m.error ? ` — ${m.error}` : ""}`;
+  try {
+    if (mode === "glb" && m.glb) show(await loadGlb(m.glb));
+    else if (m.parametric) show(await loadKit(m.parametric, piece.size));
+    else if (m.glb) show(await loadGlb(m.glb));
+  } catch (err) { window.__piece = { ok: false, error: String(err) }; $("#status").textContent += ` · failed: ${err.message}`; console.error(err); }
+  $("#modes").innerHTML = "";
+  for (const [k, label, on] of [["glb", "Mesh (GLB)", !!m.glb], ["kit", "Kit piece", !!m.parametric]]) {
+    if (!on) continue;
+    const b = document.createElement("button");
+    b.textContent = label; b.setAttribute("aria-pressed", String(k === mode || (!m.glb && k === "kit")));
+    b.onclick = () => render(k); $("#modes").append(b, " ");
+  }
+}
+async function load(id) {
+  piece = await (await fetch(`/api/pieces/${id}`)).json();
+  $("#photo").src = piece.source.image ?? "";
+  $("#name").textContent = piece.name;
+  const t = piece.timing ?? {};
+  $("#facts").innerHTML = Object.entries({
+    category: piece.category, size: `${piece.size.join(" × ")} m`, "size from": piece.size_source + (piece.size_text ? ` (“${piece.size_text}”)` : ""),
+    style: piece.style?.tags?.join(", "), colours: (piece.style?.colors ?? []).map(c => `<span style="display:inline-block;width:12px;height:12px;background:${c};border-radius:2px;vertical-align:-1px"></span> ${c}`).join(" "),
+    price: piece.source.price, timing: [t.read_ms && `read ${(t.read_ms / 1000).toFixed(1)} s`, t.model_ms && `model ${(t.model_ms / 1000).toFixed(1)} s`].filter(Boolean).join(", "),
+  }).filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  await render(piece.model.glb ? "glb" : "kit");
+  if (piece.model.status === "building") setTimeout(() => load(id), 3000);
+}
+$("#upload").onsubmit = async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target), file = f.get("file");
+  const image = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
+  $("#status").textContent = "reading…";
+  const res = await fetch("/api/pieces", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image, kind: f.get("kind"), mode: f.get("mode") }) });
+  const p = await res.json();
+  if (!res.ok) { $("#status").textContent = p.error; return; }
+  history.replaceState(null, "", `?id=${p.id}`); load(p.id);
+};
+const id = new URLSearchParams(location.search).get("id");
+if (id) load(id); else $("#name").textContent = "Upload a picture";
+</script>
+</body>
+</html>
