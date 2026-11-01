@@ -82,6 +82,8 @@ const lamps = {
     instructions: "In the evening, with only these lights, every zone has its own light and no corner is left dark. (A pendant lights its zone; a zone with no light within 2 m needs a lamp.)" }],
   say(f) {
     const unlit = f.zones.filter((z) => !z.lights_within_2m.length);
+    // a room built from photos or a plan has no lights recorded: unknown, not "Infinity m" from one
+    if (!f.lights.length) return `No lights are recorded for this room yet, so we can't tell whether ${unlit.length ? `the ${unlit.map((z) => z.zone).join(" and ")} ${unlit.length > 1 ? "have" : "has"}` : "it has"} light in the evening.`;
     const parts = [];
     if (unlit.length) parts.push(`The ${unlit.map((z) => z.zone).join(" and ")} ${unlit.length > 1 ? "have" : "has"} no light within 2 m`);
     if (f.dark_corners.length) { const c = f.corners.filter((x) => f.dark_corners.includes(x.corner)).sort((a, b) => b.nearest_light_m - a.nearest_light_m)[0];

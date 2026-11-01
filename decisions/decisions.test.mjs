@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { setTransport, decide, normalise } from "./client.mjs";
 import { chooseBest, spotFacts } from "./best-spot.mjs";
-import { gradeDesign, measureAll, widestRoute } from "./design.mjs";
+import { gradeDesign, measureAll, widestRoute, CHECKS } from "./design.mjs";
+const CHECKS_SAY = (f) => CHECKS.find((c) => c.id === "lamps_per_zone").say(f);
 import { routeUtterance } from "./route.mjs";
 import { choose, design, distinctSpots } from "./hooks.mjs";
 import { outline } from "../rules/geom.mjs";
@@ -189,4 +190,11 @@ test("hook design: findings from gradeDesign with the piece in its spot; failure
   const logs = [];
   assert.deepEqual(await design(room, [], ctx, { log: (m) => logs.push(m) }), []);
   assert.match(logs[0], /rules-only/);
+});
+
+test("lamps: a room with no lights recorded (built from photos) says so, never 'Infinity m'", () => {
+  const { lamps_per_zone: f } = Object.fromEntries(measureAll({ ...room, lights: [] }, { piece }).map(({ c, facts }) => [c.id, facts]));
+  const say = CHECKS_SAY(f);
+  assert.match(say, /^No lights are recorded for this room yet/);
+  assert.ok(!/Infinity/.test(say));
 });

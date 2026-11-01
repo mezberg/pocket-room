@@ -76,6 +76,7 @@ export class Viewer {
     this.roomData = room;
     if (this.room) this.scene.remove(this.room);
     if (this.items) this.scene.remove(this.items);
+    for (const k of Object.keys(this.labels)) if (k.startsWith("item:")) this.unlabel(k);   // the last room's names
     this.room = buildRoom(room);
     this.items = new THREE.Group();
     this.items.name = "furniture";
