@@ -78,7 +78,7 @@ export const READING_SCHEMA = {
       type: "array", description: "Big things on the floor (furniture, cabinets, columns). Up to 20.",
       items: {
         type: "object", additionalProperties: false,
-        required: ["name", "category", "x", "y", "facing", "length", "depth", "height", "color", "count"],
+        required: ["name", "category", "x", "y", "facing", "length", "depth", "height", "color", "count", "photo", "box", "look"],
         properties: {
           name: { type: "string" },
           category: { type: "string", enum: CATEGORIES },
@@ -89,6 +89,13 @@ export const READING_SCHEMA = {
           depth: { anyOf: [measure, { type: "null" }], description: "Front to back, if you can compare it" },
           height: { anyOf: [measure, { type: "null" }], description: "Floor to its top (a low TV unit, a coffee table, a kitchen worktop), if you can compare it" },
           color: { type: ["string", "null"], description: "Its main colour as #rrggbb, sampled from the photo (the upholstery, the cabinet fronts)" },
+          photo: { type: "integer", description: "The photo (1-based) that shows it best" },
+          box: {
+            type: "object", additionalProperties: false, required: ["left", "top", "right", "bottom"],
+            description: "Where it is in that photo, fractions of the image (0,0 top left): the whole object, tight",
+            properties: { left: frac, top: frac, right: frac, bottom: frac },
+          },
+          look: { type: "string", description: "What it looks like, for a 3D modeller: parts, materials, colours, handles, legs (one or two sentences)" },
           count: { type: "integer", description: "1 unless it is a row of identical things (then one entry for the row's centre)" },
         },
       },
@@ -114,6 +121,9 @@ Say which part of the floor and which stretches of each wall are actually in vie
 that runs out of frame is seen only as far as the frame shows it.
 List doors, windows and big floor objects with positions as fractions of the room, with their main colour
 and, for cupboards, units and tables, their height (low TV units and coffee tables are often under half a metre).
+A fitted kitchen along a wall is ONE object (category cupboard, name starting "Kitchen"): the whole run, base units,
+worktop, splashback and wall units, from the floor to the top of the wall units; a tall oven or fridge housing at
+its end is its own object. For each object say which photo shows it best, its box in that photo and what it looks like.
 Each reference means exactly what it names: table_height is a dining table or desk (74 cm), never a coffee table;
 chair_width is a dining chair seat. Keep it to what is visible.`;
 

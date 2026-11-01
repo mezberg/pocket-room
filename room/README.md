@@ -44,8 +44,10 @@ Plan up is taken as north, so the balcony glazing is the living room's south wal
    and the verdict says so.
 Objects carry their colour (`color`, contract-optional) and a depth and height when the photo shows them (a low TV
 unit is not a 2 m wardrobe). A reading 1.5x off the median of three or more is dropped (a coffee table read as a
-dining table). Pieces read on top of each other are pushed apart by the shortest step, at most 60 cm, never off
-the wall they stand against (`_derived.moved`). Zoopla listing test: `docs/zoopla-test.md`.
+dining table). Then the room checks itself (`settle.mjs`) with the rules' geometry and walkway check, so the room
+as built passes Check my room: no piece through another, through a wall or in a doorway; kitchen runs cut back to the
+door; guessed sizes shrink; L-sofas are arm + chaise; pinches opened by short moves; a piece left out only as a last
+resort, said in the caveats (`_derived.repairs` lists every change). Zoopla listing test: `docs/zoopla-test.md`.
 4. `resizeRoom` (`PATCH /api/rooms/:id`): fix the size by typing. Any outline: walls stretch about the plan's
    bounding box, door and window centres keep their share along the wall (widths stay), furniture centres move
    (sizes stay, kept inside), columns stay floor to ceiling. Both walls given → 0.05.

@@ -157,7 +157,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     if (spans) x.seen = spans; else delete x.seen;   // absent = the whole wall was seen
   }
 
-  const ids = {}, guessed = new Set();
+  const ids = {}, guessed = new Set(), seenIn = {};
   const items = (reading.objects || []).slice(0, 30).map((o) => {
     const cat = DEFAULT_SIZE[o.category] ? o.category : "other";
     const [dw, dd, dh0] = DEFAULT_SIZE[cat];
@@ -173,6 +173,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     ids[base] = (ids[base] || 0) + 1;
     const id = ids[base] > 1 ? `${base}_${ids[base]}` : base;
     if (!metres(o.length)) guessed.add(id);   // nothing to measure it by: its footprint is the category's
+    if (o.box) seenIn[id] = { photo: o.photo || 1, box: o.box, look: o.look || "" };   // for its 3D model (models.mjs)
     return {
       id, name: (o.name || cat) + (o.count > 1 ? ` x${o.count}` : ""), category: cat,
       at: at.map(r3), size: [width, depth, height].map(r3), rot, on_floor: cat !== "rug" && cat !== "tv",   // a TV stands on a unit or the wall
@@ -198,6 +199,7 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
   const { repairs, left_out } = settle(room, guessed);
   if (repairs.length) room._derived.repairs = repairs;
   if (left_out.length) room._derived.caveats.push(...left_out);
+  if (Object.keys(seenIn).length) room._derived.objects = seenIn;
   return room;
 }
 

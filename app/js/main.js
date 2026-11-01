@@ -190,7 +190,32 @@ async function loadRoom(id, { fresh } = {}) {
   $("view").classList.add("ready");
   // the room is checked as soon as it's in: its problems show on the 3D at once
   checkRoom().catch((err) => console.warn("check failed", err));
+  lookLoop(room);
   console.log(`[pocket-room] room ${room.id} ready ${Math.round(performance.now() - t0)} ms after the script ran, ${Math.round(performance.now())} ms after navigation`);
+}
+
+// A photo room's own furniture is rebuilt in 3D from its photos (item.piece). When each model is in, astra's
+// work is checked: the model rendered on its own next to the crop it was built from (POST /pieces/:id/look).
+// A model that doesn't look like it is rebuilt with what the check said, and checked again (two rebuilds at most).
+const looked = new Set();
+async function lookLoop(room) {
+  if (room.source !== "photo" || !room.furniture?.some((i) => i.piece) || looked.has(room.id)) return;
+  looked.add(room.id);
+  try {
+    let pieces = await viewer.loadItemModels(room);
+    const checked = new Map();   // piece id → the model it was checked on: only new models are checked again
+    for (let round = 0; round < 3 && state.room?.id === room.id; round++) {
+      const todo = pieces.filter((p) => p.model?.how === "image_to_3d" && p.model?.glb && checked.get(p.id) !== p.model.glb && p.look?.glb !== p.model.glb && viewer.models.has(p.id));
+      todo.forEach((p) => checked.set(p.id, p.model.glb));
+      const results = await Promise.all(todo.map((p) => api.pieceLook(p.id, viewer.modelShot(p.id)).then((r) => ({ p, r })).catch(() => null)));
+      if (state.room?.id !== room.id) return;
+      const again = results.filter((x) => x?.r.rebuilding);
+      console.log("[pocket-room] look check", round + 1, results.filter(Boolean).map((x) => `${x.p.name}: ${x.r.verdict} ${x.r.issues}`));
+      if (!again.length) { if (round) toast("Your furniture is rebuilt to look like your photos.", 4000); return; }
+      toast(`Checked against your photos. Rebuilding ${again.map((x) => x.p.name.toLowerCase()).join(", ")} to look more like them.`, 6000);
+      pieces = await viewer.loadItemModels(room);
+    }
+  } catch (err) { console.warn("look check", err); }
 }
 
 function showRoomFacts() {
@@ -432,10 +457,21 @@ async function applyPlan() {
 async function buildInBackground(piece, run) {
   $("verdict-building").hidden = false;
   try {
-    const ready = await untilBuilt(piece, () => {});
+    let ready = await untilBuilt(piece, () => {});
     if (run !== state.run) return;
     state.piece = ready;
     if (ready.model?.glb) { await viewer.swapModel(ready); toast("The real 3D model is in."); }
+    // astra checks its model against the picture it was built from; a wrong one is rebuilt (twice at most)
+    for (let round = 0; round < 2 && ready.model?.glb && run === state.run; round++) {
+      const look = await api.pieceLook(ready.id, viewer.modelShot(viewer.pieceObj)).catch(() => null);
+      console.log("[pocket-room] look check", ready.name, look);
+      if (!look?.rebuilding) break;
+      toast(`Rebuilding the 3D model: ${look.issues}`, 6000);
+      ready = await untilBuilt(await api.piece(ready.id), () => {});
+      if (run !== state.run) return;
+      state.piece = ready;
+      if (ready.model?.glb) await viewer.swapModel(ready);
+    }
   } catch {
     if (run === state.run) toast("The 3D model didn't build; the stand-in stays, sized right.");
   } finally {

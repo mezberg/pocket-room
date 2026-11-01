@@ -8,10 +8,12 @@
 //   4. an L-sofa's chaise goes to the other end; a measured piece in a doorway keeps its place and the opening
 //      (read from the same photos, just as rough) slides along its wall to a clear stretch;
 //   5. only then is a piece left out (a guessed one first, an L-sofa's chaise before the sofa), said in the caveats.
-// Then big pieces left a few cm to 50 cm off a wall are put back against it. Nothing is drawn where the
+// Then big pieces left a few cm to 50 cm off a wall are put back against it, gaps under 60 cm are opened,
+// and the rules' walkway check names any pinch left, which a short move opens. Nothing is drawn where the
 // code knows it can't be.
 import { outline, footprint } from "../../rules/geom.mjs";
 import { overlap, outside, doorwayRect, hitsSwing } from "../../rules/geom.mjs";
+import { analyse } from "../../rules/check.mjs";
 
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const MAX_STEP = 0.6, DOOR_STEP = 1.2, STEP = 0.02, WALL = 0.05, DEPTH = 0.03;
@@ -68,8 +70,9 @@ const FITTED = new Set(["cupboard", "shelf"]);
 // Cut a fitted run along its length from one end, keeping the other end where it was, until nothing is wrong.
 function trim(room, O, it, w, l) {
   if (!FITTED.has(it.category) || groupOf(room, it).length > 1) return null;
+  // against a wall, or long enough to be a run (a kitchen read a little off its wall is still a run)
   const b = bbox(it);
-  if (!(b[0] <= WALL || b[1] <= WALL || b[2] >= w - WALL || b[3] >= l - WALL)) return null;
+  if (!(b[0] <= WALL || b[1] <= WALL || b[2] >= w - WALL || b[3] >= l - WALL) && it.size[0] < 1.2) return null;
   const t = ((it.rot ?? 0) * Math.PI) / 180, ux = [Math.cos(t), Math.sin(t)];
   // cut a from one end and b from the other, the least in total first
   const cuts = [];
@@ -110,6 +113,9 @@ function snapToWalls(room, O, w, l, repairs) {
 // to 62 cm when a short move (≤ 25 cm) of one piece does it legally: between a piece and a wall, or between
 // two pieces facing each other across it.
 const WAY = 0.62, NUDGE = 0.25;
+// The 40-50 cm between a sofa or chair and its coffee table is legroom, not a way through.
+const SEATS = new Set(["sofa", "armchair", "chair"]);
+const legroom = (a, c) => [[a, c], [c, a]].some(([x, t]) => SEATS.has(x.category) && t.category === "table" && t.size[2] < 0.6);
 function openGaps(room, O, w, l, repairs) {
   const items = room.furniture.filter(solid);
   const tryMove = (it, axis, d, why) => {
@@ -126,7 +132,7 @@ function openGaps(room, O, w, l, repairs) {
       if (gap > 0.02 && gap < WAY - 0.02) tryMove(it, axis, dir * (WAY - gap), `by the ${["west", "east", "south", "north"][axis * 2 + (dir < 0 ? 1 : 0)]} wall`);
   }
   for (const a of items) for (const c of items) {
-    if (a === c || groupOf(room, a).includes(c) || tucked(a, c)) continue;
+    if (a === c || groupOf(room, a).includes(c) || tucked(a, c) || legroom(a, c)) continue;
     const A = bbox(a), C = bbox(c);
     for (const axis of [0, 1]) {
       const o = 1 - axis;
@@ -160,6 +166,45 @@ function slideOpening(room, id) {
     }
   op.from = from;
   return null;
+}
+
+// Last, the rules' own walkway check (rules/check.mjs): each blocked way names the pieces at its pinch.
+// Move one of them away from the pinch by what the way is short of 62 cm (≤ 30 cm, legal, never off its
+// wall) and check again. A round that doesn't leave fewer blocked ways is undone. At most 3 rounds (~1 s each).
+const blocked = (room) => analyse(room).findings.filter((f) => f.id === "path_blocked" && !f.pass && f.severity === "fail");
+const short = (f) => Math.max(0.05, WAY - Number(/widest gap is (\d+) cm/.exec(f.say)?.[1] ?? 0) / 100);
+const shortfall = (ways) => ways.reduce((s, f) => s + short(f), 0);
+function clearWays(room, O, w, l, repairs) {
+  let ways = blocked(room);
+  for (let round = 0; round < 3 && ways.length; round++) {
+    const before = room.furniture.map((i) => [i, i.at]), said = repairs.length;
+    for (const f of ways) {
+      const its = (f.items ?? []).map((id) => room.furniture.find((i) => i.id === id)).filter(Boolean);
+      const from = f.say.match(/from (the [^:,]+?)(?: to|:)/)?.[1] ?? "a door";
+      // each piece at the pinch takes its share; if one can't move, another takes it all
+      let left = short(f) + 0.02;
+      for (const it of its) {
+        const want = Math.min(0.3, its.length > 1 && left === short(f) + 0.02 ? left / 2 : left);
+        const away = [it.at[0] - f.at[0], it.at[1] - f.at[1]];
+        const axes = Math.abs(away[0]) >= Math.abs(away[1]) ? [0, 1] : [1, 0];
+        if (axes.some((axis) => Math.abs(away[axis]) > 0.01 && nudgeGroup(room, O, w, l, it, axis, Math.sign(away[axis]) * want, repairs, `to open the way from ${from}`))) left -= want;
+        if (left <= 0.01) break;
+      }
+    }
+    const after = blocked(room);
+    if (shortfall(after) >= shortfall(ways) - 0.01) { for (const [i, at] of before) i.at = at; repairs.length = said; break; }
+    ways = after;
+  }
+}
+function nudgeGroup(room, O, w, l, it, axis, d, repairs, why) {
+  const group = groupOf(room, it), boxes = group.map(bbox);
+  const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+  if ((d > 0 && box[axis] <= WALL) || (d < 0 && box[axis + 2] >= [w, l][axis] - WALL)) return false;   // off its wall
+  const shift = (i) => i.at.map((v, k) => (k === axis ? r3(v + d) : v));
+  if (!group.every((g) => !problems(room, O, g, shift(g)).length)) return false;
+  group.forEach((g) => { g.at = shift(g); });
+  repairs.push(`${it.id} moved ${Math.round(Math.abs(d) * 100)} cm ${why}`);
+  return true;
 }
 
 const bbox = (i) => {
@@ -243,6 +288,7 @@ export function settle(room, guessed = new Set()) {
   }
   snapToWalls(room, O, w, l, repairs);
   openGaps(room, O, w, l, repairs);
+  clearWays(room, O, w, l, repairs);
   for (const i of room.furniture) delete i.flipped;
   return { repairs, left_out };
 }
