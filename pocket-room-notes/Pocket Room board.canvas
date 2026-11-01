@@ -7,7 +7,7 @@
 			"x": 0,
 			"y": 8951,
 			"width": 1720,
-			"height": 400
+			"height": 826
 		},
 		{
 			"id": "prog_group",
@@ -960,9 +960,9 @@
 			"x": 40,
 			"y": 9011,
 			"width": 520,
-			"height": 248,
-			"color": "6",
-			"text": "**Next · New room flow** 🟪 session running\nThe server can build a room from photos or a floor plan, but the app has no screen for it.\nAdding: \"New room\" → 1–4 corner photos or a fire-escape plan + optional two measured walls → room in 3D in ~15 s with how sure it is → adjust size, remove wrong objects → every scenario works in it.\nFor the demo opening: the hackathon room appears in 3D."
+			"height": 300,
+			"color": "4",
+			"text": "**New room: build a room from photos or a plan** 🟩 on main\nGuided corner photos (or a fire-escape plan), optional two measured walls → room in 3D in ~16 s, becomes \"my room\", room switcher. What the photos didn't show is drawn grey (\"a guess, not your room\"); how sure it is in words; fix the size by typing.\nShop photo, link, Find for me and Check my room all work in the new room. 114/114 tests.\nTo fix: the red leather sofa came out beige."
 		},
 		{
 			"id": "p3_fix",
@@ -970,9 +970,9 @@
 			"x": 600,
 			"y": 9011,
 			"width": 520,
-			"height": 300,
+			"height": 326,
 			"color": "6",
-			"text": "**Next · Tap an issue → fix suggested** 🟪 options being explored\nTap any finding in Check my room and get a fix (move, rotate, remove, swap, add a lamp, or a product that fits the gap), shown in 3D with Apply / undo.\nA session compares 3–4 ways (code search, Decisions API choosing, reasoning model + code check, products) on cost, speed and demo risk, plus cutting 10 findings to the top 3.\n**Kate decides the path before it's built.**"
+			"text": "**Tap an issue → get a suggested fix** 🟪 building option B (Kate's pick)\nCode search finds 2–3 checked fixes (moves, turns, multi-step moves, add a lamp); the Decisions API picks the designer's first choice (\"82% sure\"). Tap → ghost + arrow preview → Apply re-checks, marker turns green → 8 s Undo. 'No easy fix: why…' where nothing works.\nAlso fixing: placement said 'Just fits' while the check said paths blocked; room check 3.7 s → under 2 s.\nRejected: model proposes fixes (slow, 0 of 4 hard cases)."
 		},
 		{
 			"id": "p3_cost",
@@ -983,6 +983,122 @@
 			"height": 196,
 			"color": "5",
 			"text": "**Cost per action (measured / list prices)**\nFurniture 3D (astra): ~$0.09 per new model, ~20 s.\nReading a picture or a room (terra): under $0.01.\nDecisions (luna): well under $0.01.\nPhoto view (image): ~$0.05.\nFind for me: web-search fees, not measured yet."
+		},
+		{
+			"id": "p3img_0",
+			"type": "file",
+			"file": "attachments/p3_room_phone_guide.jpg",
+			"x": 40,
+			"y": 9377,
+			"width": 166,
+			"height": 360
+		},
+		{
+			"id": "p3img_1",
+			"type": "file",
+			"file": "attachments/p3_room_phone_3d.jpg",
+			"x": 236,
+			"y": 9377,
+			"width": 166,
+			"height": 360
+		},
+		{
+			"id": "p3img_2",
+			"type": "file",
+			"file": "attachments/p3_room_desktop_grey.jpg",
+			"x": 432,
+			"y": 9377,
+			"width": 576,
+			"height": 360
+		},
+		{
+			"id": "p3img_cap",
+			"type": "text",
+			"x": 1038,
+			"y": 9377,
+			"width": 360,
+			"height": 150,
+			"color": "5",
+			"text": "**The hackathon room from one venue photo**\nCorner guide · the room in 3D · grey = not in the photos"
+		},
+		{
+			"id": "flow_group",
+			"type": "group",
+			"label": "Designer flow",
+			"x": 0,
+			"y": 9977,
+			"width": 1760,
+			"height": 640
+		},
+		{
+			"id": "flow_head",
+			"type": "text",
+			"x": 40,
+			"y": 10037,
+			"width": 1500,
+			"height": 130,
+			"color": "5",
+			"text": "## The designer flow (Kate, 1 Nov) · being built\nTested only through the app's own pipeline and live models, on Kate's Zoopla screenshots and her flat. No hand-made rooms, pieces or fixes."
+		},
+		{
+			"id": "flow_1",
+			"type": "text",
+			"x": 40,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "4",
+			"text": "**1 · Build the room**\nCorner photos, a listing's photos (Zoopla) or a plan → room in 3D in ~16 s. Unseen parts grey."
+		},
+		{
+			"id": "flow_2",
+			"type": "text",
+			"x": 380,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**2 · Errors grab attention**\nOverlaps and blocked paths drawn on the 3D: red on the pieces, red band on the blocked way, a fix one tap away (option B)."
+		},
+		{
+			"id": "flow_3",
+			"type": "text",
+			"x": 720,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**3 · What's wrong: Decisions advice**\nRanked, top 3 first, plain words, each tied to a marker and a fix."
+		},
+		{
+			"id": "flow_4",
+			"type": "text",
+			"x": 1060,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**4 · Find a piece**\nShop photo · page, screenshot or link · or just ask: \"want a new sofa?\""
+		},
+		{
+			"id": "flow_5",
+			"type": "text",
+			"x": 1400,
+			"y": 10207,
+			"width": 300,
+			"height": 260,
+			"color": "6",
+			"text": "**5 · Place it like a designer**\n(a) a free spot · (b) move furniture around, then place · (c) replace a piece.\nPlan as steps with ghosts + arrows, Decisions pick first with % and reason, Apply / Undo."
+		},
+		{
+			"id": "flow_who",
+			"type": "text",
+			"x": 40,
+			"y": 10497,
+			"width": 1500,
+			"height": 80,
+			"color": "5",
+			"text": "Session: Tap an issue, get a fix → finishes option B, then builds this flow. 🟪 = in progress, 🟩 = on main."
 		}
 	],
 	"edges": [
@@ -1208,6 +1324,34 @@
 			"fromSide": "bottom",
 			"toNode": "dev_T",
 			"toSide": "top"
+		},
+		{
+			"id": "flow_e0",
+			"fromNode": "flow_1",
+			"fromSide": "right",
+			"toNode": "flow_2",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e1",
+			"fromNode": "flow_2",
+			"fromSide": "right",
+			"toNode": "flow_3",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e2",
+			"fromNode": "flow_3",
+			"fromSide": "right",
+			"toNode": "flow_4",
+			"toSide": "left"
+		},
+		{
+			"id": "flow_e3",
+			"fromNode": "flow_4",
+			"fromSide": "right",
+			"toNode": "flow_5",
+			"toSide": "left"
 		}
 	]
 }
