@@ -29,6 +29,12 @@ Example (fixture living room, 2026-11-01): [`example-find.json`](example-find.js
 Shops: IKEA (gb), John Lewis, Habitat, Dunelm, MADE, sofa.com, Furniture Village, M&S. Next, Argos, Loaf,
 Wayfair, Heal's and Swyft answer 403/429 to a plain GET, so they're out. Nothing is bought, no login.
 
+**3D from the product picture.** The route hands each result to lane B (`registerProductPiece` in
+`furniture/pieces.mjs`), the same path as a pasted link: kept under its `agent-…` id so `GET /api/pieces/:id`
+serves it, `model.status: "building"` with the kit piece standing in, and the mesh built from the product
+picture (fetched as JPEG/PNG/WebP) in the background, at most three at once. Builds start as soon as find
+returns, so the one you tap is usually ready within seconds; the same product at the same size reuses its model.
+
 Takes ~35 s live (one search, ~10 page reads in parallel, one style call); the route caches answers for an
 hour (`fresh: true` to skip the cache).
 

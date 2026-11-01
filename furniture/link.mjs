@@ -22,7 +22,7 @@ export function publicUrl(raw) {
 }
 
 // The product picture as a data URL (so the image-to-3D model doesn't have to fetch a shop's CDN).
-async function pictureData(url, { fetch = globalThis.fetch } = {}) {
+export async function pictureData(url, { fetch = globalThis.fetch } = {}) {
   if (!url) return null;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { "user-agent": "Mozilla/5.0", accept: "image/jpeg,image/png;q=0.9,image/webp;q=0.8" } });

@@ -10,6 +10,7 @@ import { kitFor } from "./parametric.mjs";
 import { astraBuild, model3d } from "./astra3d.mjs";
 import { meshyAvailable, meshyBuild } from "./meshy.mjs";
 import { normalise, toGLB, fromGLB } from "./glb.mjs";
+import { pictureData } from "./link.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const OUT = process.env.PIECES_OUT ?? join(HERE, "out");
@@ -123,13 +124,59 @@ export async function createPieceFromFacts(facts, { image, kitRead = {} } = {}) 
   return save(piece);
 }
 
-async function build(piece, image, route) {
+// A piece that already has its id and facts: a "Find for me" result (agent/find.mjs), sizes read off the
+// product page, the kit piece in model.parametric. Same path as a pasted link: kept under its own id so
+// GET /api/pieces/:id serves it, and the mesh builds from the product picture in the background (the kit
+// piece stands in). The same product at the same size reuses the model built before: no second build.
+// The picture is fetched as JPEG / PNG / WebP (shops send AVIF otherwise), in a build slot, so the find
+// answer isn't held up by it.
+const live = new Set();   // ids building in this process
+export function registerProductPiece(piece, { picture = pictureData, make } = {}) {
+  const old = getPiece(piece.id);
+  const same = old && sameSize(old.size, piece.size);
+  if (same && (live.has(piece.id) || (old.model?.status === "ready" && old.model.how === "image_to_3d" && old.model.glb))) {
+    return save({ ...piece, source: old.source, model: old.model, timing: old.timing });
+  }
+  const route = piece.source?.image ? (make ? "test" : imageTo3dRoute()) : null;
+  if (!route) return save(piece);
+  const kit = piece.model?.parametric ?? null;
+  const p = save({ ...piece, model: { status: "building", how: "image_to_3d", glb: null, parametric: kit, job: `${route}:${piece.id}` } });
+  live.add(p.id);
+  slot(async () => {
+    const t0 = Date.now();
+    const image = await picture(piece.source.image);
+    if (!image) {
+      console.error(`piece ${p.id}: no product picture from ${piece.source.image}`);
+      return save({ ...p, model: kit ? { ...p.model, status: "ready", how: "parametric", error: "no product picture" } : { ...p.model, status: "failed", error: "no product picture" } });
+    }
+    writeFileSync(imageFile(p.id), Buffer.from(image.split(",")[1], "base64"));
+    const withImage = save({ ...p, source: { ...p.source, image: `/api/pieces/${p.id}/image`, image_url: piece.source.image }, timing: { ...p.timing, picture_ms: Date.now() - t0 } });
+    await build(withImage, image, route, make);
+  }).catch((err) => console.error(`piece ${p.id}:`, err.message)).finally(() => live.delete(p.id));
+  return p;
+}
+const sameSize = (a = [], b = []) => a.length === 3 && a.every((v, i) => Math.abs(v - b[i]) < 0.005);
+
+// At most three image-to-3D builds at once (cost and rate limits); the rest wait their turn.
+const BUILD_SLOTS = 3;
+let running = 0;
+const waiting = [];
+function slot(job) {
+  return new Promise((resolve, reject) => {
+    const go = () => { running++; job().then(resolve, reject).finally(() => { running--; waiting.shift()?.(); }); };
+    running < BUILD_SLOTS ? go() : waiting.push(go);
+  });
+}
+
+async function build(piece, image, route, make) {
   const t0 = Date.now();
   try {
     let doc;
-    if (route === "astra") doc = (await astraBuild(image, piece)).doc;
+    if (make) doc = await make(image, piece);
+    else if (route === "astra") doc = (await astraBuild(image, piece)).doc;
     else doc = await fromGLB((await meshyBuild(image)).bytes);
     const glb = await writeModel(piece.id, doc, piece.size);
+    console.log(`piece ${piece.id}: ${route} model ready in ${((Date.now() - t0) / 1000).toFixed(1)} s (${piece.name})`);
     save({ ...piece, model: { ...piece.model, status: "ready", glb }, timing: { ...piece.timing, model_ms: Date.now() - t0 } });
   } catch (err) {
     console.error(`piece ${piece.id}: ${route} failed:`, err.message);
