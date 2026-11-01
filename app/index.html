@@ -45,12 +45,19 @@
 </div>
 
 <header class="top">
-  <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5V20H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="7.5" y="13" width="9" height="4" rx="1" fill="currentColor"/></svg>Pocket Room</div>
+  <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5V20H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="7.5" y="13" width="9" height="4" rx="1" fill="currentColor"/></svg><span>Pocket Room</span></div>
+  <button class="room-pick" id="btn-rooms" aria-haspopup="true" aria-expanded="false"><span id="room-pick-name">Rooms</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <div class="tools">
     <button class="icon" id="btn-names" aria-pressed="true" title="Names"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <button class="icon" id="btn-home" title="Whole room"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
   </div>
 </header>
+
+<div class="menu" id="room-menu" hidden>
+  <div class="menu-group"><div class="eyebrow">Your flat</div><ul id="menu-flat"></ul></div>
+  <div class="menu-group" id="menu-built-group" hidden><div class="eyebrow">Rooms you built</div><ul id="menu-built"></ul></div>
+  <button class="btn primary new-room" id="menu-new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New room</button>
+</div>
 
 <section class="sheet" id="sheet" aria-live="polite">
   <button class="grip" id="grip" aria-label="Fold the panel"></button>
@@ -59,11 +66,73 @@
     <div class="eyebrow">My room</div>
     <h1 id="room-name">…</h1>
     <p class="meta" id="room-meta"></p>
+    <p class="sure" id="room-sure" hidden><i class="sure-dot"></i><span id="room-sure-text"></span> <button class="linkish" id="btn-fix-size" type="button">Fix the size</button></p>
+    <p class="sure unseen-note" id="room-unseen" hidden><i class="sure-dot unseen"></i><span id="room-unseen-text"></span></p>
+    <form class="size-form" id="size-form" hidden>
+      <label>Width<input id="fix-w" inputmode="decimal" autocomplete="off"></label>
+      <label>Length<input id="fix-d" inputmode="decimal" autocomplete="off"></label>
+      <div class="seg units" data-units><button type="button" data-unit="m">m</button><button type="button" data-unit="ft">ft in</button></div>
+      <div class="row"><button class="btn primary" type="submit">Save size</button><button class="btn" type="button" id="fix-cancel">Cancel</button></div>
+      <p class="hint">Width: the wall facing you in the first photo. Length: the wall running away from you.</p>
+    </form>
     <div class="row">
       <button class="btn primary" id="btn-check">Check my room</button>
       <button class="btn" id="btn-photo">Photo view</button>
+      <button class="btn" id="btn-new-room"><svg viewBox="0 0 24 24" class="small"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New room</button>
     </div>
     <img class="still" id="still" alt="A photo-like view of the room" hidden>
+  </div>
+
+  <div class="screen" data-screen="new" hidden>
+    <div class="eyebrow">New room</div>
+    <div id="new-pick">
+      <h1>Build a room in 3D</h1>
+      <p class="meta">Photos from the corners, or a floor plan. About 20 seconds.</p>
+      <div class="seg modes" id="new-modes"><button type="button" data-mode="photos" aria-pressed="true">Photos</button><button type="button" data-mode="plan" aria-pressed="false">Floor plan</button></div>
+      <div id="new-photos">
+        <div class="shot">
+          <svg viewBox="0 0 100 100" id="corner-guide" aria-hidden="true"></svg>
+          <div><strong id="shot-title"></strong><p class="meta" id="shot-say"></p></div>
+        </div>
+        <ol class="thumbs" id="thumbs"></ol>
+        <div class="row">
+          <label class="btn primary" id="shot-camera"><input type="file" accept="image/*" capture="environment" id="room-camera" hidden><svg viewBox="0 0 24 24" class="small"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Take photo</span></label>
+          <label class="btn"><input type="file" accept="image/*" multiple id="room-upload" hidden>Upload photos</label>
+        </div>
+        <details class="measured" id="measured">
+          <summary>I measured two walls</summary>
+          <div class="size-form">
+            <label>Width<input id="m-width" inputmode="decimal" autocomplete="off" placeholder="3.80"></label>
+            <label>Length<input id="m-depth" inputmode="decimal" autocomplete="off" placeholder="5.20"></label>
+            <div class="seg units" data-units><button type="button" data-unit="m">m</button><button type="button" data-unit="ft">ft in</button></div>
+            <p class="hint">Width: the wall facing you in photo 1. Length: the wall running away from you. One is enough; two make it exact.</p>
+          </div>
+        </details>
+        <input class="name-in" id="new-name" placeholder="Name it (optional): Hackathon room" autocomplete="off" maxlength="60">
+        <div class="row">
+          <button class="btn primary" id="btn-build" disabled>Build my room</button>
+          <button class="btn" type="button" data-cancel>Cancel</button>
+        </div>
+      </div>
+      <div id="new-plan" hidden>
+        <p class="meta">A photo or screenshot of a floor plan: an estate agent's plan or the fire-escape plan on the back of the door.</p>
+        <label class="tile wide" id="plan-tile"><input type="file" accept="image/*" id="plan-in" hidden>
+          <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 12h7v8M11 4v5M15 12h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Photo of the plan</label>
+        <p class="hint" id="plan-note"></p>
+        <div class="row"><button class="btn" type="button" data-cancel>Cancel</button></div>
+      </div>
+    </div>
+    <div id="new-busy" class="busy-box" hidden>
+      <div class="busy">
+        <img id="new-busy-img" alt="" hidden>
+        <div><span class="spin"></span><strong class="busy-step"></strong><p class="meta busy-sub"></p></div>
+      </div>
+      <div class="busy-error" hidden><p class="err"></p><div class="row"><button class="btn primary retry">Try again</button><button class="btn back">Back</button></div></div>
+    </div>
+    <div id="new-planrooms" hidden>
+      <p class="meta">The plan has more than one room. Which one is this?</p>
+      <div class="chips" id="planroom-chips"></div>
+    </div>
   </div>
 
   <div class="screen" data-screen="add" hidden>
@@ -129,6 +198,7 @@
       <div class="chip" id="verdict-chip"></div>
       <p class="say" id="verdict-say"></p>
       <p class="meta" id="verdict-piece"></p>
+      <p class="unseen-warn" id="verdict-unseen" hidden></p>
       <p class="building" id="verdict-building" hidden><span class="spin small"></span><span>Showing a stand-in. Building the real 3D model…</span></p>
       <ol class="findings" id="findings"></ol>
       <p class="meta" id="findings-busy" hidden><span class="spin small"></span> Checking the room with it in…</p>

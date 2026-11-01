@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { place, analyse } from "../../rules/index.mjs";
 import { withPiece } from "../../decisions/design.mjs";
 import { resolveRoom } from "../rooms-store.mjs";
+import { preferSeen } from "../../room/photo/seen.mjs";
 
 // Lane E hook. decisions/hooks.mjs may export either or both:
 //   choose(room, piece, placement) -> placement   pick/reorder among placement.spots (all legal, measured)
@@ -33,6 +34,7 @@ export function placeRouter(hook = E) {
       if (!room) return;
       let placement = place(room, piece, { replace });
       if (hook.choose) placement = await hook.choose(room, piece, placement);
+      placement = preferSeen(room, placement);   // rooms from photos: spots on what the photos showed first
       res.json(placement);
     } catch (e) { next(e); }
   });

@@ -7,9 +7,11 @@ the prebuilt Hoskins rooms and rooms built this session); a `room` in the body w
 | Call | Lane | In | Out |
 |---|---|---|---|
 | `GET /api/rooms/:id` | A | | `room` |
-| `POST /api/rooms/from-photo` | A | `{ images: [..], hint? }` | `room` (source `photo`, accuracy ~0.15) |
+| `POST /api/rooms/from-photo` | A | `{ images: [..≤8], hint?: text \| { width_m?, depth_m?, height_m? }, name? }` | `room` (source `photo`; `accuracy_m` from the spread between photos; a measured wall wins) |
 | `POST /api/rooms/from-plan` | A | `{ image, room?, px_per_m?, height_m? }` | `room` (source `floorplan`) + `_plan_rooms` |
-| `GET /api/rooms` | A | | `{ rooms: [{ id, name, source }] }` |
+| `GET /api/rooms` | A | | `{ rooms: [{ id, name, source }], from_plan: boolean }` (`from_plan` false: this server can't read plans; from-plan answers 501) |
+| `PATCH /api/rooms/:id` | A | `{ width_m?, depth_m?, height_m?, name? }` | `room` resized by code (walls stretch, opening and furniture centres move with them; both walls → `accuracy_m` 0.05). Built rooms only |
+| `PUT /api/rooms/:id` | A | `room` | `{ id }`: puts back a built room the app kept after the server forgot it (restart). Schema-checked; not the flat's rooms |
 | `POST /api/pieces` | B | `{ image, kind: photo\|shop_tag\|screenshot, hint? }` | `piece` (model.status may be `building`) |
 | `POST /api/pieces/from-link` | B (+ G's page reader) | `{ url }` | `piece` (source `link`, size from the page; 422 if the page doesn't state it) |
 | `GET /api/pieces/:id` | B | | `piece` (poll until model.status is `ready` or `failed`) |

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { roomFromReading, extentFrom } from "./build.mjs";
+import { roomFromReading, extentFrom, planExtents, resizeRoom } from "./build.mjs";
 import { checkRoom } from "../schema-check.mjs";
 
 // A real gpt-6.1-terra reading of room/venue/venue-chesterfields-2026-11-01.jpg
@@ -68,4 +68,78 @@ test("the venue reading builds a usable room", () => {
   assert.ok(room.walls.some((x) => x.openings.length));
   assert.ok(room.furniture.some((f) => f.category === "sofa" || f.category === "armchair"));
   for (const f of room.furniture) assert.ok(f.at[0] >= 0 && f.at[0] <= W && f.at[1] >= 0 && f.at[1] <= L, f.id);
+});
+
+const p = (photo, ref, multiples, span_fraction = 1) => ({ photo, span_fraction, ref, multiples, note: "" });
+
+test("several photos: each photo gives its own value, the room takes their median", () => {
+  const e = { seen_fraction: 1, measures: [
+    p(1, "door_width", 5), p(1, "chair_width", 9),   // 4.10, 4.05 -> 4.075
+    p(2, "floor_tile", 7),                           // 4.2
+    p(3, "door_width", 2.5, 0.5),                    // 2.05 of half the wall -> 4.1
+  ] };
+  const x = extentFrom(e, "width");
+  assert.deepEqual(x.photos, [4.075, 4.2, 4.1]);
+  assert.equal(x.m, 4.1);
+  assert.ok(x.err >= 0.1 && x.err < 0.15, `err ${x.err}`);   // photos agree within ~6 cm
+  // a photo that disagrees widens the error
+  const off = extentFrom({ seen_fraction: 1, measures: [...e.measures, p(4, "door_width", 7)] }, "width");
+  assert.ok(off.err > x.err);
+});
+
+test("one measured wall scales the other by the photo's proportions", () => {
+  const r = reading({ depth: { seen_fraction: 1, measures: [m("door_width", 6)] } });   // 4.1 x 4.92 read
+  const { W, L } = planExtents(r, { width_m: 3.28 });                                    // the real width is 80%
+  assert.equal(W.m, 3.28);
+  assert.ok(Math.abs(L.m - 4.92 * 0.8) < 1e-9);
+  const both = planExtents(r, { width_m: 3, depth_m: 4 });
+  assert.deepEqual([both.W.m, both.L.m], [3, 4]);
+});
+
+test("resizeRoom stretches walls, keeps opening widths and keeps furniture inside", () => {
+  const room = roomFromReading(reading(), { id: "t" });
+  const out = resizeRoom(room, { width_m: 5, depth_m: 6 });
+  assert.deepEqual(checkRoom(out), []);
+  assert.equal(out.accuracy_m, 0.05);
+  const n = out.walls.find((w) => w.id === "north");
+  assert.deepEqual(n.a, [5, 6]);
+  const d0 = room.walls.find((w) => w.id === "north").openings[0], d1 = n.openings[0];
+  assert.equal(d1.width, d0.width);
+  assert.ok(Math.abs((d1.from + d1.width / 2) / 5 - (d0.from + d0.width / 2) / 4.1) < 0.002);   // same share along
+  for (const f of out.furniture) assert.ok(f.at[0] > 0 && f.at[0] < 5 && f.at[1] > 0 && f.at[1] < 6);
+  const one = resizeRoom(room, { width_m: 5 });
+  assert.equal(one.walls.find((w) => w.id === "north").a[1], room.walls.find((w) => w.id === "north").a[1]);
+  assert.ok(one.accuracy_m < room.accuracy_m);
+  assert.equal(resizeRoom(room, { height_m: 3 }).fixtures[0].size[2], 3);   // columns stay floor to ceiling
+});
+
+test("what the photos showed: seen wall spans and floor; the rest is marked, not made up", () => {
+  const seen = { floor: { left: 0.2, right: 1, near: 0.3, far: 1 }, walls: [{ wall: "far", from: 0.2, to: 1 }, { wall: "right", from: 0.3, to: 1 }] };
+  const room = roomFromReading(reading({ seen, depth: { seen_fraction: 1, measures: [m("door_width", 6)] } }), { id: "t" });
+  assert.deepEqual(checkRoom(room), []);
+  const by = Object.fromEntries(room.walls.map((x) => [x.id, x]));
+  // far wall = north, a at the east end: seen from the right end to 20% from the left (0 .. 3.28 m from a),
+  // and its door (2.665 .. 3.485) was seen too, so the span runs on to the door's far edge
+  assert.deepEqual(by.north.seen, [[0, 3.485]]);
+  assert.deepEqual(by.east.seen, [[1.476, 4.92]]);   // right wall: from 30% of the way to the far end
+  assert.deepEqual(by.south.seen, []);               // behind the camera: nobody saw it
+  assert.deepEqual(by.west.seen, []);
+  assert.deepEqual(room.floor_seen, [[0.82, 1.476], [4.1, 1.476], [4.1, 4.92], [0.82, 4.92]]);
+});
+
+test("an older reading without `seen` falls back to the seen fractions", () => {
+  const room = roomFromReading(venue, { id: "v" });
+  assert.deepEqual(checkRoom(room), []);
+  const by = Object.fromEntries(room.walls.map((x) => [x.id, x]));
+  assert.ok(by.north.seen.length >= 1);              // the far wall, partly
+  assert.deepEqual(by.south.seen, []);
+  assert.equal(room.floor_seen.length, 4);
+});
+
+test("resizeRoom carries what was seen along", () => {
+  const seen = { floor: { left: 0, right: 0.5, near: 0, far: 1 }, walls: [{ wall: "far", from: 0, to: 0.5 }] };
+  const room = roomFromReading(reading({ seen, openings: [] }), { id: "t" });
+  const out = resizeRoom(room, { width_m: 8.2 });
+  assert.deepEqual(out.walls.find((x) => x.id === "north").seen, [[4.1, 8.2]]);
+  assert.equal(out.floor_seen[1][0], 4.1);
 });

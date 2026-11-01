@@ -44,3 +44,35 @@ test("from-plan wants an image data URL", async () => {
   const res = await fetch(`${base}/from-plan`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: "nope" }) });
   assert.equal(res.status, 400);
 });
+
+import { saveRoom } from "../rooms-store.mjs";
+const json = (method, body) => ({ method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const box = (id) => ({ id, name: "Box", source: "photo", accuracy_m: 1, height: 2.5, glb: null, lights: [], fixtures: [],
+  walls: [["south", [0, 0], [4, 0]], ["east", [4, 0], [4, 3]], ["north", [4, 3], [0, 3]], ["west", [0, 3], [0, 0]]].map(([id, a, b]) => ({ id, a, b, openings: [] })),
+  furniture: [{ id: "sofa", name: "Sofa", category: "sofa", at: [2, 0.5], size: [2, 0.9, 0.8], rot: 0, on_floor: true }] });
+
+test("the list says whether plans can be read here", async () => {
+  const out = await (await fetch(base)).json();
+  assert.equal(typeof out.from_plan, "boolean");
+});
+
+test("PATCH fixes a built room's size by hand; the flat's rooms stay exact", async () => {
+  saveRoom(box("photo-t1"));
+  const res = await fetch(`${base}/photo-t1`, json("PATCH", { width_m: 5, depth_m: 3.6, name: "Studio" }));
+  assert.equal(res.status, 200);
+  const room = await res.json();
+  assert.equal(room.name, "Studio");
+  assert.equal(room.accuracy_m, 0.05);
+  assert.deepEqual(room.walls[2].a, [5, 3.6]);
+  assert.deepEqual((await (await fetch(`${base}/photo-t1`)).json()).walls[2].a, [5, 3.6]);   // stored
+  assert.equal((await fetch(`${base}/photo-t1`, json("PATCH", { width_m: 0.2 }))).status, 400);
+  assert.equal((await fetch(`${base}/hoskins-living`, json("PATCH", { width_m: 4 }))).status, 400);
+});
+
+test("PUT puts back a room the app kept, checked against the schema", async () => {
+  assert.equal((await fetch(`${base}/photo-t2`, json("PUT", box("photo-t2")))).status, 200);
+  assert.equal((await (await fetch(`${base}/photo-t2`)).json()).name, "Box");
+  assert.equal((await fetch(`${base}/photo-t3`, json("PUT", { ...box("photo-t3"), walls: "no" }))).status, 400);
+  assert.equal((await fetch(`${base}/photo-t4`, json("PUT", box("photo-t5")))).status, 400);
+  assert.equal((await fetch(`${base}/hoskins-living`, json("PUT", box("hoskins-living")))).status, 400);
+});

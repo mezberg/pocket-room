@@ -10,6 +10,11 @@
     "source": { "enum": ["prebuilt", "photo", "floorplan", "manual"] },
     "accuracy_m": { "type": "number", "description": "Rough error of the walls, e.g. 0.01 prebuilt, 0.15 from a photo" },
     "height": { "type": "number", "description": "Floor to ceiling" },
+    "floor_seen": {
+      "type": "array",
+      "description": "Rooms from photos: the part of the floor the photos showed, as a polygon. Absent = all of it is known; the rest is a guess (drawn grey)",
+      "items": { "$ref": "#/$defs/pt" }
+    },
     "glb": { "type": ["string", "null"], "description": "URL of the room shell model, or null to draw it from walls" },
     "walls": {
       "type": "array",
@@ -21,6 +26,11 @@
           "id": { "type": "string" },
           "a": { "$ref": "#/$defs/pt" },
           "b": { "$ref": "#/$defs/pt" },
+          "seen": {
+            "type": "array",
+            "description": "Rooms from photos: the spans of this wall the photos showed, as [from, to] metres from a. Absent = all of it is known; [] = none of it was seen (drawn grey, a guess)",
+            "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+          },
           "openings": {
             "type": "array",
             "items": {

@@ -12,6 +12,11 @@ async function call(method, path, body) {
 
 export const api = {
   room: (id) => call("GET", `/rooms/${encodeURIComponent(id)}`),
+  rooms: () => call("GET", "/rooms"),                            // { rooms: [{ id, name, source }], from_plan }
+  fromPhoto: (images, hint, name) => call("POST", "/rooms/from-photo", { images, hint, name }),
+  fromPlan: (image, room, name) => call("POST", "/rooms/from-plan", { image, room, name }),
+  resizeRoom: (id, body) => call("PATCH", `/rooms/${encodeURIComponent(id)}`, body),   // { width_m?, depth_m?, name? }
+  keepRoom: (room) => call("PUT", `/rooms/${encodeURIComponent(room.id)}`, room),      // put back after a server restart
   newPiece: (image, kind = "photo", hint) => call("POST", "/pieces", { image, kind, hint }),
   fromLink: (url) => call("POST", "/pieces/from-link", { url }),
   piece: (id) => call("GET", `/pieces/${encodeURIComponent(id)}`),
@@ -44,4 +49,14 @@ export async function imageToDataURL(file, max = 1600) {
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
   bmp.close?.();
   return c.toDataURL("image/jpeg", 0.86);
+}
+
+// a file as it is, as a data URL (plans: keep every line, and the server's cache knows the same file)
+export async function fileAsDataURL(file) {
+  return new Promise((ok, no) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result);
+    r.onerror = () => no(r.error);
+    r.readAsDataURL(file);
+  });
 }
