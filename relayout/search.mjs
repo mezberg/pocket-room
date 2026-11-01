@@ -283,7 +283,7 @@ export function anneal(room, { budgetMs = 6000, iters = 4000, seed = 7, pinned =
   };
   let evals = 1, geo = 0, i = 0;
   const movers = zones;
-  for (; i < iters && performance.now() - t0 < budgetMs; i++) {
+  for (; movers.length && i < iters && performance.now() - t0 < budgetMs; i++) {   // nothing left to move: the room as it is
     const T = T0 * Math.pow(T1 / T0, i / iters);
     const near = i % 25 === 0 || !cur._near ? (cur._near = nearProblems(cur.room, cur.m, zones, 1.2)) : cur._near;
     // pick a zone: near a squeeze 4×, big zones 2×, other single pieces 1×

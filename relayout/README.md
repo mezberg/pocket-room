@@ -40,7 +40,7 @@ set, the airer and the TV-side plants form one wall). Opening it needs the seati
 |---|---|---|---|
 | fixes | what the templates foresee | anything a sequence of zone/piece moves can reach; take-out and smaller-piece tiers | whatever it imagines; measured 0/2 valid on the blocked way (issue-fix-options notes) |
 | quality | predictable, rigid; fails on odd rooms (photo rooms, L-shapes) | all numbers measured; whole room scored (walls of furniture, squeezes, overlaps, door swings, TV facing, daylight, a light per zone, how much moves) | inventive but invents sizes; needs repair loops |
-| latency | < 1 s | ~6 s for Kate's flat, ~8 s for the Zoopla room (4 × 1100 annealing steps, ~1600 layouts measured at ~3 ms) + ~0.5 s Decisions | 15–35 s per proposal |
+| latency | < 1 s | ~7 s for Kate's flat, ~9 s for the Zoopla room (5 × 1100 annealing steps, ~1200–1300 layouts measured at ~3 ms) + ~0.5 s Decisions | 15–35 s per proposal |
 | cost | none | one Decisions call | 1+ Responses calls per try |
 | effort | medium, grows per room type | done here (≈ 600 lines) | medium + repair code |
 | risk | brittle templates | long step lists; tuning weights | invalid layouts, can't be trusted |
@@ -49,12 +49,26 @@ Recommendation: the global search (simulated annealing over zone moves, seeded s
 with zones as the move unit (so it plans like a designer) and the Decisions API choosing among 2–3 measured plans. A
 beam search was tried first and was myopic (a 30 cm nudge looked best and shut out the 1.2 m seating move).
 
+## Three different ideas, not one plan three times
+One search settles on one idea, so its runners-up are the same plan with small changes. The plans are now built to differ:
+1. **Rearrange the room**: the best layout found (3 seeded annealing runs).
+2. **Keep … where it is**: the zone plan 1 moves furthest stays put, and a second search (2 runs) finds the best without
+   it. Shown even when it can't open the room, so the owner sees what keeping it costs ("one way stays blocked").
+3. **Smallest change**: as open as plan 1, with the fewest big zones moved, then the fewest moves.
+
+No two plans move the same big zones to within 40 cm of each other. When no plan opens the room, "take one out" and
+"a smaller piece" follow.
+
 ## Measured (no model in the numbers)
-| room | before | best plan | after |
+| room | before | plan | after |
 |---|---|---|---|
-| hoskins-living | 6 problems, 1 blocked way, narrowest 17 cm, 1 overlap | sofa + side table + coffee table 120 cm south, towards the window; dining set 34 cm east; bookshelf 85 cm south; floor lamp moved; airer and bag put away | 0 problems, 0 blocked, narrowest 77 cm |
-| (fewest moves) | | sofa group 141 cm south; floor lamp moved; bag put away | 4 problems (tight only), 0 blocked, narrowest 59 cm |
-| zoopla-openplan-blocked (from photos) | 6 problems, 1 blocked way (26 cm by the dining table) | sectional + coffee table 86 cm south, media unit with it; dining set 123 cm north-east (out of the kitchen run) | 3 problems (tight), 0 blocked, narrowest 62 cm |
+| hoskins-living | 6 problems, 1 blocked way, narrowest 17 cm, 1 overlap | **Rearrange**: sofa + side table + coffee table 120 cm south, towards the window; dining set 34 cm east; bookshelf 85 cm south; floor lamp moved; airer and bag put away | 0 problems, narrowest 77 cm |
+| | | **Smallest change**: sofa group 141 cm south; floor lamp moved; bag put away | 0 blocked, 4 tight, narrowest 59 cm |
+| | | **Keep the sofa**: dining set 293 cm south, by the window; bag put away | 1 way stays blocked, narrowest 55 cm, 3 zones in daylight |
+| zoopla-openplan-blocked (from photos) | 6 problems, 1 blocked way (26 cm by the dining table) | **Rearrange**: sectional + coffee table 30 cm east, media unit 60 cm east with it; dining set 237 cm south | 4 problems (tight), 0 blocked, narrowest 62 cm |
+| | | **Keep the sectional**: dining set 107 cm north-east (out of the kitchen run) | 0 blocked, narrowest 62 cm |
+
+Time: about 7 s for Kate's flat and 9 s for the Zoopla room (searches only), plus about 0.5 s for the Decisions pick.
 
 ## In the app
 "Rearrange my room" under What's wrong (any rule problem, no new piece): a card with the plans (the pick first, its
@@ -64,6 +78,7 @@ A fix card with no small fix now says so and offers "Rearrange the room", with t
 ## Left to do
 - Screens (`docs/screens/relayout-*.jpg`) weren't taken; the UI is wired but not checked in a browser.
 - Turning zones (the sofa onto another wall) and swapping zones (seating ↔ dining) aren't move types yet.
-- Long plans (6–7 steps): group small "put away" steps, or prefer the fewest-moves plan when it's nearly as good.
+- Long plans (6–7 steps): group the small "put away" steps.
+- "Keep the sofa" can score worse than the room as it is on problem count (7 vs 6 on Kate's flat); it is shown as the trade-off.
 - Floor lamps can travel 2 m; a "lamp belongs to its sofa" term would keep them close.
-- The search is CPU-bound in the request (6–8 s); a worker or streaming the first plan would help.
+- The search is CPU-bound in the request (7–9 s); a worker or streaming the first plan would help.

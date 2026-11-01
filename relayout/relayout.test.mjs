@@ -65,6 +65,18 @@ test("every plan is what the rules measure once applied (through the app's own a
   }
 });
 
+test("the plans are different ideas, not one plan three times", () => {
+  const r = hoskins();
+  assert.ok(r.plans.length >= 2);
+  const sofaAt = (p) => p.steps.find((s) => s.item === "sofa")?.at ?? null;
+  // one plan keeps the sofa where it stands, and says what that costs
+  const keep = r.plans.find((p) => /^Keep the sofa/.test(p.say));
+  assert.ok(keep && !sofaAt(keep), keep?.say);
+  // no two plans move the same zones to the same places
+  const sig = (p) => p.steps.filter((s) => ["sofa", "dining_table", "desk"].includes(s.item)).map((s) => `${s.item}@${s.at.map((v) => Math.round(v * 2)).join(",")}`).join(";");
+  assert.equal(new Set(r.plans.map(sig)).size, r.plans.length);
+});
+
 test("a room built from photos: the 26 cm way by the dining table opens", () => {
   const r = openplan();
   assert.ok(r.before.blocked >= 1);

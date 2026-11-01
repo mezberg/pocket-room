@@ -94,6 +94,7 @@ function gains(before, after) {
   if (before.overlaps > after.overlaps) out.push("nothing stands in anything else");
   if (before.narrowest_m != null && after.narrowest_m != null && after.narrowest_m > before.narrowest_m + 0.02) out.push(`the narrowest walkway goes from ${cm(before.narrowest_m)} to ${cm(after.narrowest_m)}`);
   if (after.problems < before.problems) out.push(`${before.problems} problems become ${after.problems}`);
+  if (after.blocked) out.push(`${after.blocked === 1 ? "one way stays" : `${after.blocked} ways stay`} blocked`);
   return out.join(", ");
 }
 
@@ -122,31 +123,45 @@ export function relayoutPlans(room, { focus = null, budgetMs = 15000, pinned = [
   const t0 = performance.now();
   const zones = zonesOf(room);
   const pins = new Set(pinned);
-  const run = annealMany(room, { budgetMs, zones, pinned: pins });
+  const run = annealMany(room, { budgetMs: budgetMs * 0.6, zones, pinned: pins, seeds: [7, 11, 23] });
   const { ctx, O } = run;
   const before = numbers(room, ctx, O);
   const s0 = snap(room, O);
   const open = (st) => st.m.closed < 0.5 && st.m.hard === 0;     // no door or piece cut off (a window may still be)
-  const good = run.best.filter((st) => st.score < run.start.score - 1);
+  const better = (st) => st.score < run.start.score - 1;
+  const good = run.best.filter(better);
   const plans = [];
 
-  // 1. rearrange: the fewest zones that open every way, the best overall, and one more that differs
+  // 1. rearrange: three different ideas, not three versions of one.
+  //   a. the best layout found;
+  //   b. the best that keeps a's main zone (the one it moves furthest) where it stands: a second search with it pinned;
+  //   c. the smallest change: only small pieces move (or are put away), or else the fewest zones.
+  const BIG = new Set(["seating", "dining", "work"]);
   const opening = good.filter(open);
-  const fewest = [...opening].sort((a, b) => movedZones(room, a.room, zones).length - movedZones(room, b.room, zones).length || a.score - b.score)[0];
+  const A = opening[0] ?? good[0];
   const picks = [];
-  if (opening[0]) picks.push(opening[0]);
-  if (fewest && !picks.includes(fewest)) picks.push(fewest);
-  for (const st of good) {
-    if (picks.length >= 3) break;
-    if (picks.includes(st)) continue;
-    // a real alternative: moves a different set of zones and is at least as open as the others
-    if (open(st) || !opening.length) picks.push(st);
+  if (A) picks.push({ st: A, head: "Rearrange the room" });
+  const main = A && mainZone(room, A.room, ctx);
+  let B = null;
+  if (main) {
+    const keepIds = [...main.items, ...(main.tv ? ctx.byZone.get(main.tv).items : [])];
+    const alt = annealMany(room, { budgetMs: budgetMs * 0.4, zones, pinned: new Set([...pins, ...keepIds]), seeds: [5, 13] });
+    // shown even when it can't open the room: then it says what keeping it costs
+    B = alt.best.filter(better)[0] ?? null;
+    if (B) picks.push({ st: B, head: `Keep ${main.name} where ${main.items.length > 1 ? "they are" : "it is"}` });
+    run.best.push(...alt.best);
   }
-  for (const st of picks.slice(0, 3)) plans.push(planOf("rearrange", room, st, ctx, O, before));
+  const bigMoved = (st) => movedZones(room, st.room, zones).filter((id) => BIG.has(ctx.byZone.get(id)?.kind)).length;
+  const others = run.best.filter(better).filter((st) => !picks.some((p) => p.st === st || sameIdea(room, p.st.room, st.room, zones)));
+  // as open as the best plan, with the fewest big zones moved, then the fewest moves
+  const pool = others.filter((st) => open(st) || !open(A));
+  const small = pool.sort((a, b) => bigMoved(a) - bigMoved(b) || movedZones(room, a.room, zones).length - movedZones(room, b.room, zones).length || a.score - b.score)[0];
+  if (small) picks.push({ st: small, head: bigMoved(small) ? "Smallest change" : "Smallest change: only small pieces move" });
+  for (const p of picks.slice(0, 3)) plans.push(planOf("rearrange", room, p.st, ctx, O, before, { head: p.head }));
 
   // 2. take something out: when no layout opens every way
-  if (!opening.length) {
-    const bestSt = good[0] ?? run.start;
+  if (!plans.some((p) => p.after.blocked === 0 && p.after.overlaps === 0)) {
+    const bestSt = A ?? run.start;
     const cands = (bestSt.room.furniture ?? []).filter((x) => !stays(room, x) && x.on_floor !== false && x.category !== "rug"
       && !["sofa", "desk", "bed"].includes(x.category) && !isTv(x) && !(x.category === "table" && x.size[2] >= 0.65));
     const tries = cands.map((x) => {
@@ -182,8 +197,9 @@ export function relayoutPlans(room, { focus = null, budgetMs = 15000, pinned = [
 
   // say each plan in a line
   for (const p of plans) {
-    const head = p.kind === "rearrange" ? `Rearrange ${p.zones_moved > 2 ? "the room" : "two zones"}` : p.kind === "remove" ? p.why : p.why;
-    p.say = `${sentence(head.replace(/^Rearrange two zones/, p.zones_moved === 1 ? "Move one zone" : "Rearrange two zones"))}${p.gain ? `: ${p.gain}` : ""}.`;
+    const head = p.head ?? p.why;
+    p.say = `${sentence(head)}${p.gain ? `: ${p.gain}` : ""}.`;
+    delete p.head;
     if (focus) p.clears_focus = clears(focus, s0, p.room, O);
   }
   // the one that clears the tapped problem first, then the best measured
@@ -203,6 +219,29 @@ const smaller = (x) => {
   const d = x.category === "sofa" ? Math.max(0.8, x.size[1] - 0.1) : Math.max(0.3, r2(x.size[1] * 0.85));
   return [r2(w), r2(d), x.size[2]];
 };
+
+// The zone a layout moves furthest among the big ones (seating, dining, desk), weighted by how much it holds.
+function mainZone(room0, room, ctx) {
+  let best = null, w = 0;
+  for (const z of ctx.zones.filter((z) => z.kind === "seating" || z.kind === "dining" || z.kind === "work")) {
+    const a = byId(room0, z.lead), b = byId(room, z.lead);
+    if (!a || !b) continue;
+    const d = Math.hypot(b.at[0] - a.at[0], b.at[1] - a.at[1]);
+    const k = d * z.items.reduce((s, id) => { const x = byId(room0, id); return s + (x ? x.size[0] * x.size[1] : 0); }, 0);
+    if (d > 0.1 && k > w) { w = k; best = z; }
+  }
+  return best;
+}
+// Two layouts are the same idea when they move the same big zones to within 40 cm of each other.
+function sameIdea(room0, a, b, zones) {
+  for (const z of zones.filter((z) => z.kind !== "piece")) {
+    const o = byId(room0, z.lead), x = byId(a, z.lead), y = byId(b, z.lead);
+    if (!o || !x || !y) continue;
+    const mx = Math.hypot(x.at[0] - o.at[0], x.at[1] - o.at[1]) > 0.1, my = Math.hypot(y.at[0] - o.at[0], y.at[1] - o.at[1]) > 0.1;
+    if (mx !== my || Math.hypot(x.at[0] - y.at[0], x.at[1] - y.at[1]) > 0.4) return false;
+  }
+  return true;
+}
 
 // Even a full re-layout can't open it: say what stands where, in plain words.
 function noneWhy(room, run, before) {
