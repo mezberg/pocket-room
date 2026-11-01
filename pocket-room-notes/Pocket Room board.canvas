@@ -19,6 +19,15 @@
 			"label": "Development plan · what runs in parallel, what waits"
 		},
 		{
+			"id": "p2s_group",
+			"type": "group",
+			"x": 0,
+			"y": 6751,
+			"width": 1700,
+			"height": 2000,
+			"label": "Phase 2 · joined"
+		},
+		{
 			"id": "p1",
 			"type": "group",
 			"x": 0,
@@ -91,6 +100,16 @@
 			"height": 356,
 			"color": "6",
 			"label": "7 · Photoreal render · Stretch"
+		},
+		{
+			"id": "p2s_5",
+			"type": "text",
+			"text": "**Still to do (phase 3 polish)** 🟧\n- Too many findings (10): show the top 3, fold the rest.\n- Kate's room is crowded as modelled: armchair and sideboard 'Doesn't fit' anywhere; check the dining chair positions; let a TV unit replace the TV bench.\n- Not tested: camera + share target on a real phone, photo-built rooms through the whole flow.\n- Deploy: needs a long-running host (3D jobs run in the server) + your OK.\n- Voice (Talk tab) is a placeholder.",
+			"x": 40,
+			"y": 8391,
+			"width": 480,
+			"height": 300,
+			"color": "2"
 		},
 		{
 			"id": "test_cap",
@@ -300,46 +319,6 @@
 			"width": 380,
 			"height": 144,
 			"color": "1"
-		},
-		{
-			"id": "p3_0",
-			"type": "text",
-			"text": "**Phone-first web app, three.js**\nReuse Misplaced `real.js` (renderer, sun, shadows, AO), `labels.js`, `rotate.js`.",
-			"x": 930,
-			"y": 70,
-			"width": 380,
-			"height": 118,
-			"color": "3"
-		},
-		{
-			"id": "p3_1",
-			"type": "text",
-			"text": "**Inputs**\nCamera · upload · PWA share target, so a screenshot from Instagram / Pinterest goes straight in.",
-			"x": 930,
-			"y": 208,
-			"width": 380,
-			"height": 144,
-			"color": "3"
-		},
-		{
-			"id": "p3_2",
-			"type": "text",
-			"text": "**Small backend**\nHolds the OpenAI key, runs 3D jobs, caches models. Node on Vercel.",
-			"x": 930,
-			"y": 372,
-			"width": 380,
-			"height": 118,
-			"color": "3"
-		},
-		{
-			"id": "p3_3",
-			"type": "text",
-			"text": "**Screens**\nMy room · Add piece (spinner while 3D builds) · Verdict + advice list · Talk",
-			"x": 930,
-			"y": 510,
-			"width": 380,
-			"height": 118,
-			"color": "3"
 		},
 		{
 			"id": "p4_0",
@@ -854,33 +833,24 @@
 			"height": 715
 		},
 		{
-			"id": "p2s_group",
-			"type": "group",
-			"label": "Phase 2 · joined",
-			"x": 0,
-			"y": 6751,
-			"width": 1700,
-			"height": 2000
-		},
-		{
 			"id": "p2s_head",
 			"type": "text",
+			"text": "## Phase 2 · joined and on main · 1 Nov, 15:00\nAll 7 lanes merged, the join fixes done, 92/92 tests pass. The three scenarios work end to end, live, on phone and desktop.",
 			"x": 40,
 			"y": 6811,
 			"width": 1600,
 			"height": 110,
-			"color": "4",
-			"text": "## Phase 2 · joined and on main · 1 Nov, 15:00\nAll 7 lanes merged, the join fixes done, 92/92 tests pass. The three scenarios work end to end, live, on phone and desktop."
+			"color": "4"
 		},
 		{
 			"id": "p2s_1",
 			"type": "text",
+			"text": "**1 · In a shop: photo → your room** 🟩\nChesterfield photo: read in ~26 s, placed on the west wall replacing the old sofa, verdict + findings.\nShop tag: stand-in at 7 s, real 3D model at 26 s.",
 			"x": 40,
 			"y": 6951,
 			"width": 480,
 			"height": 144,
-			"color": "4",
-			"text": "**1 · In a shop: photo → your room** 🟩\nChesterfield photo: read in ~26 s, placed on the west wall replacing the old sofa, verdict + findings.\nShop tag: stand-in at 7 s, real 3D model at 26 s."
+			"color": "4"
 		},
 		{
 			"id": "p2s_1_0",
@@ -903,12 +873,12 @@
 		{
 			"id": "p2s_2",
 			"type": "text",
+			"text": "**2 · Found online: screenshot or pasted link** 🟩\nInstagram screenshot placed in 5 s. New: paste a product link (IKEA): stand-in at 4 s, real model at 24 s; sizes only if the page states them.",
 			"x": 40,
 			"y": 7311,
 			"width": 480,
 			"height": 144,
-			"color": "4",
-			"text": "**2 · Found online: screenshot or pasted link** 🟩\nInstagram screenshot placed in 5 s. New: paste a product link (IKEA): stand-in at 4 s, real model at 24 s; sizes only if the page states them."
+			"color": "4"
 		},
 		{
 			"id": "p2s_2_0",
@@ -922,12 +892,12 @@
 		{
 			"id": "p2s_3",
 			"type": "text",
+			"text": "**3 · Find for me** 🟩\nNew tab: chips or free text → 3 real UK products that fit (IKEA, Habitat…) with price, size, reason, link, ~50 s. Tap one to place it.",
 			"x": 40,
 			"y": 7671,
 			"width": 480,
 			"height": 144,
-			"color": "4",
-			"text": "**3 · Find for me** 🟩\nNew tab: chips or free text → 3 real UK products that fit (IKEA, Habitat…) with price, size, reason, link, ~50 s. Tap one to place it."
+			"color": "4"
 		},
 		{
 			"id": "p2s_3_0",
@@ -950,12 +920,12 @@
 		{
 			"id": "p2s_4",
 			"type": "text",
+			"text": "**Check my room + Photo view** 🟩\nRules + Decisions findings as markers (~5 s). Photo view renders the current view in 15–32 s.",
 			"x": 40,
 			"y": 8031,
 			"width": 480,
 			"height": 118,
-			"color": "4",
-			"text": "**Check my room + Photo view** 🟩\nRules + Decisions findings as markers (~5 s). Photo view renders the current view in 15–32 s."
+			"color": "4"
 		},
 		{
 			"id": "p2s_4_0",
@@ -976,14 +946,53 @@
 			"height": 320
 		},
 		{
-			"id": "p2s_5",
+			"id": "p3_group",
+			"type": "group",
+			"label": "Phase 3",
+			"x": 0,
+			"y": 8951,
+			"width": 1600,
+			"height": 592
+		},
+		{
+			"id": "p3_head",
 			"type": "text",
 			"x": 40,
-			"y": 8391,
+			"y": 9011,
+			"width": 1500,
+			"height": 80,
+			"color": "5",
+			"text": "## Phase 3 · polish and the demo opener · started 1 Nov, 15:20"
+		},
+		{
+			"id": "p3_room",
+			"type": "text",
+			"x": 40,
+			"y": 9131,
 			"width": 480,
-			"height": 300,
-			"color": "2",
-			"text": "**Still to do (phase 3 polish)** 🟧\n- Too many findings (10): show the top 3, fold the rest.\n- Kate's room is crowded as modelled: armchair and sideboard 'Doesn't fit' anywhere; check the dining chair positions; let a TV unit replace the TV bench.\n- Not tested: camera + share target on a real phone, photo-built rooms through the whole flow.\n- Deploy: needs a long-running host (3D jobs run in the server) + your OK.\n- Voice (Talk tab) is a placeholder."
+			"height": 326,
+			"color": "6",
+			"text": "**New room: build a room from photos or a plan** 🟪 in progress\nThe server can already do it (from-photo, from-plan); the app had no screen for it.\nBuilding: guided corner photos or a fire-escape plan photo, optional two measured walls, the room appears in 3D in ~15–20 s and becomes \"my room\", room switcher, every scenario works in it.\nWhy first: the demo opens with the hackathon room appearing in 3D.\nSession: New room flow · branch `new-room-flow`"
+		},
+		{
+			"id": "p3_fix",
+			"type": "text",
+			"x": 560,
+			"y": 9131,
+			"width": 480,
+			"height": 352,
+			"color": "6",
+			"text": "**Tap an issue → get a suggested fix** 🟪 options being explored\nTap a marker or finding in Check my room → a fix: move / rotate / remove a piece, add a lamp, a different size.\nOptions compared: code search in rules/ · code proposes + Decisions picks · model proposes + code verifies · pick from 2–3 with 3D preview, apply, undo.\n**Kate decides the path** before it's built (quick prototype first).\nSession: Tap an issue, get a fix · branch `issue-fix-options`"
+		},
+		{
+			"id": "p3_next",
+			"type": "text",
+			"x": 1080,
+			"y": 9131,
+			"width": 480,
+			"height": 170,
+			"color": "3",
+			"text": "**Then** 🟨\nTop 3 findings first, the rest folded · voice (Talk tab) · deploy to a long-running host (needs Kate's OK) · prebuild the venue room as a backup · real-phone test of camera + share"
 		}
 	],
 	"edges": [
