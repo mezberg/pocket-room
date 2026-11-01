@@ -101,7 +101,8 @@
         "size": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3, "description": "[width, depth, height] in the piece's own frame" },
         "rot": { "type": "number" },
         "on_floor": { "type": "boolean", "description": "false for things on a table or wall (they don't block paths)" },
-        "piece": { "type": "string", "description": "Optional piece id (piece.schema.json) it was made from" }
+        "piece": { "type": "string", "description": "Optional piece id (piece.schema.json) it was made from" },
+        "color": { "type": "string", "description": "Optional main colour #rrggbb (photo rooms read it from the photo; absent = the app picks)" }
       }
     }
   }
