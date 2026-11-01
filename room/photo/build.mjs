@@ -12,6 +12,7 @@ const metres = (m) => (m && REFS[m.ref] && m.multiples > 0 ? REFS[m.ref] * m.mul
 
 const LIMITS = { width: [1.5, 40], depth: [1.5, 40], height: [2.1, 10] };
 const FALLBACK = { width: 4, depth: 4, height: 2.4 };
+const OUTLIER = 1.5;
 
 /**
  * One extent. Each reading measures a span that covers some share of the whole extent (its own
@@ -23,9 +24,14 @@ const FALLBACK = { width: 4, depth: 4, height: 2.4 };
 export function extentFrom(e, key, known) {
   if (known > 0) return { m: known, err: 0.05, from: ["given"] };
   const share = (r) => clamp(r.span_fraction ?? e.seen_fraction ?? 1, 0.25, 1);
-  const vals = (e?.measures || []).map((r) => ({ r, v: metres(r), s: share(r) })).filter((x) => x.v);
-  if (!vals.length) return { m: FALLBACK[key], err: FALLBACK[key] / 2, from: ["default"] };
-  const from = vals.map(({ r, v, s }) => `${r.photo ? `photo ${r.photo}: ` : ""}${r.multiples} x ${r.ref} = ${r3(v)} m${s < 1 ? ` of ${Math.round(s * 100)}%` : ""} (${r.note})`);
+  const all = (e?.measures || []).map((r) => ({ r, v: metres(r), s: share(r) })).filter((x) => x.v);
+  if (!all.length) return { m: FALLBACK[key], err: FALLBACK[key] / 2, from: ["default"] };
+  // A reading 1.5x off the median of three or more used the wrong reference (a coffee table read as a
+  // dining table): drop it rather than let it widen the error or move the median.
+  const mid = median(all.map((x) => x.v / x.s));
+  const odd = (x) => all.length >= 3 && (x.v / x.s > mid * OUTLIER || x.v / x.s < mid / OUTLIER);
+  const vals = all.filter((x) => !odd(x));
+  const from = all.map((x) => { const { r, v, s } = x; return `${r.photo ? `photo ${r.photo}: ` : ""}${r.multiples} x ${r.ref} = ${r3(v)} m${s < 1 ? ` of ${Math.round(s * 100)}%` : ""} (${r.note})${odd(x) ? " [dropped: far from the others]" : ""}`; });
   const seen = Math.max(...vals.map((x) => x.s));
   const byPhoto = new Map();
   for (const x of vals) { const k = x.r.photo || 1; byPhoto.set(k, [...(byPhoto.get(k) || []), x]); }
@@ -154,17 +160,21 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     const [dw, dd, dh0] = DEFAULT_SIZE[cat];
     const dh = dh0 ?? h;
     const width = clamp(metres(o.length) ?? dw, 0.2, Math.max(w, l));
+    const depth = clamp(metres(o.depth) ?? dd, 0.05, Math.max(w, l));
+    const height = clamp(metres(o.height) ?? dh, 0.01, h);
     const rot = FACING[o.facing] ?? 0;
     // keep the footprint inside the walls
-    const [fx, fy] = rot % 180 === 0 ? [width, dd] : [dd, width];
+    const [fx, fy] = rot % 180 === 0 ? [width, depth] : [depth, width];
     const at = [clamp(o.x * w, fx / 2, Math.max(fx / 2, w - fx / 2)), clamp(o.y * l, fy / 2, Math.max(fy / 2, l - fy / 2))];
     const base = (o.name || cat).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || cat;
     ids[base] = (ids[base] || 0) + 1;
     return {
       id: ids[base] > 1 ? `${base}_${ids[base]}` : base, name: (o.name || cat) + (o.count > 1 ? ` x${o.count}` : ""), category: cat,
-      at: at.map(r3), size: [width, dd, dh].map(r3), rot, on_floor: cat !== "rug",
+      at: at.map(r3), size: [width, depth, height].map(r3), rot, on_floor: cat !== "rug",
+      ...(/^#[0-9a-f]{6}$/i.test(o.color ?? "") ? { color: o.color.toLowerCase() } : {}),
     };
   });
+  const moved = separate(items, w, l);
 
   return {
     id, name: name || `${reading.room_type || "Room"} (from photo)`,
@@ -177,8 +187,49 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     furniture: items.filter((i) => i.category !== "column"),
     lights: [],
     style: { tags: reading.style?.tags || [], colors: (reading.style?.colors || []).filter((c) => /^#[0-9a-f]{6}$/i.test(c)) },
-    _derived: { width: { ...W, m: r3(w), err: r3(W.err) }, depth: { ...L, m: r3(l), err: r3(L.err) }, height: { ...Hh, m: r3(h), err: r3(Hh.err) }, caveats: reading.caveats || [] },
+    _derived: { width: { ...W, m: r3(w), err: r3(W.err) }, depth: { ...L, m: r3(l), err: r3(L.err) }, height: { ...Hh, m: r3(h), err: r3(Hh.err) }, caveats: reading.caveats || [], ...(moved.length ? { moved } : {}) },
   };
+}
+
+// The footprint [x0, y0, x1, y1] of an item, turned by its rot.
+const box = (i) => {
+  const [fx, fy] = (((i.rot ?? 0) % 180) + 180) % 180 === 90 ? [i.size[1], i.size[0]] : [i.size[0], i.size[1]];
+  return [i.at[0] - fx / 2, i.at[1] - fy / 2, i.at[0] + fx / 2, i.at[1] + fy / 2];
+};
+const TUCKS = { chair: ["table", "desk"], table: ["chair"], desk: ["chair"] };
+
+/**
+ * Positions read from photos are rough, so pieces can come out overlapping, which no real room has.
+ * Push the smaller of each overlapping pair out along the shorter way, inside the walls. Rugs lie under
+ * things and chairs tuck under tables, so those pairs are left. Returns what moved, for _derived.
+ */
+export function separate(items, w, l, gap = 0.02) {
+  const moved = new Map();
+  const solid = items.filter((i) => i.on_floor !== false && i.category !== "rug");
+  for (let pass = 0; pass < 8; pass++) {
+    let any = false;
+    for (let a = 0; a < solid.length; a++) for (let b = a + 1; b < solid.length; b++) {
+      const A = solid[a], B = solid[b];
+      if (TUCKS[A.category]?.includes(B.category)) continue;
+      const p = box(A), q = box(B);
+      const ox = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), oy = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
+      if (ox <= 0.005 || oy <= 0.005) continue;
+      const [mover, still] = A.size[0] * A.size[1] <= B.size[0] * B.size[1] ? [A, B] : [B, A];
+      const m = box(mover), s0 = box(still), [fx, fy] = [m[2] - m[0], m[3] - m[1]];
+      const room = (axis, dir) => { const at = [...mover.at]; at[axis] += dir; return at[axis] - [fx, fy][axis] / 2 >= -1e-6 && at[axis] + [fx, fy][axis] / 2 <= [w, l][axis] + 1e-6; };
+      // the four ways out, shortest first, that keep it inside the walls
+      const ways = [[0, s0[2] - m[0] + gap], [0, s0[0] - m[2] - gap], [1, s0[3] - m[1] + gap], [1, s0[1] - m[3] - gap]]
+        .filter(([axis, d]) => room(axis, d)).sort((u, v) => Math.abs(u[1]) - Math.abs(v[1]));
+      if (!ways.length) continue;
+      const [axis, d] = ways[0];
+      const from = moved.get(mover)?.from ?? [...mover.at];
+      mover.at = mover.at.map((v, i) => (i === axis ? r3(v + d) : v));
+      moved.set(mover, { from, by: still.id });
+      any = true;
+    }
+    if (!any) break;
+  }
+  return [...moved].map(([i, x]) => `${i.id} moved ${Math.round(Math.hypot(i.at[0] - x.from[0], i.at[1] - x.from[1]) * 100)} cm off the ${x.by}`);
 }
 
 /**

@@ -143,3 +143,46 @@ test("resizeRoom carries what was seen along", () => {
   assert.deepEqual(out.walls.find((x) => x.id === "north").seen, [[4.1, 8.2]]);
   assert.equal(out.floor_seen[1][0], 4.1);
 });
+
+// Zoopla test (2026-11-01, docs/test-inputs/zoopla): one photo read a coffee table against table_height,
+// so one width reading was 5.55 m against 2.9 and 3.1; the room's error came out 1.3 m.
+test("a reading far from the others is dropped, and says so", () => {
+  const e = { seen_fraction: 1, measures: [m("three_seat_sofa_length", 1.45), m("door_width", 3.8), m("table_height", 7.5)] };
+  const x = extentFrom(e, "width");
+  assert.equal(x.m, (2.9 + 3.116) / 2);
+  assert.ok(x.err < 0.2, `err ${x.err}`);
+  assert.match(x.from[2], /dropped/);
+  // two readings that disagree are both kept: nothing says which one is wrong
+  assert.equal(extentFrom({ seen_fraction: 1, measures: [m("door_width", 4), m("door_width", 8)] }, "width").m, (3.28 + 6.56) / 2);
+});
+
+test("objects keep their colour, depth and height (a low TV unit is not 2 m tall)", () => {
+  const room = roomFromReading(reading({ objects: [
+    { name: "Red chesterfield", category: "sofa", x: 0.5, y: 0.3, facing: "camera", length: m("three_seat_sofa_length", 1), depth: null, height: null, color: "#7D2027", count: 1 },
+    { name: "Low media cabinet", category: "cupboard", x: 0.5, y: 0.9, facing: "camera", length: m("door_width", 2), depth: m("chair_width", 1), height: m("chair_seat_height", 1.1), color: "white", count: 1 },
+    { name: "Old reading", category: "table", x: 0.2, y: 0.6, facing: "camera", length: null, count: 1 },
+  ] }), { id: "t" });
+  assert.deepEqual(checkRoom(room), []);
+  const [sofa, cab, old] = room.furniture;
+  assert.equal(sofa.color, "#7d2027");
+  assert.deepEqual(cab.size, [1.64, 0.45, 0.495]);
+  assert.equal(cab.color, undefined);                // not a hex: left out, the app picks one
+  assert.deepEqual(old.size, [1.6, 0.8, 0.74]);      // older readings: category defaults
+});
+
+test("pieces read on top of each other are pushed apart, inside the walls; chairs may tuck under tables", () => {
+  const o = (name, category, x, y, len, extra = {}) => ({ name, category, x, y, facing: "camera", length: m("door_width", len), depth: null, height: null, color: null, count: 1, ...extra });
+  const room = roomFromReading(reading({ objects: [
+    o("Sofa", "sofa", 0.3, 0.5, 2.4), o("Coffee table", "table", 0.3, 0.55, 1.2),
+    o("Dining table", "table", 0.8, 0.2, 1.5), o("Chair", "chair", 0.8, 0.2, 0.55), o("Rug", "rug", 0.3, 0.5, 2.4),
+  ] }), { id: "t" });
+  const by = Object.fromEntries(room.furniture.map((i) => [i.id, i]));
+  const box = (i) => [i.at[0] - i.size[0] / 2, i.at[1] - i.size[1] / 2, i.at[0] + i.size[0] / 2, i.at[1] + i.size[1] / 2];
+  const overlap = (a, b) => { const p = box(a), q = box(b); return Math.min(p[2], q[2]) > Math.max(p[0], q[0]) + 1e-6 && Math.min(p[3], q[3]) > Math.max(p[1], q[1]) + 1e-6; };
+  assert.ok(!overlap(by.sofa, by.coffee_table), "sofa and coffee table apart");
+  assert.ok(overlap(by.dining_table, by.chair), "the chair stays tucked in");
+  assert.ok(overlap(by.rug, by.sofa), "the rug stays under the sofa");
+  const [w, l] = [room.walls[0].b[0], room.walls[1].b[1]];
+  for (const i of room.furniture) { const b = box(i); assert.ok(b[0] >= -1e-6 && b[1] >= -1e-6 && b[2] <= w + 1e-6 && b[3] <= l + 1e-6, i.id); }
+  assert.match(room._derived.moved.join(";"), /coffee_table moved \d+ cm off the sofa/);
+});

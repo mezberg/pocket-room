@@ -106,3 +106,12 @@ test("createPiece: tag photo → parametric piece with tag size (vision stubbed)
   assert.equal(getPiece(p.id).name, "HALDEN Armchair");
   await assert.rejects(createPiece({ image: "nope" }, { read }), /data URL/);
 });
+
+// Zoopla test (2026-11-01): IKEA STYRSPEL read as 0.7 x 0.7 x 1.3 m and came out 1.2 m tall, cut by the
+// chair range. Office chairs with a headrest are 1.3-1.45 m.
+test("an office chair with a headrest keeps its estimated height", () => {
+  const r = resolveSize({ category: "chair", dimension_text: null, estimate_m: { w: 0.7, d: 0.7, h: 1.3 } });
+  assert.deepEqual(r.size, [0.7, 0.7, 1.3]);
+  assert.equal(r.size_source, "vision_estimate");
+  assert.equal(resolveSize({ category: "chair", estimate_m: { w: 0.5, d: 0.5, h: 2.4 } }).size[2], 1.5);
+});
