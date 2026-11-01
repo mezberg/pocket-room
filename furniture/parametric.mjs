@@ -67,3 +67,9 @@ export function kitFor(piece, read = {}) {
       return null;
   }
 }
+
+// The kit template for a category when nothing has read the picture (a pasted link, an agent find).
+const BY_CATEGORY = { sofa: "sofa", armchair: "armchair", shelf: "shelf", cupboard: "sideboard", tv: "sideboard", desk: "desk",
+  chair: "diningChair", bed: "bed", rug: "rug", lamp: "floorLamp", plant: "plant" };
+export const templateFor = (category, size) =>
+  category === "table" ? (size[2] > 0.6 ? "diningTable" : "coffeeTable") : BY_CATEGORY[category] ?? null;

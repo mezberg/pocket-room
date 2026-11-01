@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { bestWall, freeSpace } from "./space.mjs";
 import { place } from "../rules/index.mjs";
-import { kitFor } from "../furniture/parametric.mjs";
+import { kitFor, templateFor } from "../furniture/parametric.mjs";
 import { UK_SHOPS, fetchPage, pageMeta, pageText, shopFor, sizeSnippets } from "./page.mjs";
 import { judgeStyle, readProductPage, readRoomStyle, searchProducts } from "./models.mjs";
 
@@ -194,10 +194,8 @@ function toPiece(c, { id, category, note }) {
 }
 
 // A parametric piece from lane B's kit (furniture/parametric.mjs) so the piece shows at once, in its colours.
-const TEMPLATE = { sofa: "sofa", armchair: "armchair", shelf: "shelf", cupboard: "sideboard", tv: "sideboard", desk: "desk",
-  chair: "diningChair", bed: "bed", rug: "rug", lamp: "floorLamp" };
 function modelFor(category, size, got = {}) {
-  const template = category === "table" ? (size[2] > 0.6 ? "diningTable" : "coffeeTable") : TEMPLATE[category];
+  const template = templateFor(category, size);
   const parametric = template ? kitFor({ size, style: { colors: got.colors ?? [] } }, { kit_template: template, material: got.material }) : null;
   return parametric ? { status: "ready", how: "parametric", glb: null, job: null, parametric }
     : { status: "pending", how: null, glb: null, parametric: null, job: null };

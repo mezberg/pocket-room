@@ -100,6 +100,29 @@ export async function createPiece({ image, kind = "photo", hint, mode = "auto" }
   return save(piece);
 }
 
+// A piece whose facts are already known (a product page read by link.mjs): no picture read. The kit piece
+// stands in at once; if there is a picture and an image-to-3D route, the mesh builds in the background.
+export async function createPieceFromFacts(facts, { image, kitRead = {} } = {}) {
+  const id = randomUUID().slice(0, 8);
+  const piece = { id, ...facts, model: { status: "pending" }, timing: { read_ms: facts.timing?.read_ms ?? 0 } };
+  let src = image;
+  if (image?.startsWith("data:")) {
+    writeFileSync(imageFile(id), Buffer.from(image.split(",")[1], "base64"));
+    piece.source = { ...piece.source, image: `/api/pieces/${id}/image`, image_url: facts.source?.image ?? null };
+  }
+  const kit = kitFor(piece, kitRead);
+  const route = src ? imageTo3dRoute() : null;
+  if (route) {
+    piece.model = { status: "building", how: "image_to_3d", glb: null, parametric: kit, job: `${route}:${id}` };
+    build(piece, src, route);
+  } else if (kit) {
+    piece.model = { status: "ready", how: "parametric", glb: null, parametric: kit, job: null };
+  } else {
+    piece.model = { status: "failed", how: null, glb: null, parametric: null, job: null, error: "no kit template and no picture" };
+  }
+  return save(piece);
+}
+
 async function build(piece, image, route) {
   const t0 = Date.now();
   try {
