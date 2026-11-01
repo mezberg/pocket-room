@@ -200,7 +200,7 @@ const TUCKS = { chair: ["table", "desk"], table: ["chair"], desk: ["chair"] };
 
 /**
  * Positions read from photos are rough, so pieces can come out overlapping, which no real room has.
- * Push the smaller of each overlapping pair out along the shorter way, inside the walls. Rugs lie under
+ * Of each overlapping pair, move whichever piece gets clear by the shortest step, inside the walls. Rugs lie under
  * things and chairs tuck under tables, so those pairs are left. Returns what moved, for _derived.
  */
 export function separate(items, w, l, gap = 0.02) {
@@ -214,14 +214,17 @@ export function separate(items, w, l, gap = 0.02) {
       const p = box(A), q = box(B);
       const ox = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), oy = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
       if (ox <= 0.005 || oy <= 0.005) continue;
-      const [mover, still] = A.size[0] * A.size[1] <= B.size[0] * B.size[1] ? [A, B] : [B, A];
-      const m = box(mover), s0 = box(still), [fx, fy] = [m[2] - m[0], m[3] - m[1]];
-      const room = (axis, dir) => { const at = [...mover.at]; at[axis] += dir; return at[axis] - [fx, fy][axis] / 2 >= -1e-6 && at[axis] + [fx, fy][axis] / 2 <= [w, l][axis] + 1e-6; };
-      // the four ways out, shortest first, that keep it inside the walls
-      const ways = [[0, s0[2] - m[0] + gap], [0, s0[0] - m[2] - gap], [1, s0[3] - m[1] + gap], [1, s0[1] - m[3] - gap]]
-        .filter(([axis, d]) => room(axis, d)).sort((u, v) => Math.abs(u[1]) - Math.abs(v[1]));
+      // the ways out for either piece, keeping it inside the walls; the shortest wins (the smaller piece on a tie)
+      const ways = [];
+      for (const [mover, still] of [[A, B], [B, A]]) {
+        const mb = box(mover), sb = box(still), f = [mb[2] - mb[0], mb[3] - mb[1]];
+        const inside = (axis, d) => mover.at[axis] + d - f[axis] / 2 >= -1e-6 && mover.at[axis] + d + f[axis] / 2 <= [w, l][axis] + 1e-6;
+        const small = mover.size[0] * mover.size[1] <= still.size[0] * still.size[1] ? 0 : 0.001;
+        for (const [axis, d] of [[0, sb[2] - mb[0] + gap], [0, sb[0] - mb[2] - gap], [1, sb[3] - mb[1] + gap], [1, sb[1] - mb[3] - gap]])
+          if (inside(axis, d)) ways.push({ mover, still, axis, d, cost: Math.abs(d) + small });
+      }
       if (!ways.length) continue;
-      const [axis, d] = ways[0];
+      const { mover, still, axis, d } = ways.sort((u, v) => u.cost - v.cost)[0];
       const from = moved.get(mover)?.from ?? [...mover.at];
       mover.at = mover.at.map((v, i) => (i === axis ? r3(v + d) : v));
       moved.set(mover, { from, by: still.id });

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { roomFromReading, extentFrom, planExtents, resizeRoom } from "./build.mjs";
+import { roomFromReading, extentFrom, planExtents, resizeRoom, separate } from "./build.mjs";
 import { checkRoom } from "../schema-check.mjs";
 
 // A real gpt-6.1-terra reading of room/venue/venue-chesterfields-2026-11-01.jpg
@@ -184,5 +184,17 @@ test("pieces read on top of each other are pushed apart, inside the walls; chair
   assert.ok(overlap(by.rug, by.sofa), "the rug stays under the sofa");
   const [w, l] = [room.walls[0].b[0], room.walls[1].b[1]];
   for (const i of room.furniture) { const b = box(i); assert.ok(b[0] >= -1e-6 && b[1] >= -1e-6 && b[2] <= w + 1e-6 && b[3] <= l + 1e-6, i.id); }
-  assert.match(room._derived.moved.join(";"), /coffee_table moved \d+ cm off the sofa/);
+  assert.match(room._derived.moved.join(";"), /(coffee_table|sofa) moved \d+ cm off the (sofa|coffee_table)/);
+});
+
+// Zoopla living room: the table sat against the south wall, the sofa along the west wall overlapped it by
+// 14 cm. Pushing the table out sideways took 91 cm; nudging the sofa north takes 16.
+test("the shorter step wins, whichever piece it moves", () => {
+  const items = [
+    { id: "sofa", category: "sofa", at: [0.476, 2.465], size: [2, 0.9, 0.8], rot: 90 },
+    { id: "table", category: "table", at: [0.537, 0.8], size: [1.6, 0.8, 0.74], rot: 90 },
+  ];
+  const moved = separate(items, 3.032, 3.625);
+  assert.deepEqual(moved, ["sofa moved 16 cm off the table"]);
+  assert.deepEqual(items[1].at, [0.537, 0.8]);
 });
