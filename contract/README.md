@@ -25,3 +25,8 @@ Verdict: `Fits` · `Just fits` · `Doesn't fit` (exact strings). Minimum walkway
 ## Rule
 Geometry comes from code (`rules/`), never from a model. Models read pictures, judge soft things
 (style, light, priority) and explain.
+
+## What was seen
+Rooms built from photos are boxes whose unseen parts are a guess. `walls[].seen` lists the spans of a wall the
+photos showed (metres from `a`), `floor_seen` the part of the floor they showed. Absent means fully known
+(the prebuilt rooms, plans). The app draws the rest grey; rules may treat a spot on an unseen span as unchecked.
