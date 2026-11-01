@@ -10,6 +10,8 @@ the prebuilt Hoskins rooms and rooms built this session); a `room` in the body w
 | `POST /api/rooms/from-photo` | A | `{ images: [..], hint? }` | `room` (source `photo`, accuracy ~0.15) |
 | `POST /api/rooms/from-plan` | A | `{ image, room?, px_per_m?, height_m? }` | `room` (source `floorplan`) + `_plan_rooms` |
 | `GET /api/rooms` | A | | `{ rooms: [{ id, name, source }] }` |
+| `GET /api/rooms/options` | A | | `{ photo: true, plan: bool }` (plan only where the local floorplan pipeline runs; else from-plan is a 501) |
+| `PUT /api/rooms/:id` | A | `room` | `{ ok, id }`: a photo / plan room after the app resized it or took an object out (prebuilt rooms: 403) |
 | `POST /api/pieces` | B | `{ image, kind: photo\|shop_tag\|screenshot, hint? }` | `piece` (model.status may be `building`) |
 | `POST /api/pieces/from-link` | B (+ G's page reader) | `{ url }` | `piece` (source `link`, size from the page; 422 if the page doesn't state it) |
 | `GET /api/pieces/:id` | B | | `piece` (poll until model.status is `ready` or `failed`) |
