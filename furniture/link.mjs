@@ -25,7 +25,7 @@ export function publicUrl(raw) {
 async function pictureData(url, { fetch = globalThis.fetch } = {}) {
   if (!url) return null;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { "user-agent": "Mozilla/5.0", accept: "image/avif,image/webp,image/png,image/jpeg,*/*" } });
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { "user-agent": "Mozilla/5.0", accept: "image/jpeg,image/png;q=0.9,image/webp;q=0.8" } });
     const type = (res.headers.get("content-type") ?? "").split(";")[0];
     if (!res.ok || !/^image\/(jpeg|png|webp|gif)$/.test(type)) return null;
     const buf = Buffer.from(await res.arrayBuffer());
