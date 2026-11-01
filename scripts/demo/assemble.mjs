@@ -22,7 +22,7 @@ const img = { w: 840 }; img.h = Math.round((img.w * 625) / 1000); img.x = 70; im
 const k = img.w / 1000;
 const b = await chromium.launch({ channel: "chrome", headless: true, args: ["--disable-gpu"] });   // GPU raster splits tall boxes in screenshots
 const pg = await b.newPage({ viewport: { width: W, height: H } });
-await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#16130f;font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;overflow:hidden">
+await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#000;font-family:Arial,sans-serif;overflow:hidden">
   <div style="position:absolute;left:${img.x}px;top:${img.y}px;width:${img.w}px;height:${img.h}px;border-radius:10px;overflow:hidden">
   <img src="data:image/jpeg;base64,${readFileSync(aisle).toString("base64")}" style="display:block;width:100%;height:100%">
   <div style="position:absolute;left:${CROP.x * k - 3}px;top:${CROP.y * k - 3}px;width:${CROP.w * k}px;height:${CROP.h * k}px;border:3px solid #fff;border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,.4)"></div></div>
@@ -38,29 +38,36 @@ const API = [
   ["gpt-image", "gpt-image-2.5-flare", "turns your 3D view into a photoreal photo of your room"],
   ["Responses · vision", "gpt-6.1-terra", "reads the photo, tag or shop page: the piece, its size, its style"],
 ];
-const font = "-apple-system,'Helvetica Neue',Arial,sans-serif";
-await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#F1ECE4;color:#1d1a16;font-family:${font};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 140px;box-sizing:border-box">
-  <div style="font-size:22px;letter-spacing:.14em;color:#8a8175;font-weight:600">POCKET ROOM · BUILT ON OPENAI</div>
-  <div style="margin-top:44px;display:grid;grid-template-columns:330px 1fr;row-gap:34px;column-gap:40px;align-items:baseline">
-    ${API.map(([name, model, what]) => `<div><div style="font-size:38px;font-weight:700">${name}</div><div style="font-size:19px;color:#8a8175;margin-top:6px">${model}</div></div><div style="font-size:30px;line-height:1.35;color:#3b352d">${what}</div>`).join("")}
-  </div>
+const font = "Arial,sans-serif";   // slides: Arial only, white on black, bullets
+const BG = "#000", FG = "#fff", MUTED = "#9a9a9a", ACCENT = "#ff6a4d";
+const bullets = (items, size, gap) => `<ul style="margin:0;padding:0 0 0 1.1em;font-size:${size}px;line-height:1.3">${items.map((t) => `<li style="margin-bottom:${gap}px">${t}</li>`).join("")}</ul>`;
+await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:${BG};color:${FG};font-family:${font};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 150px;box-sizing:border-box">
+  <div style="font-size:22px;letter-spacing:.14em;color:${MUTED};font-weight:bold">POCKET ROOM · BUILT ON OPENAI</div>
+  <div style="margin-top:40px">${bullets(API.map(([name, model, what]) => `<b>${name}</b> <span style="color:${MUTED};font-size:24px">(${model})</span><br><span style="font-size:30px;color:#d8d8d8">${what}</span>`), 38, 30)}</div>
 </body>`);
 await pg.screenshot({ path: join(work, "apis.jpg"), type: "jpeg", quality: 92 });
 
 // slide 0, before the video: the problem
-await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#F1ECE4;color:#1d1a16;font-family:${font};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 150px;box-sizing:border-box">
-  <div style="font-size:22px;letter-spacing:.14em;color:#8a8175;font-weight:600">THE PROBLEM</div>
-  <div style="margin-top:28px;font-size:46px;line-height:1.32;font-weight:600;max-width:1100px">You walk into a furniture shop, a vintage market, your friend's place 🙂 You like a piece of furniture, but have no idea how it fits into the unfinished interior of your rented room.</div>
-  <div style="margin-top:46px;font-size:56px;font-weight:700;color:#b5452f">Now you know…</div>
+await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:${BG};color:${FG};font-family:${font};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 150px;box-sizing:border-box">
+  <div style="font-size:22px;letter-spacing:.14em;color:${MUTED};font-weight:bold">THE PROBLEM</div>
+  <div style="margin-top:34px;font-weight:bold">${bullets([
+    "You walk into a furniture shop, a vintage market, your friend's place 🙂",
+    "You like a piece of furniture",
+    "No idea how it fits into the unfinished interior of your rented room",
+  ], 44, 22)}</div>
+  <div style="margin-top:40px;font-size:58px;font-weight:bold;color:${ACCENT}">Now you know…</div>
 </body>`);
 await pg.screenshot({ path: join(work, "intro.jpg"), type: "jpeg", quality: 92 });
 
 // slide 2: the board, and how it was made (Kate's words, caption at twice the usual size)
 const bh = 820, bw = Math.round((bh * 940) / 1320);
-await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:#16130f;font-family:${font};overflow:hidden">
+await pg.setContent(`<!doctype html><body style="margin:0;width:${W}px;height:${H}px;background:${BG};font-family:${font};overflow:hidden">
   <img src="data:image/jpeg;base64,${readFileSync(board).toString("base64")}" style="position:absolute;left:70px;top:${(H - bh) / 2}px;width:${bw}px;height:${bh}px;border-radius:10px">
-  <div style="position:absolute;left:${70 + bw + 60}px;right:70px;top:0;bottom:0;display:flex;align-items:center;color:#fff;font-size:44px;line-height:1.3;font-weight:600">
-    Codex helped me plan this on an Obsidian board, spin up subagents for parallel development and board status updates, and obviously build &amp; test it via computer use!!!</div>
+  <div style="position:absolute;left:${70 + bw + 60}px;right:60px;top:0;bottom:0;display:flex;align-items:center;color:${FG};font-weight:bold">${bullets([
+    "Codex helped me plan this on an Obsidian board",
+    "Spun up subagents for parallel development and board status updates",
+    "And obviously built &amp; tested it via computer use!!!",
+  ], 44, 30)}</div>
 </body>`);
 await pg.screenshot({ path: join(work, "board.jpg"), type: "jpeg", quality: 92 });
 await b.close();
