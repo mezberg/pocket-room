@@ -1,0 +1,348 @@
+{
+  "id": "hoskins-hall",
+  "name": "Hall and lobby, Hoskins Street",
+  "source": "prebuilt",
+  "accuracy_m": 0.04,
+  "_note": "Exact export of the 26 Sep 2026 build (room/hoskins/export.mjs).",
+  "height": 2.4,
+  "glb": "/room/hoskins-flat.glb",
+  "walls": [
+    {
+      "id": "south",
+      "a": [
+        0.104,
+        0.48
+      ],
+      "b": [
+        1.153,
+        0.48
+      ],
+      "openings": [
+        {
+          "id": "reception_door",
+          "kind": "door",
+          "from": 0.16,
+          "width": 0.729,
+          "head": 2.04,
+          "swing": {
+            "hinge": "a",
+            "into": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "partition",
+      "a": [
+        1.153,
+        0.48
+      ],
+      "b": [
+        1.153,
+        5.731
+      ],
+      "openings": [
+        {
+          "id": "kitchen_door",
+          "kind": "door",
+          "from": 0.771,
+          "width": 0.806,
+          "head": 2.04,
+          "swing": {
+            "hinge": "a",
+            "into": false
+          }
+        },
+        {
+          "id": "bathroom_door",
+          "kind": "door",
+          "from": 4.132,
+          "width": 0.764,
+          "head": 2.04,
+          "swing": {
+            "hinge": "a",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "niche_south",
+      "a": [
+        1.153,
+        5.731
+      ],
+      "b": [
+        1.292,
+        5.731
+      ],
+      "openings": []
+    },
+    {
+      "id": "cupboard_wall",
+      "a": [
+        1.292,
+        5.731
+      ],
+      "b": [
+        1.292,
+        6.606
+      ],
+      "openings": [
+        {
+          "id": "hall_cupboard_door",
+          "kind": "door",
+          "from": 0.167,
+          "width": 0.556,
+          "head": 2.04,
+          "swing": {
+            "hinge": "a",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "niche_north",
+      "a": [
+        1.292,
+        6.606
+      ],
+      "b": [
+        1.153,
+        6.606
+      ],
+      "openings": []
+    },
+    {
+      "id": "store_end",
+      "a": [
+        1.153,
+        6.606
+      ],
+      "b": [
+        1.153,
+        6.696
+      ],
+      "openings": []
+    },
+    {
+      "id": "lobby_south",
+      "a": [
+        1.153,
+        6.696
+      ],
+      "b": [
+        2.695,
+        6.696
+      ],
+      "openings": [
+        {
+          "id": "meter_cupboard_door",
+          "kind": "door",
+          "from": 0.917,
+          "width": 0.486,
+          "head": 2.04,
+          "swing": {
+            "hinge": "b",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "east",
+      "a": [
+        2.695,
+        6.696
+      ],
+      "b": [
+        2.695,
+        8.023
+      ],
+      "openings": [
+        {
+          "id": "front_door",
+          "kind": "door",
+          "from": 0.278,
+          "width": 0.694,
+          "head": 2.08,
+          "swing": {
+            "hinge": "b",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "lobby_north",
+      "a": [
+        2.695,
+        8.023
+      ],
+      "b": [
+        1.458,
+        8.023
+      ],
+      "openings": [
+        {
+          "id": "bedroom_door",
+          "kind": "door",
+          "from": 0.104,
+          "width": 0.708,
+          "head": 2.04,
+          "swing": {
+            "hinge": "a",
+            "into": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "step",
+      "a": [
+        1.458,
+        8.023
+      ],
+      "b": [
+        1.458,
+        7.53
+      ],
+      "openings": []
+    },
+    {
+      "id": "north",
+      "a": [
+        1.458,
+        7.53
+      ],
+      "b": [
+        0.104,
+        7.53
+      ],
+      "openings": []
+    },
+    {
+      "id": "west",
+      "a": [
+        0.104,
+        7.53
+      ],
+      "b": [
+        0.104,
+        0.48
+      ],
+      "openings": []
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "hall_heater",
+      "name": "Hall heater",
+      "category": "radiator",
+      "at": [
+        0.142,
+        6.349
+      ],
+      "size": [
+        0.764,
+        0.076,
+        0.6
+      ],
+      "rot": 90,
+      "on_floor": false
+    }
+  ],
+  "furniture": [
+    {
+      "id": "hall_cabinet",
+      "name": "Hall cabinet",
+      "category": "cupboard",
+      "at": [
+        0.361,
+        7.346
+      ],
+      "size": [
+        0.472,
+        0.326,
+        0.92
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "storage_box",
+      "name": "Storage box",
+      "category": "other",
+      "at": [
+        0.889,
+        7.349
+      ],
+      "size": [
+        0.417,
+        0.292,
+        0.36
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "doormat",
+      "name": "Doormat",
+      "category": "rug",
+      "at": [
+        2.472,
+        7.314
+      ],
+      "size": [
+        0.611,
+        0.417,
+        0.012
+      ],
+      "rot": 270,
+      "on_floor": true
+    }
+  ],
+  "lights": [
+    {
+      "id": "hall_light_1",
+      "kind": "ceiling",
+      "at": [
+        2.035,
+        7.217
+      ],
+      "h": 2.28
+    },
+    {
+      "id": "hall_light_2",
+      "kind": "ceiling",
+      "at": [
+        0.625,
+        5.967
+      ],
+      "h": 2.28
+    },
+    {
+      "id": "hall_light_3",
+      "kind": "ceiling",
+      "at": [
+        0.625,
+        3.258
+      ],
+      "h": 2.28
+    },
+    {
+      "id": "hall_light_4",
+      "kind": "ceiling",
+      "at": [
+        0.625,
+        1.175
+      ],
+      "h": 2.28
+    }
+  ],
+  "style": {
+    "tags": [],
+    "colors": []
+  }
+}

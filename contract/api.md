@@ -7,6 +7,8 @@ JSON in, JSON out, under `/api`. Images go as data URLs or https URLs. Every rou
 |---|---|---|---|
 | `GET /api/rooms/:id` | A | | `room` |
 | `POST /api/rooms/from-photo` | A | `{ images: [..], hint? }` | `room` (source `photo`, accuracy ~0.15) |
+| `POST /api/rooms/from-plan` | A | `{ image, room?, px_per_m?, height_m? }` | `room` (source `floorplan`) + `_plan_rooms` |
+| `GET /api/rooms` | A | | `{ rooms: [{ id, name, source }] }` |
 | `POST /api/pieces` | B | `{ image, kind: photo\|shop_tag\|screenshot, hint? }` | `piece` (model.status may be `building`) |
 | `GET /api/pieces/:id` | B | | `piece` (poll until model.status is `ready` or `failed`) |
 | `POST /api/agent/find` | G | `{ roomId, wall?, query }` | `{ pieces: [piece] }`, each already known to fit |

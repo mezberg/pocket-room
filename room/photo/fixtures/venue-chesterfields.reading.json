@@ -1,0 +1,181 @@
+{
+  "room_type": "industrial event and coworking space",
+  "width": {
+    "seen_fraction": 0.7,
+    "measures": [
+      {
+        "ref": "pull_up_banner_width",
+        "multiples": 8.5,
+        "note": "Visible far-wall span compared with banner width"
+      },
+      {
+        "ref": "brick_length",
+        "multiples": 22,
+        "note": "Approximate visible span along brick band"
+      }
+    ]
+  },
+  "depth": {
+    "seen_fraction": 0.8,
+    "measures": [
+      {
+        "ref": "folding_table_length",
+        "multiples": 3,
+        "note": "Approximate visible floor depth to far wall"
+      },
+      {
+        "ref": "chair_width",
+        "multiples": 10,
+        "note": "Rough depth inferred from seating and tables"
+      }
+    ]
+  },
+  "height": {
+    "seen_fraction": 0.7,
+    "measures": [
+      {
+        "ref": "standing_adult_height",
+        "multiples": 1.6,
+        "note": "Floor to upper edge of visible wall"
+      },
+      {
+        "ref": "pull_up_banner_height",
+        "multiples": 1.5,
+        "note": "Visible wall height compared with partially obscured banner"
+      }
+    ]
+  },
+  "openings": [
+    {
+      "kind": "window",
+      "wall": "far",
+      "center": 0.29,
+      "width": {
+        "ref": "pull_up_banner_width",
+        "multiples": 1.1,
+        "note": "First frosted window compared with banner"
+      },
+      "sill_frac": null,
+      "head_frac": 0.62
+    },
+    {
+      "kind": "window",
+      "wall": "far",
+      "center": 0.53,
+      "width": {
+        "ref": "pull_up_banner_width",
+        "multiples": 1.4,
+        "note": "Middle frosted window"
+      },
+      "sill_frac": null,
+      "head_frac": 0.64
+    },
+    {
+      "kind": "window",
+      "wall": "far",
+      "center": 0.78,
+      "width": {
+        "ref": "pull_up_banner_width",
+        "multiples": 1.5,
+        "note": "Right frosted window, partly cropped"
+      },
+      "sill_frac": null,
+      "head_frac": 0.65
+    }
+  ],
+  "objects": [
+    {
+      "name": "Red leather armchair",
+      "category": "armchair",
+      "x": 0.52,
+      "y": 0.3,
+      "facing": "left",
+      "length": {
+        "ref": "armchair_width",
+        "multiples": 1.1,
+        "note": "Large upholstered armchair"
+      },
+      "count": 1
+    },
+    {
+      "name": "Red leather sofa",
+      "category": "sofa",
+      "x": 0.88,
+      "y": 0.22,
+      "facing": "left",
+      "length": null,
+      "count": 1
+    },
+    {
+      "name": "Work tables",
+      "category": "table",
+      "x": 0.48,
+      "y": 0.83,
+      "facing": "camera",
+      "length": null,
+      "count": 3
+    },
+    {
+      "name": "Folding chairs around tables",
+      "category": "chair",
+      "x": 0.48,
+      "y": 0.76,
+      "facing": "away",
+      "length": null,
+      "count": 8
+    },
+    {
+      "name": "Foreground folding chair",
+      "category": "chair",
+      "x": 0.05,
+      "y": 0.28,
+      "facing": "right",
+      "length": null,
+      "count": 1
+    },
+    {
+      "name": "Pull-up banner",
+      "category": "other",
+      "x": 0.22,
+      "y": 0.93,
+      "facing": "camera",
+      "length": {
+        "ref": "pull_up_banner_height",
+        "multiples": 1,
+        "note": "Freestanding banner behind tables"
+      },
+      "count": 1
+    },
+    {
+      "name": "Structural columns",
+      "category": "other",
+      "x": 0.43,
+      "y": 0.95,
+      "facing": "camera",
+      "length": null,
+      "count": 2
+    }
+  ],
+  "style": {
+    "tags": [
+      "industrial",
+      "coworking",
+      "exposed brick",
+      "concrete",
+      "leather upholstery"
+    ],
+    "colors": [
+      "#a52529",
+      "#74736c",
+      "#6c4135",
+      "#252423",
+      "#d2d1cb"
+    ]
+  },
+  "caveats": [
+    "The side walls, near wall and ceiling are not visible; whole-room fractions and object positions are highly approximate.",
+    "Window bottoms are obscured and the rightmost window continues out of frame.",
+    "Depth is inferred from furniture rather than a visible wall-to-wall span.",
+    "Opening head fractions depend on an uncertain estimate of full wall height."
+  ]
+}

@@ -1,0 +1,1978 @@
+{
+ "title": "Hoskins Street SE10 \u2014 current flat",
+ "rooms": {
+  "Balcony": [
+   -0.104,
+   3.75,
+   -8.513,
+   -6.715
+  ],
+  "Bathroom": [
+   1.257,
+   3.646,
+   3.314,
+   5.682
+  ],
+  "Bedroom": [
+   0.0,
+   2.799,
+   7.634,
+   12.676
+  ],
+  "Hall": [
+   0.0,
+   1.257,
+   0.376,
+   7.634
+  ],
+  "Hall cupboard": [
+   1.333,
+   1.931,
+   5.682,
+   6.654
+  ],
+  "Kitchen": [
+   1.257,
+   3.646,
+   -0.006,
+   3.314
+  ],
+  "Entrance lobby": [
+   1.257,
+   2.799,
+   6.654,
+   8.106
+  ],
+  "Meter cupboard": [
+   1.931,
+   3.646,
+   5.682,
+   6.654
+  ],
+  "Living room": [
+   0.0,
+   3.646,
+   -6.59,
+   0.376
+  ]
+ },
+ "assemblies": [
+  {
+   "name": "Clothes airer",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 17,
+   "size": [
+    0.538,
+    1.151,
+    0.961
+   ],
+   "origin_blender": [
+    3.268,
+    -1.499,
+    -0.002
+   ]
+  },
+  {
+   "name": "Leather bag",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    0.417,
+    0.278,
+    0.22
+   ],
+   "origin_blender": [
+    1.653,
+    -5.562,
+    0.0
+   ]
+  },
+  {
+   "name": "Balcony chair 1",
+   "category": "furniture",
+   "movable": true,
+   "room": "Balcony",
+   "parts": 6,
+   "size": [
+    0.51,
+    0.503,
+    0.901
+   ],
+   "origin_blender": [
+    2.53,
+    -7.551,
+    -0.051
+   ]
+  },
+  {
+   "name": "Balcony chair 2",
+   "category": "furniture",
+   "movable": true,
+   "room": "Balcony",
+   "parts": 6,
+   "size": [
+    0.499,
+    0.491,
+    0.901
+   ],
+   "origin_blender": [
+    1.464,
+    -7.857,
+    -0.051
+   ]
+  },
+  {
+   "name": "Balcony planter 1",
+   "category": "decor",
+   "movable": true,
+   "room": "Balcony",
+   "parts": 2,
+   "size": [
+    0.597,
+    0.621,
+    0.518
+   ],
+   "origin_blender": [
+    0.143,
+    -8.265,
+    -0.05
+   ]
+  },
+  {
+   "name": "Balcony planter 2",
+   "category": "decor",
+   "movable": true,
+   "room": "Balcony",
+   "parts": 2,
+   "size": [
+    0.641,
+    0.596,
+    0.501
+   ],
+   "origin_blender": [
+    3.511,
+    -8.265,
+    -0.05
+   ]
+  },
+  {
+   "name": "Balcony table",
+   "category": "furniture",
+   "movable": true,
+   "room": "Balcony",
+   "parts": 3,
+   "size": [
+    0.6,
+    0.6,
+    0.75
+   ],
+   "origin_blender": [
+    2.0,
+    -7.715,
+    -0.05
+   ]
+  },
+  {
+   "name": "Basin",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 10,
+   "size": [
+    0.46,
+    0.54,
+    1.08
+   ],
+   "origin_blender": [
+    3.065,
+    4.647,
+    0.0
+   ]
+  },
+  {
+   "name": "Bath",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 11,
+   "size": [
+    1.84,
+    0.775,
+    2.0
+   ],
+   "origin_blender": [
+    2.295,
+    3.806,
+    0.0
+   ]
+  },
+  {
+   "name": "Bath mat",
+   "category": "decor",
+   "movable": true,
+   "room": "Bathroom",
+   "parts": 1,
+   "size": [
+    0.764,
+    0.361,
+    0.01
+   ],
+   "origin_blender": [
+    1.965,
+    4.397,
+    0.0
+   ]
+  },
+  {
+   "name": "Bed",
+   "category": "furniture",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 20,
+   "size": [
+    2.022,
+    1.492,
+    1.13
+   ],
+   "origin_blender": [
+    1.119,
+    10.151,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedside table (north)",
+   "category": "furniture",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 9,
+   "size": [
+    0.446,
+    0.45,
+    0.56
+   ],
+   "origin_blender": [
+    0.341,
+    11.148,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedside table (south)",
+   "category": "furniture",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 10,
+   "size": [
+    0.446,
+    0.45,
+    0.64
+   ],
+   "origin_blender": [
+    0.341,
+    9.155,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedroom blind",
+   "category": "decor",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 1,
+   "size": [
+    1.326,
+    0.063,
+    0.06
+   ],
+   "origin_blender": [
+    0.976,
+    12.54,
+    2.16
+   ]
+  },
+  {
+   "name": "Roller blinds",
+   "category": "decor",
+   "movable": false,
+   "room": "Living room",
+   "parts": 9,
+   "size": [
+    2.87,
+    0.063,
+    0.16
+   ],
+   "origin_blender": [
+    1.816,
+    -6.413,
+    2.12
+   ]
+  },
+  {
+   "name": "Ladder bookshelf",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 68,
+   "size": [
+    0.411,
+    0.638,
+    1.807
+   ],
+   "origin_blender": [
+    0.341,
+    -0.898,
+    -0.003
+   ]
+  },
+  {
+   "name": "Dining chair 1",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 7,
+   "size": [
+    0.604,
+    0.628,
+    0.842
+   ],
+   "origin_blender": [
+    2.438,
+    -1.037,
+    -0.002
+   ]
+  },
+  {
+   "name": "Dining chair 2",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 7,
+   "size": [
+    0.62,
+    0.636,
+    0.842
+   ],
+   "origin_blender": [
+    1.764,
+    -1.068,
+    -0.002
+   ]
+  },
+  {
+   "name": "Dining chair 3",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 7,
+   "size": [
+    0.636,
+    0.62,
+    0.842
+   ],
+   "origin_blender": [
+    1.604,
+    -1.95,
+    -0.002
+   ]
+  },
+  {
+   "name": "Dining chair 4",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 7,
+   "size": [
+    0.639,
+    0.631,
+    0.842
+   ],
+   "origin_blender": [
+    2.611,
+    -1.995,
+    -0.002
+   ]
+  },
+  {
+   "name": "Chest of drawers",
+   "category": "furniture",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 17,
+   "size": [
+    0.785,
+    0.49,
+    1.26
+   ],
+   "origin_blender": [
+    2.288,
+    12.312,
+    0.0
+   ]
+  },
+  {
+   "name": "Chopping board",
+   "category": "decor",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 1,
+   "size": [
+    0.068,
+    0.278,
+    0.34
+   ],
+   "origin_blender": [
+    3.511,
+    2.147,
+    0.91
+   ]
+  },
+  {
+   "name": "Coffee table",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 11,
+   "size": [
+    0.549,
+    0.903,
+    0.54
+   ],
+   "origin_blender": [
+    1.844,
+    -2.575,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedroom curtains",
+   "category": "decor",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 3,
+   "size": [
+    1.699,
+    0.055,
+    1.871
+   ],
+   "origin_blender": [
+    0.984,
+    12.475,
+    0.4
+   ]
+  },
+  {
+   "name": "Desk",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 12,
+   "size": [
+    1.36,
+    0.576,
+    1.03
+   ],
+   "origin_blender": [
+    2.576,
+    -6.142,
+    0.0
+   ]
+  },
+  {
+   "name": "Desk lamp 1",
+   "category": "lighting",
+   "movable": true,
+   "room": "Living room",
+   "parts": 3,
+   "size": [
+    0.445,
+    0.275,
+    0.437
+   ],
+   "origin_blender": [
+    2.343,
+    -6.277,
+    0.75
+   ]
+  },
+  {
+   "name": "Desk lamp 2",
+   "category": "lighting",
+   "movable": true,
+   "room": "Living room",
+   "parts": 3,
+   "size": [
+    0.445,
+    0.275,
+    0.437
+   ],
+   "origin_blender": [
+    3.043,
+    -6.277,
+    0.75
+   ]
+  },
+  {
+   "name": "Dining table",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 12,
+   "size": [
+    0.9,
+    0.9,
+    0.934
+   ],
+   "origin_blender": [
+    2.125,
+    -1.589,
+    -0.005
+   ]
+  },
+  {
+   "name": "Doormat",
+   "category": "decor",
+   "movable": true,
+   "room": "Entrance lobby",
+   "parts": 1,
+   "size": [
+    0.417,
+    0.611,
+    0.012
+   ],
+   "origin_blender": [
+    2.472,
+    7.314,
+    0.0
+   ]
+  },
+  {
+   "name": "Storage box and cushion",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 2,
+   "size": [
+    0.514,
+    0.521,
+    0.33
+   ],
+   "origin_blender": [
+    1.583,
+    -6.183,
+    0.0
+   ]
+  },
+  {
+   "name": "Floor lamp",
+   "category": "lighting",
+   "movable": true,
+   "room": "Living room",
+   "parts": 3,
+   "size": [
+    0.53,
+    0.26,
+    1.562
+   ],
+   "origin_blender": [
+    0.552,
+    -5.006,
+    0.0
+   ]
+  },
+  {
+   "name": "Fridge-freezer",
+   "category": "appliance",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 3,
+   "size": [
+    0.583,
+    0.628,
+    1.8
+   ],
+   "origin_blender": [
+    1.681,
+    0.426,
+    0.0
+   ]
+  },
+  {
+   "name": "Grill",
+   "category": "appliance",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 1,
+   "size": [
+    0.361,
+    0.222,
+    0.12
+   ],
+   "origin_blender": [
+    3.292,
+    1.043,
+    0.91
+   ]
+  },
+  {
+   "name": "Door mirror",
+   "category": "decor",
+   "movable": false,
+   "room": "Entrance lobby",
+   "parts": 3,
+   "size": [
+    0.319,
+    0.055,
+    1.225
+   ],
+   "origin_blender": [
+    2.32,
+    6.724,
+    0.73
+   ]
+  },
+  {
+   "name": "Hall cabinet",
+   "category": "furniture",
+   "movable": true,
+   "room": "Hall",
+   "parts": 5,
+   "size": [
+    0.472,
+    0.326,
+    1.388
+   ],
+   "origin_blender": [
+    0.361,
+    7.346,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedroom heater",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 1,
+   "size": [
+    0.694,
+    0.09,
+    0.42
+   ],
+   "origin_blender": [
+    1.097,
+    12.526,
+    0.18
+   ]
+  },
+  {
+   "name": "Hall heater",
+   "category": "fixture",
+   "movable": false,
+   "room": "Hall",
+   "parts": 1,
+   "size": [
+    0.076,
+    0.764,
+    0.45
+   ],
+   "origin_blender": [
+    0.142,
+    6.349,
+    0.15
+   ]
+  },
+  {
+   "name": "Living room heater",
+   "category": "fixture",
+   "movable": false,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    0.076,
+    0.799,
+    0.45
+   ],
+   "origin_blender": [
+    0.142,
+    -5.787,
+    0.15
+   ]
+  },
+  {
+   "name": "Hob",
+   "category": "appliance",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 5,
+   "size": [
+    0.479,
+    0.528,
+    0.006
+   ],
+   "origin_blender": [
+    3.261,
+    1.522,
+    0.91
+   ]
+  },
+  {
+   "name": "Balcony door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    0.763,
+    0.06,
+    2.21
+   ],
+   "origin_blender": [
+    0.792,
+    -6.6,
+    0.04
+   ]
+  },
+  {
+   "name": "Bathroom door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Hall",
+   "parts": 1,
+   "size": [
+    0.282,
+    0.904,
+    2.14
+   ],
+   "origin_blender": [
+    1.235,
+    4.995,
+    0.0
+   ]
+  },
+  {
+   "name": "Bedroom door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 1,
+   "size": [
+    0.848,
+    0.804,
+    2.14
+   ],
+   "origin_blender": [
+    2.236,
+    8.41,
+    0.0
+   ]
+  },
+  {
+   "name": "Front door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Entrance lobby",
+   "parts": 1,
+   "size": [
+    0.282,
+    0.834,
+    2.18
+   ],
+   "origin_blender": [
+    2.777,
+    7.321,
+    0.0
+   ]
+  },
+  {
+   "name": "Hall cupboard door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Hall cupboard",
+   "parts": 1,
+   "size": [
+    0.158,
+    0.696,
+    2.14
+   ],
+   "origin_blender": [
+    1.312,
+    6.175,
+    0.0
+   ]
+  },
+  {
+   "name": "Kitchen door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 1,
+   "size": [
+    0.943,
+    0.948,
+    2.14
+   ],
+   "origin_blender": [
+    1.609,
+    1.653,
+    0.0
+   ]
+  },
+  {
+   "name": "Meter cupboard door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Entrance lobby",
+   "parts": 1,
+   "size": [
+    0.626,
+    0.164,
+    2.14
+   ],
+   "origin_blender": [
+    2.313,
+    6.673,
+    0.0
+   ]
+  },
+  {
+   "name": "Living room door",
+   "category": "fixture",
+   "movable": false,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    0.869,
+    0.866,
+    2.14
+   ],
+   "origin_blender": [
+    0.629,
+    0.063,
+    0.0
+   ]
+  },
+  {
+   "name": "Built-in cupboards",
+   "category": "fixture",
+   "movable": false,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    2.243,
+    0.614,
+    2.4
+   ],
+   "origin_blender": [
+    2.427,
+    -0.417,
+    0.0
+   ]
+  },
+  {
+   "name": "Kettle",
+   "category": "appliance",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 2,
+   "size": [
+    0.15,
+    0.15,
+    0.24
+   ],
+   "origin_blender": [
+    3.167,
+    2.342,
+    0.91
+   ]
+  },
+  {
+   "name": "Kitchen units",
+   "category": "fixture",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 25,
+   "size": [
+    2.188,
+    2.347,
+    0.91
+   ],
+   "origin_blender": [
+    2.455,
+    2.036,
+    0.0
+   ]
+  },
+  {
+   "name": "Knife block",
+   "category": "decor",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 1,
+   "size": [
+    0.139,
+    0.16,
+    0.2
+   ],
+   "origin_blender": [
+    3.424,
+    1.081,
+    0.91
+   ]
+  },
+  {
+   "name": "Laptop",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 2,
+   "size": [
+    0.31,
+    0.252,
+    0.221
+   ],
+   "origin_blender": [
+    0.661,
+    -2.309,
+    0.525
+   ]
+  },
+  {
+   "name": "Toilet roll",
+   "category": "decor",
+   "movable": true,
+   "room": "Bathroom",
+   "parts": 1,
+   "size": [
+    0.1,
+    0.1,
+    0.1
+   ],
+   "origin_blender": [
+    3.255,
+    4.995,
+    1.05
+   ]
+  },
+  {
+   "name": "Bathroom light",
+   "category": "lighting",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 2,
+   "size": [
+    0.42,
+    0.42,
+    0.075
+   ],
+   "origin_blender": [
+    2.347,
+    4.647,
+    2.325
+   ]
+  },
+  {
+   "name": "Hall light 1",
+   "category": "lighting",
+   "movable": false,
+   "room": "Entrance lobby",
+   "parts": 2,
+   "size": [
+    0.36,
+    0.36,
+    0.075
+   ],
+   "origin_blender": [
+    2.035,
+    7.217,
+    2.325
+   ]
+  },
+  {
+   "name": "Hall light 2",
+   "category": "lighting",
+   "movable": false,
+   "room": "Hall",
+   "parts": 2,
+   "size": [
+    0.36,
+    0.36,
+    0.075
+   ],
+   "origin_blender": [
+    0.625,
+    5.967,
+    2.325
+   ]
+  },
+  {
+   "name": "Hall light 3",
+   "category": "lighting",
+   "movable": false,
+   "room": "Hall",
+   "parts": 2,
+   "size": [
+    0.36,
+    0.36,
+    0.075
+   ],
+   "origin_blender": [
+    0.625,
+    3.258,
+    2.325
+   ]
+  },
+  {
+   "name": "Hall light 4",
+   "category": "lighting",
+   "movable": false,
+   "room": "Hall",
+   "parts": 2,
+   "size": [
+    0.36,
+    0.36,
+    0.075
+   ],
+   "origin_blender": [
+    0.625,
+    1.175,
+    2.325
+   ]
+  },
+  {
+   "name": "Kitchen light",
+   "category": "lighting",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 2,
+   "size": [
+    0.36,
+    0.36,
+    0.075
+   ],
+   "origin_blender": [
+    2.452,
+    1.661,
+    2.325
+   ]
+  },
+  {
+   "name": "Microwave",
+   "category": "appliance",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 2,
+   "size": [
+    0.542,
+    0.442,
+    0.27
+   ],
+   "origin_blender": [
+    3.257,
+    2.954,
+    0.91
+   ]
+  },
+  {
+   "name": "Mirror cabinet",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 4,
+   "size": [
+    0.142,
+    1.278,
+    0.66
+   ],
+   "origin_blender": [
+    3.478,
+    4.925,
+    1.2
+   ]
+  },
+  {
+   "name": "Office chair",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 16,
+   "size": [
+    0.665,
+    0.718,
+    1.079
+   ],
+   "origin_blender": [
+    2.421,
+    -5.321,
+    0.0
+   ]
+  },
+  {
+   "name": "Oven",
+   "category": "appliance",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 6,
+   "size": [
+    0.072,
+    0.521,
+    0.69
+   ],
+   "origin_blender": [
+    2.944,
+    1.54,
+    0.14
+   ]
+  },
+  {
+   "name": "Bedroom pendant",
+   "category": "lighting",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 4,
+   "size": [
+    0.38,
+    0.38,
+    0.641
+   ],
+   "origin_blender": [
+    1.396,
+    10.273,
+    1.759
+   ]
+  },
+  {
+   "name": "Dining pendant",
+   "category": "lighting",
+   "movable": false,
+   "room": "Living room",
+   "parts": 4,
+   "size": [
+    0.601,
+    0.602,
+    0.495
+   ],
+   "origin_blender": [
+    2.125,
+    -1.59,
+    1.905
+   ]
+  },
+  {
+   "name": "Living pendant",
+   "category": "lighting",
+   "movable": false,
+   "room": "Living room",
+   "parts": 4,
+   "size": [
+    0.601,
+    0.602,
+    0.495
+   ],
+   "origin_blender": [
+    1.792,
+    -4.174,
+    1.905
+   ]
+  },
+  {
+   "name": "Bamboo",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 11,
+   "size": [
+    0.398,
+    0.389,
+    1.5
+   ],
+   "origin_blender": [
+    3.328,
+    -2.633,
+    0.44
+   ]
+  },
+  {
+   "name": "Fern",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 2,
+   "size": [
+    0.74,
+    0.629,
+    0.244
+   ],
+   "origin_blender": [
+    3.319,
+    -3.372,
+    0.392
+   ]
+  },
+  {
+   "name": "Ficus",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 3,
+   "size": [
+    0.279,
+    0.28,
+    1.27
+   ],
+   "origin_blender": [
+    3.121,
+    -5.502,
+    0.0
+   ]
+  },
+  {
+   "name": "Peace lily",
+   "category": "decor",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 3,
+   "size": [
+    0.332,
+    0.526,
+    0.384
+   ],
+   "origin_blender": [
+    0.235,
+    9.194,
+    0.56
+   ]
+  },
+  {
+   "name": "Projector",
+   "category": "appliance",
+   "movable": true,
+   "room": "Living room",
+   "parts": 1,
+   "size": [
+    0.16,
+    0.18,
+    0.14
+   ],
+   "origin_blender": [
+    0.403,
+    -4.079,
+    0.52
+   ]
+  },
+  {
+   "name": "Shower",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 5,
+   "size": [
+    0.183,
+    0.4,
+    1.108
+   ],
+   "origin_blender": [
+    3.122,
+    3.828,
+    0.842
+   ]
+  },
+  {
+   "name": "Side table",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 3,
+   "size": [
+    0.36,
+    0.36,
+    0.52
+   ],
+   "origin_blender": [
+    0.403,
+    -4.069,
+    0.0
+   ]
+  },
+  {
+   "name": "Sink",
+   "category": "fixture",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 16,
+   "size": [
+    0.924,
+    0.514,
+    0.453
+   ],
+   "origin_blender": [
+    2.462,
+    2.932,
+    0.728
+   ]
+  },
+  {
+   "name": "Smoke alarm",
+   "category": "fixture",
+   "movable": false,
+   "room": "Hall",
+   "parts": 1,
+   "size": [
+    0.11,
+    0.11,
+    0.04
+   ],
+   "origin_blender": [
+    0.625,
+    4.439,
+    2.36
+   ]
+  },
+  {
+   "name": "Sofa",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 15,
+   "size": [
+    1.023,
+    2.361,
+    1.014
+   ],
+   "origin_blender": [
+    0.611,
+    -2.575,
+    0.0
+   ]
+  },
+  {
+   "name": "Storage box",
+   "category": "decor",
+   "movable": true,
+   "room": "Hall",
+   "parts": 2,
+   "size": [
+    0.417,
+    0.292,
+    0.36
+   ],
+   "origin_blender": [
+    0.889,
+    7.349,
+    0.0
+   ]
+  },
+  {
+   "name": "Tall unit",
+   "category": "fixture",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 5,
+   "size": [
+    0.621,
+    0.75,
+    2.12
+   ],
+   "origin_blender": [
+    3.224,
+    0.487,
+    0.0
+   ]
+  },
+  {
+   "name": "Toilet brush",
+   "category": "decor",
+   "movable": true,
+   "room": "Bathroom",
+   "parts": 1,
+   "size": [
+    0.1,
+    0.1,
+    0.35
+   ],
+   "origin_blender": [
+    3.205,
+    5.504,
+    0.0
+   ]
+  },
+  {
+   "name": "Towel",
+   "category": "decor",
+   "movable": true,
+   "room": "Bathroom",
+   "parts": 1,
+   "size": [
+    0.491,
+    0.08,
+    0.388
+   ],
+   "origin_blender": [
+    1.66,
+    5.577,
+    0.99
+   ]
+  },
+  {
+   "name": "Towel radiator",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 12,
+   "size": [
+    0.459,
+    0.028,
+    1.15
+   ],
+   "origin_blender": [
+    1.66,
+    5.577,
+    0.2
+   ]
+  },
+  {
+   "name": "TV bench",
+   "category": "furniture",
+   "movable": true,
+   "room": "Living room",
+   "parts": 9,
+   "size": [
+    0.389,
+    1.806,
+    0.62
+   ],
+   "origin_blender": [
+    3.341,
+    -3.409,
+    0.0
+   ]
+  },
+  {
+   "name": "Wall cabinets",
+   "category": "fixture",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 9,
+   "size": [
+    0.357,
+    2.334,
+    0.67
+   ],
+   "origin_blender": [
+    3.356,
+    2.029,
+    1.45
+   ]
+  },
+  {
+   "name": "Open wardrobe",
+   "category": "furniture",
+   "movable": false,
+   "room": "Bedroom",
+   "parts": 56,
+   "size": [
+    1.271,
+    0.482,
+    2.318
+   ],
+   "origin_blender": [
+    0.754,
+    7.984,
+    0.0
+   ]
+  },
+  {
+   "name": "Washing machine",
+   "category": "appliance",
+   "movable": false,
+   "room": "Kitchen",
+   "parts": 6,
+   "size": [
+    0.576,
+    0.605,
+    0.85
+   ],
+   "origin_blender": [
+    1.67,
+    2.887,
+    0.0
+   ]
+  },
+  {
+   "name": "Watering can",
+   "category": "decor",
+   "movable": true,
+   "room": "Living room",
+   "parts": 2,
+   "size": [
+    0.2,
+    0.329,
+    0.228
+   ],
+   "origin_blender": [
+    3.341,
+    -2.991,
+    0.44
+   ]
+  },
+  {
+   "name": "WC",
+   "category": "fixture",
+   "movable": false,
+   "room": "Bathroom",
+   "parts": 7,
+   "size": [
+    0.658,
+    0.4,
+    0.84
+   ],
+   "origin_blender": [
+    2.954,
+    5.272,
+    0.0
+   ]
+  },
+  {
+   "name": "Window desk",
+   "category": "furniture",
+   "movable": true,
+   "room": "Bedroom",
+   "parts": 11,
+   "size": [
+    1.181,
+    0.486,
+    0.84
+   ],
+   "origin_blender": [
+    1.097,
+    12.315,
+    0.0
+   ]
+  },
+  {
+   "name": "Wine bottle",
+   "category": "decor",
+   "movable": true,
+   "room": "Kitchen",
+   "parts": 1,
+   "size": [
+    0.074,
+    0.074,
+    0.32
+   ],
+   "origin_blender": [
+    3.445,
+    2.585,
+    0.91
+   ]
+  }
+ ],
+ "fly_path": [
+  [
+   2.417,
+   7.286,
+   1.5
+  ],
+  [
+   1.445,
+   7.217,
+   1.5
+  ],
+  [
+   0.681,
+   6.731,
+   1.5
+  ],
+  [
+   0.681,
+   4.995,
+   1.5
+  ],
+  [
+   1.445,
+   4.995,
+   1.5
+  ],
+  [
+   2.278,
+   4.786,
+   1.5
+  ],
+  [
+   1.445,
+   4.995,
+   1.5
+  ],
+  [
+   0.681,
+   3.953,
+   1.5
+  ],
+  [
+   0.681,
+   1.661,
+   1.5
+  ],
+  [
+   1.653,
+   1.661,
+   1.5
+  ],
+  [
+   2.417,
+   1.592,
+   1.5
+  ],
+  [
+   1.653,
+   1.661,
+   1.5
+  ],
+  [
+   0.681,
+   1.175,
+   1.5
+  ],
+  [
+   0.646,
+   -0.075,
+   1.5
+  ],
+  [
+   1.445,
+   -1.95,
+   1.5
+  ],
+  [
+   1.792,
+   -4.728,
+   1.5
+  ],
+  [
+   2.139,
+   -6.187,
+   1.5
+  ],
+  [
+   1.097,
+   -5.076,
+   1.5
+  ],
+  [
+   0.75,
+   -1.603,
+   1.5
+  ],
+  [
+   0.681,
+   0.48,
+   1.5
+  ],
+  [
+   0.681,
+   5.342,
+   1.5
+  ],
+  [
+   1.097,
+   7.286,
+   1.5
+  ],
+  [
+   1.861,
+   8.12,
+   1.5
+  ],
+  [
+   1.445,
+   9.509,
+   1.5
+  ],
+  [
+   1.375,
+   11.245,
+   1.5
+  ]
+ ],
+ "walk_start": {
+  "pos": [
+   2.452,
+   7.321
+  ],
+  "look": [
+   0.681,
+   6.036
+  ]
+ },
+ "lights": [
+  {
+   "name": "pendant_bed_light",
+   "pos": [
+    1.396,
+    10.273,
+    1.88
+   ],
+   "color": [
+    1.0,
+    0.82,
+    0.62
+   ],
+   "energy": 60
+  },
+  {
+   "name": "light_hall0_light",
+   "pos": [
+    2.035,
+    7.217,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "light_hall1_light",
+   "pos": [
+    0.625,
+    5.967,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "light_hall2_light",
+   "pos": [
+    0.625,
+    3.258,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "light_hall3_light",
+   "pos": [
+    0.625,
+    1.175,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "light_kitchen_light",
+   "pos": [
+    2.452,
+    1.661,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "light_bath_light",
+   "pos": [
+    2.347,
+    4.647,
+    2.28
+   ],
+   "color": [
+    1.0,
+    0.93,
+    0.82
+   ],
+   "energy": 35
+  },
+  {
+   "name": "floorlamp_light",
+   "pos": [
+    0.697,
+    -5.006,
+    1.35
+   ],
+   "color": [
+    1.0,
+    0.82,
+    0.62
+   ],
+   "energy": 25
+  },
+  {
+   "name": "pendant_dining_light",
+   "pos": [
+    2.125,
+    -1.589,
+    1.92
+   ],
+   "color": [
+    1.0,
+    0.82,
+    0.62
+   ],
+   "energy": 70
+  },
+  {
+   "name": "pendant_living_light",
+   "pos": [
+    1.792,
+    -4.173,
+    1.92
+   ],
+   "color": [
+    1.0,
+    0.82,
+    0.62
+   ],
+   "energy": 70
+  }
+ ],
+ "room_order": [
+  "Living room",
+  "Bedroom",
+  "Kitchen",
+  "Bathroom",
+  "Hall",
+  "Entrance lobby",
+  "Balcony",
+  "Hall cupboard",
+  "Meter cupboard"
+ ],
+ "views": [
+  {
+   "name": "Bedroom \u2192 window (photo 22.11.42)",
+   "pos": [
+    2.347,
+    8.432,
+    1.55
+   ],
+   "look": [
+    1.097,
+    12.148,
+    0.9
+   ],
+   "fov": 80
+  },
+  {
+   "name": "Bedroom \u2192 door & wardrobe (22.11.37)",
+   "pos": [
+    0.75,
+    12.148,
+    1.6
+   ],
+   "look": [
+    1.861,
+    8.12,
+    0.9
+   ],
+   "fov": 80
+  },
+  {
+   "name": "Kitchen from the door (22.11.49)",
+   "pos": [
+    1.445,
+    1.592,
+    1.55
+   ],
+   "look": [
+    3.25,
+    2.564,
+    0.9
+   ],
+   "fov": 82
+  },
+  {
+   "name": "Kitchen \u2192 fridge & door (22.11.45)",
+   "pos": [
+    2.625,
+    2.772,
+    1.6
+   ],
+   "look": [
+    2.0,
+    0.133,
+    0.9
+   ],
+   "fov": 82
+  },
+  {
+   "name": "Bathroom (22.11.51)",
+   "pos": [
+    1.445,
+    4.995,
+    1.55
+   ],
+   "look": [
+    3.32,
+    4.3,
+    1.0
+   ],
+   "fov": 82
+  },
+  {
+   "name": "Hall \u2192 living room (22.11.53)",
+   "pos": [
+    0.75,
+    7.425,
+    1.6
+   ],
+   "look": [
+    0.681,
+    0.272,
+    1.2
+   ],
+   "fov": 75
+  },
+  {
+   "name": "Living room \u2192 cupboards (22.11.59)",
+   "pos": [
+    1.097,
+    -6.36,
+    1.6
+   ],
+   "look": [
+    1.861,
+    -0.561,
+    1.0
+   ],
+   "fov": 80
+  },
+  {
+   "name": "Living room \u2192 balcony (22.12.01)",
+   "pos": [
+    1.445,
+    -0.839,
+    1.6
+   ],
+   "look": [
+    1.861,
+    -6.465,
+    1.0
+   ],
+   "fov": 80
+  }
+ ]
+}
