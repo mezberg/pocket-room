@@ -4,6 +4,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { room as livingFixture } from "../fixtures.mjs";
 import { readRoom } from "../../room/photo/read.mjs";
 import { roomFromReading } from "../../room/photo/build.mjs";
+import { savePlan, runPipeline } from "../../room/fireplan/run.mjs";
+import { roomFromPlan } from "../../room/fireplan/convert.mjs";
 
 const HOSKINS = new URL("../../room/hoskins/rooms/", import.meta.url);
 const prebuilt = () => {
@@ -42,6 +44,20 @@ r.post("/from-photo", async (req, res, next) => {
     const known = typeof hint === "object" && hint ? hint : {};
     const reading = await readRoom(images, text);
     const room = roomFromReading(reading, { name, known });
+    built.set(room.id, room);
+    res.json(room);
+  } catch (e) { next(e); }
+});
+
+// Fire-escape / estate-agent plan -> one room. { image: dataURL, room?: "r3", px_per_m?, height_m?, name? }
+// Without `room` it takes the largest; the reply's _plan_rooms lists the others to ask for.
+r.post("/from-plan", async (req, res, next) => {
+  try {
+    const { image, room: pick, px_per_m, height_m, name } = req.body || {};
+    let file;
+    try { file = savePlan(image); } catch (e) { return res.status(400).json({ error: e.message }); }
+    const { graph, rings } = await runPipeline(file);
+    const room = roomFromPlan(graph, rings, { room: pick, px_per_m, height_m, name });
     built.set(room.id, room);
     res.json(room);
   } catch (e) { next(e); }

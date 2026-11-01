@@ -39,3 +39,8 @@ test("the rest of the flat is listed and served", async () => {
   const kitchen = await (await fetch(`${base}/hoskins-kitchen`)).json();
   assert.equal(kitchen.walls[3].openings[0].id, "kitchen_door");
 });
+
+test("from-plan wants an image data URL", async () => {
+  const res = await fetch(`${base}/from-plan`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image: "nope" }) });
+  assert.equal(res.status, 400);
+});

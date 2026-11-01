@@ -39,3 +39,19 @@ Venue test (`room/venue/venue-chesterfields-2026-11-01.jpg`, one photo of one wa
 because most of the room is out of frame. Take 3–4 photos from the corners (or measure two walls) for a tighter box.
 
 `schema-check.mjs`: a small JSON Schema checker for the contract (no dependency).
+
+## From a fire-escape or estate-agent plan (`fireplan/`)
+`POST /api/rooms/from-plan { image: dataURL, room?: "r3", px_per_m?, height_m?, name? }` → `room` with `source: "floorplan"`.
+
+1. `run.mjs` runs `~/Desktop/Coding projects/floorplan recognition pipeline` (`FLOORPLAN_PIPELINE` to move it) with its own
+   `venv` (`FLOORPLAN_PYTHON` to override). Its stage 1 is one VLM recolour call on the pipeline's own OpenRouter key;
+   the rest is local. Results are cached by image hash in the temp folder, so a re-sent plan is instant.
+2. `convert.mjs`: the picked room's traced floor polygon (inner faces, jitter removed), doors projected onto its walls,
+   walls named by the way they face. Scale: `px_per_m` if given, else the median door opening = 0.82 m.
+   `accuracy_m` from the spread of the door widths (about ±10%). Without `room` it takes the largest; `_plan_rooms`
+   lists the others with their areas so the UI can ask for one.
+
+Checked on Kate's own plan (`fp3d/plan.png`), 13.5 s cold: room `r1` comes out 3.63 x 6.80 m against the exact
+3.44 x 6.74 m. On the sample plan in `fireplan/fixtures`, the bedrooms come out 3.80 x 3.62 (printed 3.67 x 3.45) and
+4.28 x 2.94 (printed 4.82 x 3.00). The pipeline finds doors, not windows. Door swings are not read (`swing: null`).
+The largest region can be two rooms the trace merged (on Kate's plan, r0), so pick by `_plan_rooms`.
