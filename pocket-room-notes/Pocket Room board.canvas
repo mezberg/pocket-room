@@ -530,7 +530,7 @@
 			"width": 400,
 			"height": 196,
 			"text": "**A · Room** (part 1)\nHoskins → GLB + room.json · live box room from a photo · fire-plan shortcut\n**Build the hackathon room:** on arrival measure + photograph the venue → room.json + GLB; then try the live photo build against it",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_B",
@@ -540,7 +540,7 @@
 			"width": 400,
 			"height": 170,
 			"text": "**B · Furniture** (part 2)\nVision read · DB match · image → 3D · normalise.\n⚠ Test the 3D vendor on day 1: slowest, riskiest lane",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_C",
@@ -560,7 +560,7 @@
 			"width": 400,
 			"height": 118,
 			"text": "**D · Rules in code** (parts 4 + 5a)\nPlacement candidates + legal spots · model check: overlaps, doors, paths (A*), walkways",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_E",
@@ -570,7 +570,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**E · Decisions** (parts 4 + 5b)\nVerdict + best wall · design-grade question set (light, flow, proportion, style) · tuned on fixtures",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_G",
@@ -580,7 +580,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**G · Agent finds furniture** (part 2)\nAgent searches shops for pieces that fit the free spot and the room's style → product image + dims → piece.json, same path as B",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_F",
@@ -590,7 +590,7 @@
 			"width": 400,
 			"height": 144,
 			"text": "**F · Render** (part 7, stretch)\ngpt-image edit from a screenshot + room photo. Needs nothing else: anyone free can start it",
-			"color": "2"
+			"color": "4"
 		},
 		{
 			"id": "dev_note",
@@ -679,7 +679,7 @@
 			"x": 0,
 			"y": 3396,
 			"width": 1820,
-			"height": 2340
+			"height": 3155
 		},
 		{
 			"id": "prog_head",
@@ -689,7 +689,7 @@
 			"width": 1400,
 			"height": 110,
 			"color": "5",
-			"text": "## Progress · 1 Nov, 13:40 · all 7 lanes done, test pass running\n🟧 done on its branch, not yet tested · 🟨 still working · 🟩 tested and works (after the test pass). Nothing merged into main yet."
+			"text": "## Progress · 1 Nov, 14:00 · test pass done\n🟩 tested, works on its own · 🟧 partly · nothing merged into main yet. Joining them needs the must-fixes below."
 		},
 		{
 			"id": "prog_B",
@@ -698,8 +698,8 @@
 			"y": 3596,
 			"width": 400,
 			"height": 274,
-			"color": "2",
-			"text": "**B · Furniture: image → 3D works through OpenAI** 🟧\n`gpt-6-astra` reads the photo and returns 3D parts; our code builds the GLB. 15–35 s, clean low-poly, right shape and colours, untextured.\nAll 3 test pictures pass (photo, shop tag, Instagram screenshot).\nBranch `claude/lane-b-furniture-fc4f26`"
+			"color": "4",
+			"text": "**B · Furniture: image → 3D works through OpenAI** 🟩 tested\n`gpt-6-astra` reads the photo and returns 3D parts; our code builds the GLB. 15–35 s, clean low-poly, right shape and colours, untextured.\nAll 3 test pictures pass (photo, shop tag, Instagram screenshot).\nBranch `claude/lane-b-furniture-fc4f26`"
 		},
 		{
 			"id": "prog_B_img0",
@@ -727,7 +727,7 @@
 			"width": 400,
 			"height": 222,
 			"color": "2",
-			"text": "**C · App: phone viewer runs end to end on the stubs** 🟧\nRoom in 3D with sun and shadows, Add piece flow, verdict markers, PWA share target.\nVercel preview not deployed (needs your OK to create a project).\nBranch `claude/lane-c-app-9d1714`"
+			"text": "**C · App: phone viewer runs end to end on the stubs** 🟧 partly\nRoom in 3D with sun and shadows, Add piece flow, verdict markers, PWA share target.\nVercel preview not deployed (needs your OK to create a project).\nBranch `claude/lane-c-app-9d1714`"
 		},
 		{
 			"id": "prog_C_img0",
@@ -754,8 +754,8 @@
 			"y": 4276,
 			"width": 400,
 			"height": 196,
-			"color": "2",
-			"text": "**E · Decisions API works with our key** 🟧\n`gpt-6-luna`, no fallback needed. Best spot with a reason, 6 design findings on the fixture room, voice routing.\n12 tests + live smoke pass.\nBranch `claude/lane-e-decisions-790a42`"
+			"color": "4",
+			"text": "**E · Decisions API works with our key** 🟩 tested\n`gpt-6-luna`, no fallback needed. Best spot with a reason, 6 design findings on the fixture room, voice routing.\n12 tests + live smoke pass.\nBranch `claude/lane-e-decisions-790a42`"
 		},
 		{
 			"id": "prog_F",
@@ -764,8 +764,8 @@
 			"y": 4512,
 			"width": 400,
 			"height": 170,
-			"color": "2",
-			"text": "**F · Render: 3D view → photo in ~15 s** 🟧\n`gpt-image-2.5-flare` won on quality and speed. 5 tests pass.\nNeeds `OPENAI_MODEL_RENDER` in `.env`.\nBranch `lane-f-render`"
+			"color": "4",
+			"text": "**F · Render: 3D view → photo in ~15 s** 🟩 tested\n`gpt-image-2.5-flare` won on quality and speed. 5 tests pass.\nNeeds `OPENAI_MODEL_RENDER` in `.env`.\nBranch `lane-f-render`"
 		},
 		{
 			"id": "prog_F_img0",
@@ -801,8 +801,8 @@
 			"y": 4852,
 			"width": 400,
 			"height": 170,
-			"color": "2",
-			"text": "**G · Agent finds 3 real UK products that fit** 🟧\nLinks checked (200), sizes copied from the product pages. 15 tests pass.\nBranch `claude/lane-g-agent-985b31`"
+			"color": "4",
+			"text": "**G · Agent finds 3 real UK products that fit** 🟩 tested\nLinks checked (200), sizes copied from the product pages. 15 tests pass.\nBranch `claude/lane-g-agent-985b31`"
 		},
 		{
 			"id": "prog_A",
@@ -811,8 +811,8 @@
 			"y": 5062,
 			"width": 400,
 			"height": 326,
-			"color": "2",
-			"text": "**A · Room: your flat exact, venue room from one photo** 🟧\nAll 5 rooms of the flat exported from the 26 Sep build (±4 cm); replaces the fixture.\nVenue from one photo: a 9–11 × 6 × 4.1 m box with windows, Chesterfields and a column in 14–17 s, but ±3 m because one photo shows one wall: take 3–4 corner photos or measure two walls.\nFire-plan shortcut works. 24 tests pass.\nBranch `lane-a-room`"
+			"color": "4",
+			"text": "**A · Room: your flat exact, venue room from one photo** 🟩 tested\nAll 5 rooms of the flat exported from the 26 Sep build (±4 cm); replaces the fixture.\nVenue from one photo: a 9–11 × 6 × 4.1 m box with windows, Chesterfields and a column in 14–17 s, but ±3 m because one photo shows one wall: take 3–4 corner photos or measure two walls.\nFire-plan shortcut works. 24 tests pass.\nBranch `lane-a-room`"
 		},
 		{
 			"id": "prog_D",
@@ -821,8 +821,37 @@
 			"y": 5428,
 			"width": 400,
 			"height": 248,
-			"color": "2",
-			"text": "**D · Rules: placement and model check in code** 🟧\nFree-floor grid (4 cm), walkways, legal spots best first, model findings with markers. place ≈ 0.1 s, analyse ≈ 1 s.\n8 tests: tiny, typical, crowded rooms + the fixture sofa.\nBranch `lane-d-rules`"
+			"color": "4",
+			"text": "**D · Rules: placement and model check in code** 🟩 tested\nFree-floor grid (4 cm), walkways, legal spots best first, model findings with markers. place ≈ 0.1 s, analyse ≈ 1 s.\n8 tests: tiny, typical, crowded rooms + the fixture sofa.\nBranch `lane-d-rules`"
+		},
+		{
+			"id": "test_must",
+			"type": "text",
+			"x": 40,
+			"y": 5796,
+			"width": 560,
+			"height": 586,
+			"color": "1",
+			"text": "## Test pass: must-fix before the demo\n1. **D ↔ E hook missing:** `decisions/hooks.mjs` doesn't exist, so the Decisions API is never called through `/api/place` and `/api/analyse`. A 10-line adapter fixes it (tested).\n2. **C keeps the old sofa** when the new one replaces it → \"overlap by 94 cm\" (see screenshot).\n3. **C sends only `roomId`; D and G always use the fixture room** → look rooms up from lane A.\n4. **C's Sample button 404s** (B doesn't serve the fixture id).\n5. **Deploy:** Vercel config misses `room/**`; B writes files and runs 3D jobs in-process, which serverless loses → host the server long-running or add a store.\nShould-fix: fern 14 cm into the wall (A) · hall path \"blocked\" at the partition nib (D) · E's own flow grid disagrees with D · G should use D's `place()` · \"0% sure\" text in C · E/G tests expect the old fixture.\nDemo note: a 0.78 m armchair doesn't fit anywhere in Kate's room; only a sofa replacing the old one fits → demo with a sofa.\nMerge order: A → D → E + hook → B → G → F → C."
+		},
+		{
+			"id": "test_img",
+			"type": "file",
+			"file": "attachments/test_joined_verdict.jpg",
+			"x": 640,
+			"y": 5796,
+			"width": 330,
+			"height": 715
+		},
+		{
+			"id": "test_cap",
+			"type": "text",
+			"x": 1000,
+			"y": 5796,
+			"width": 420,
+			"height": 200,
+			"color": "5",
+			"text": "**All lanes joined behind lane C's app, with lane A's real room**\nReal placement (\"Just fits, west wall\") and 11 findings as markers. Shows bug 2: the old sofa stays."
 		}
 	],
 	"edges": [
