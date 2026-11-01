@@ -1,0 +1,3 @@
+# furniture
+
+See LANES.md.

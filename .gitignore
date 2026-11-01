@@ -1,4 +1,6 @@
 .DS_Store
-.env*
+.env
+.env.*
+!.env.example
 node_modules/
 pocket-room-notes/.obsidian/workspace*.json

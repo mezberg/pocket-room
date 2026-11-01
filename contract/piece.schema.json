@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "piece.schema.json",
+  "title": "Piece",
+  "description": "One piece of furniture from any source. Lane B and G write it, everything else reads it.",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "name",
+    "size",
+    "size_source",
+    "source",
+    "model"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "description": "Same words as room.schema.json item.category"
+    },
+    "name": {
+      "type": "string",
+      "description": "Plain words: 'Green velvet 3-seat sofa'"
+    },
+    "size": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "[width, depth, height] in metres"
+    },
+    "size_source": {
+      "enum": [
+        "tag",
+        "product_page",
+        "vision_estimate",
+        "category_default"
+      ],
+      "description": "How sure the size is; the UI says 'estimated' for the last two"
+    },
+    "style": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "material": {
+          "type": "string"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "photo",
+            "shop_tag",
+            "screenshot",
+            "agent"
+          ]
+        },
+        "image": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "URL or data URL of the picture it came from"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Product page, if known"
+        },
+        "price": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shop": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "building",
+            "ready",
+            "failed"
+          ]
+        },
+        "how": {
+          "enum": [
+            "db_match",
+            "parametric",
+            "image_to_3d"
+          ]
+        },
+        "glb": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "URL once ready; scaled to size, base on the floor, front at -y, centred"
+        },
+        "parametric": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "kit-real.js template name + args when how = parametric"
+        },
+        "job": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

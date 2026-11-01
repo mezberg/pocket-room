@@ -1,0 +1,41 @@
+{
+  "id": "fixture-sofa-84",
+  "category": "sofa",
+  "name": "Green velvet 3-seat sofa",
+  "size": [
+    2.13,
+    0.92,
+    0.84
+  ],
+  "size_source": "tag",
+  "style": {
+    "tags": [
+      "mid-century",
+      "velvet"
+    ],
+    "colors": [
+      "#3f5e4a"
+    ],
+    "material": "velvet"
+  },
+  "source": {
+    "kind": "shop_tag",
+    "image": null,
+    "price": "$1,299",
+    "shop": "example"
+  },
+  "model": {
+    "status": "ready",
+    "how": "parametric",
+    "glb": null,
+    "parametric": {
+      "template": "sofa",
+      "args": {
+        "seats": 3,
+        "seatW": 0.62,
+        "depth": 0.92
+      }
+    },
+    "job": null
+  }
+}

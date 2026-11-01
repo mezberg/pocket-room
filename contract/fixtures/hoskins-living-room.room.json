@@ -1,0 +1,445 @@
+{
+  "id": "hoskins-living",
+  "name": "Living room, Hoskins Street",
+  "source": "prebuilt",
+  "accuracy_m": 0.05,
+  "_note": "Approximate, from the viewer manifest (room box + furniture boxes, facing guessed toward the room centre). Lane A replaces it with the exact export.",
+  "height": 2.4,
+  "glb": "/room/hoskins-flat.glb",
+  "walls": [
+    {
+      "id": "south",
+      "a": [
+        0.0,
+        -6.59
+      ],
+      "b": [
+        3.646,
+        -6.59
+      ],
+      "openings": [
+        {
+          "id": "balcony_door",
+          "kind": "glazed_door",
+          "from": 0.41,
+          "width": 0.763,
+          "head": 2.3,
+          "swing": null
+        },
+        {
+          "id": "glazing",
+          "kind": "window",
+          "from": 1.173,
+          "width": 2.077,
+          "sill": 0.0,
+          "head": 2.3
+        }
+      ]
+    },
+    {
+      "id": "east",
+      "a": [
+        3.646,
+        -6.59
+      ],
+      "b": [
+        3.646,
+        0.376
+      ],
+      "openings": []
+    },
+    {
+      "id": "north",
+      "a": [
+        3.646,
+        0.376
+      ],
+      "b": [
+        0.0,
+        0.376
+      ],
+      "openings": [
+        {
+          "id": "hall_door",
+          "kind": "door",
+          "from": 2.582,
+          "width": 0.87,
+          "head": 2.04,
+          "swing": {
+            "hinge": "b",
+            "into": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "west",
+      "a": [
+        0.0,
+        0.376
+      ],
+      "b": [
+        0.0,
+        -6.59
+      ],
+      "openings": []
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "living_room_heater",
+      "name": "Living room heater",
+      "category": "radiator",
+      "at": [
+        0.142,
+        -5.787
+      ],
+      "size": [
+        0.799,
+        0.076,
+        0.45
+      ],
+      "rot": 90,
+      "on_floor": false
+    },
+    {
+      "id": "built-in_cupboards",
+      "name": "Built-in cupboards",
+      "category": "cupboard",
+      "at": [
+        2.427,
+        -0.417
+      ],
+      "size": [
+        2.243,
+        0.614,
+        2.4
+      ],
+      "rot": 0,
+      "on_floor": true
+    }
+  ],
+  "furniture": [
+    {
+      "id": "clothes_airer",
+      "name": "Clothes airer",
+      "category": "other",
+      "at": [
+        3.268,
+        -1.499
+      ],
+      "size": [
+        1.151,
+        0.538,
+        0.961
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "ladder_bookshelf",
+      "name": "Ladder bookshelf",
+      "category": "shelf",
+      "at": [
+        0.341,
+        -0.898
+      ],
+      "size": [
+        0.638,
+        0.411,
+        1.807
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "dining_chair_1",
+      "name": "Dining chair 1",
+      "category": "chair",
+      "at": [
+        2.438,
+        -1.037
+      ],
+      "size": [
+        0.628,
+        0.604,
+        0.842
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "dining_chair_2",
+      "name": "Dining chair 2",
+      "category": "chair",
+      "at": [
+        1.764,
+        -1.068
+      ],
+      "size": [
+        0.636,
+        0.62,
+        0.842
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "dining_chair_3",
+      "name": "Dining chair 3",
+      "category": "chair",
+      "at": [
+        1.604,
+        -1.95
+      ],
+      "size": [
+        0.636,
+        0.62,
+        0.842
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "dining_chair_4",
+      "name": "Dining chair 4",
+      "category": "chair",
+      "at": [
+        2.611,
+        -1.995
+      ],
+      "size": [
+        0.639,
+        0.631,
+        0.842
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "coffee_table",
+      "name": "Coffee table",
+      "category": "table",
+      "at": [
+        1.844,
+        -2.575
+      ],
+      "size": [
+        0.903,
+        0.549,
+        0.54
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "desk",
+      "name": "Desk",
+      "category": "desk",
+      "at": [
+        2.576,
+        -6.142
+      ],
+      "size": [
+        1.36,
+        0.576,
+        1.03
+      ],
+      "rot": 180,
+      "on_floor": true
+    },
+    {
+      "id": "dining_table",
+      "name": "Dining table",
+      "category": "table",
+      "at": [
+        2.125,
+        -1.589
+      ],
+      "size": [
+        0.9,
+        0.9,
+        0.934
+      ],
+      "rot": 0,
+      "on_floor": true
+    },
+    {
+      "id": "storage_box_and_cushion",
+      "name": "Storage box and cushion",
+      "category": "other",
+      "at": [
+        1.583,
+        -6.183
+      ],
+      "size": [
+        0.521,
+        0.514,
+        0.33
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "floor_lamp",
+      "name": "Floor lamp",
+      "category": "lamp",
+      "at": [
+        0.552,
+        -5.006
+      ],
+      "size": [
+        0.53,
+        0.26,
+        1.562
+      ],
+      "rot": 180,
+      "on_floor": true
+    },
+    {
+      "id": "office_chair",
+      "name": "Office chair",
+      "category": "chair",
+      "at": [
+        2.421,
+        -5.321
+      ],
+      "size": [
+        0.718,
+        0.665,
+        1.079
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "bamboo",
+      "name": "Bamboo",
+      "category": "plant",
+      "at": [
+        3.328,
+        -2.633
+      ],
+      "size": [
+        0.398,
+        0.389,
+        1.5
+      ],
+      "rot": 0,
+      "on_floor": false
+    },
+    {
+      "id": "fern",
+      "name": "Fern",
+      "category": "plant",
+      "at": [
+        3.319,
+        -3.372
+      ],
+      "size": [
+        0.74,
+        0.629,
+        0.244
+      ],
+      "rot": 180,
+      "on_floor": false
+    },
+    {
+      "id": "ficus",
+      "name": "Ficus",
+      "category": "plant",
+      "at": [
+        3.121,
+        -5.502
+      ],
+      "size": [
+        0.28,
+        0.279,
+        1.27
+      ],
+      "rot": 270,
+      "on_floor": true
+    },
+    {
+      "id": "side_table",
+      "name": "Side table",
+      "category": "table",
+      "at": [
+        0.403,
+        -4.069
+      ],
+      "size": [
+        0.36,
+        0.36,
+        0.52
+      ],
+      "rot": 180,
+      "on_floor": true
+    },
+    {
+      "id": "sofa",
+      "name": "Sofa",
+      "category": "sofa",
+      "at": [
+        0.611,
+        -2.575
+      ],
+      "size": [
+        2.361,
+        1.023,
+        1.014
+      ],
+      "rot": 90,
+      "on_floor": true
+    },
+    {
+      "id": "tv_bench",
+      "name": "TV bench",
+      "category": "tv",
+      "at": [
+        3.341,
+        -3.409
+      ],
+      "size": [
+        1.806,
+        0.389,
+        0.62
+      ],
+      "rot": 270,
+      "on_floor": true
+    }
+  ],
+  "lights": [
+    {
+      "id": "dining_pendant",
+      "kind": "pendant",
+      "at": [
+        2.125,
+        -1.59
+      ],
+      "h": 1.9
+    },
+    {
+      "id": "living_pendant",
+      "kind": "pendant",
+      "at": [
+        1.792,
+        -4.174
+      ],
+      "h": 1.9
+    },
+    {
+      "id": "floor_lamp",
+      "kind": "floor_lamp",
+      "at": [
+        0.552,
+        -5.006
+      ],
+      "h": 1.35
+    }
+  ],
+  "style": {
+    "tags": [],
+    "colors": []
+  }
+}

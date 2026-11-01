@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "room.schema.json",
+  "title": "Room",
+  "type": "object",
+  "required": ["id", "name", "height", "walls", "furniture"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "source": { "enum": ["prebuilt", "photo", "floorplan", "manual"] },
+    "accuracy_m": { "type": "number", "description": "Rough error of the walls, e.g. 0.01 prebuilt, 0.15 from a photo" },
+    "height": { "type": "number", "description": "Floor to ceiling" },
+    "glb": { "type": ["string", "null"], "description": "URL of the room shell model, or null to draw it from walls" },
+    "walls": {
+      "type": "array",
+      "description": "Inner faces, in order around the room (counter-clockwise from above)",
+      "items": {
+        "type": "object",
+        "required": ["id", "a", "b"],
+        "properties": {
+          "id": { "type": "string" },
+          "a": { "$ref": "#/$defs/pt" },
+          "b": { "$ref": "#/$defs/pt" },
+          "openings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "kind", "from", "width"],
+              "properties": {
+                "id": { "type": "string" },
+                "kind": { "enum": ["door", "window", "glazed_door", "opening"] },
+                "from": { "type": "number", "description": "Distance along the wall from a to the opening's near edge" },
+                "width": { "type": "number" },
+                "sill": { "type": "number", "description": "Windows: sill height" },
+                "head": { "type": "number" },
+                "swing": {
+                  "type": ["object", "null"],
+                  "description": "Doors that swing into this room",
+                  "properties": {
+                    "hinge": { "enum": ["a", "b"], "description": "Which end of the opening (towards wall end a or b)" },
+                    "into": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "description": "Things that never move: radiators, built-in cupboards, columns",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "furniture": {
+      "type": "array",
+      "description": "Movable pieces already in the room",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "lights": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["pendant", "ceiling", "floor_lamp", "table_lamp", "wall"] },
+          "at": { "$ref": "#/$defs/pt" },
+          "h": { "type": "number" }
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "description": "Filled by the room analysis: tags and main colours",
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "colors": { "type": "array", "items": { "type": "string", "description": "#rrggbb" } }
+      }
+    }
+  },
+  "$defs": {
+    "pt": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[x, y]" },
+    "item": {
+      "type": "object",
+      "required": ["id", "name", "category", "at", "size", "rot"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "description": "sofa, armchair, table, chair, desk, bed, rug, shelf, lamp, plant, radiator, cupboard, tv, other" },
+        "at": { "$ref": "#/$defs/pt", "description": "Centre of the footprint" },
+        "size": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3, "description": "[width, depth, height] in the piece's own frame" },
+        "rot": { "type": "number" },
+        "on_floor": { "type": "boolean", "description": "false for things on a table or wall (they don't block paths)" },
+        "piece": { "type": "string", "description": "Optional piece id (piece.schema.json) it was made from" }
+      }
+    }
+  }
+}
