@@ -74,7 +74,8 @@
             "photo",
             "shop_tag",
             "screenshot",
-            "agent"
+            "agent",
+            "link"
           ]
         },
         "image": {

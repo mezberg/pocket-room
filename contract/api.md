@@ -1,6 +1,7 @@
 # Server API
 
-JSON in, JSON out, under `/api`. Images go as data URLs or https URLs. Every route has a stub in
+JSON in, JSON out, under `/api`. Rooms are resolved by `roomId` from one store (`server/rooms-store.mjs`:
+the prebuilt Hoskins rooms and rooms built this session); a `room` in the body wins (unsaved rooms). Images go as data URLs or https URLs. Every route has a stub in
 `server/routes/` that returns the fixtures, so the app can be built before the lanes land.
 
 | Call | Lane | In | Out |
@@ -10,10 +11,11 @@ JSON in, JSON out, under `/api`. Images go as data URLs or https URLs. Every rou
 | `POST /api/rooms/from-plan` | A | `{ image, room?, px_per_m?, height_m? }` | `room` (source `floorplan`) + `_plan_rooms` |
 | `GET /api/rooms` | A | | `{ rooms: [{ id, name, source }] }` |
 | `POST /api/pieces` | B | `{ image, kind: photo\|shop_tag\|screenshot, hint? }` | `piece` (model.status may be `building`) |
+| `POST /api/pieces/from-link` | B (+ G's page reader) | `{ url }` | `piece` (source `link`, size from the page; 422 if the page doesn't state it) |
 | `GET /api/pieces/:id` | B | | `piece` (poll until model.status is `ready` or `failed`) |
-| `POST /api/agent/find` | G | `{ roomId, wall?, query }` | `{ pieces: [piece] }`, each already known to fit |
-| `POST /api/place` | D + E | `{ roomId, piece }` | `placement` |
-| `POST /api/analyse` | D + E | `{ roomId, room? }` | `{ findings: [finding] }` |
+| `POST /api/agent/find` | G | `{ roomId, room?, wall?, query }` | `{ pieces: [piece] }`, each already known to fit |
+| `POST /api/place` | D + E | `{ roomId, room?, piece, replace? }` | `placement` |
+| `POST /api/analyse` | D + E | `{ roomId, room?, piece?, replaces? }` | `{ findings: [finding] }` (piece with `at`/`rot` = the new piece in its spot; `replaces` = the item it takes out) |
 | `POST /api/render` | F | `{ roomId, view: dataURL, photo?, prompt? }` | `{ image: dataURL }` |
 
 ```ts
