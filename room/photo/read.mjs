@@ -13,11 +13,19 @@ const measure = {
     note: { type: "string", description: "What you compared, in a few words" },
   },
 };
+const reading = {
+  type: "object", additionalProperties: false, required: ["photo", "span_fraction", "ref", "multiples", "note"],
+  properties: {
+    photo: { type: "integer", description: "Which photo this reading is from, 1-based" },
+    span_fraction: { ...frac, description: "Share of the room's whole extent that this measured span covers (1 = wall to wall)" },
+    ...measure.properties,
+  },
+};
 const extent = {
   type: "object", additionalProperties: false, required: ["seen_fraction", "measures"],
   properties: {
-    seen_fraction: { ...frac, description: "Share of this extent of the whole room that the measures cover (1 = wall to wall)" },
-    measures: { type: "array", items: measure, description: "3-5 independent readings of the SEEN span, each against a different reference if you can" },
+    seen_fraction: { ...frac, description: "Largest share of this extent of the whole room that any one photo shows (1 = wall to wall)" },
+    measures: { type: "array", items: reading, description: "3-5 independent readings, each against a different reference if you can (with several photos: from each photo that shows this extent). Never empty." },
   },
 };
 
@@ -74,14 +82,29 @@ Do not give metres. Instead measure spans in multiples of the references listed 
 = 1/0.43 banners). Prefer references you can actually see; use people and furniture when nothing else is there.
 Treat the first photo's camera as standing at the "near" wall looking at the "far" wall.
 If the room continues out of frame, measure what you see and say what share of the whole extent that is (seen_fraction).
+Always give readings for width, depth AND height, even rough ones: depth runs along the floor, so read it against
+things standing in a row towards the far wall (tables, chairs, sofas, floor tiles, people), and height against a person,
+a door or a banner even when the ceiling is out of frame (then the span is the part you see).
 List doors, windows and big floor objects with positions as fractions of the room. Keep it to what is visible.`;
+
+// Added when there are several photos: they go round the room from corner to corner.
+export const MULTI = (n) => `
+There are ${n} photos of the same room, taken from its corners and going round it clockwise
+(photo 1 from a corner of the near wall). Combine them into one room in photo 1's frame: width runs along
+the far wall as seen in photo 1, depth from the near wall to the far wall. Corner photos often show two walls
+end to end: measure those wall to wall (span_fraction 1). Give readings from each photo that shows an extent
+and say which photo each came from, so code can compare the photos. List each door, window and object once.`;
 
 /** images: data URLs or https URLs. hint: optional text from the user. Returns the parsed reading. */
 export async function readRoom(images, hint) {
   const { openai, MODELS } = await import("../../server/openai.mjs");   // lazy: tests run without a key
   if (!MODELS.text) throw new Error("OPENAI_MODEL_TEXT is not set");
-  const content = [{ type: "input_text", text: PROMPT + (hint ? `\nThe user adds: ${hint}` : "") }];
-  for (const url of images) content.push({ type: "input_image", image_url: url, detail: "high" });
+  const text = PROMPT + (images.length > 1 ? MULTI(images.length) : "") + (hint ? `\nThe user adds: ${hint}` : "");
+  const content = [{ type: "input_text", text }];
+  images.forEach((url, i) => {
+    if (images.length > 1) content.push({ type: "input_text", text: `Photo ${i + 1}:` });
+    content.push({ type: "input_image", image_url: url, detail: "high" });
+  });
   const res = await openai.responses.create({
     model: MODELS.text,
     reasoning: { effort: process.env.ROOM_PHOTO_EFFORT || "low" },   // a minute budget: low is ~20 s

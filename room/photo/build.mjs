@@ -13,17 +13,51 @@ const metres = (m) => (m && REFS[m.ref] && m.multiples > 0 ? REFS[m.ref] * m.mul
 const LIMITS = { width: [1.5, 40], depth: [1.5, 40], height: [2.1, 10] };
 const FALLBACK = { width: 4, depth: 4, height: 2.4 };
 
-/** One extent: median of the readings of the seen span, scaled up by how much of the room was seen. */
+/**
+ * One extent. Each reading measures a span that covers some share of the whole extent (its own
+ * span_fraction, else the extent's seen_fraction), so it stands for reading / share of the room.
+ * One photo: the median of those, and the error is half their spread plus half the unseen part.
+ * Several photos (each reading says which photo it is from): each photo gives its median, the room takes
+ * the median of the photos, and the error is the spread between photos plus what no photo saw.
+ */
 export function extentFrom(e, key, known) {
   if (known > 0) return { m: known, err: 0.05, from: ["given"] };
-  const vals = (e?.measures || []).map((m) => ({ m, v: metres(m) })).filter((x) => x.v);
+  const share = (r) => clamp(r.span_fraction ?? e.seen_fraction ?? 1, 0.25, 1);
+  const vals = (e?.measures || []).map((r) => ({ r, v: metres(r), s: share(r) })).filter((x) => x.v);
   if (!vals.length) return { m: FALLBACK[key], err: FALLBACK[key] / 2, from: ["default"] };
-  const seen = clamp(e.seen_fraction || 1, 0.25, 1);
-  const vs = vals.map((x) => x.v);
-  const m = clamp(median(vs) / seen, ...LIMITS[key]);
-  // rough error: half the spread of the readings, plus half of the part of the room nobody saw
-  const err = Math.max(0.15, (Math.max(...vs) - Math.min(...vs)) / 2 / seen + (m * (1 - seen)) / 2);
-  return { m, err, from: vals.map(({ m: r, v }) => `${r.multiples} x ${r.ref} = ${r3(v)} m (${r.note})`), seen_fraction: seen };
+  const from = vals.map(({ r, v, s }) => `${r.photo ? `photo ${r.photo}: ` : ""}${r.multiples} x ${r.ref} = ${r3(v)} m${s < 1 ? ` of ${Math.round(s * 100)}%` : ""} (${r.note})`);
+  const seen = Math.max(...vals.map((x) => x.s));
+  const byPhoto = new Map();
+  for (const x of vals) { const k = x.r.photo || 1; byPhoto.set(k, [...(byPhoto.get(k) || []), x]); }
+  if (byPhoto.size > 1) {
+    const per = [...byPhoto.values()].map((xs) => median(xs.map((x) => x.v / x.s)));
+    const m = clamp(median(per), ...LIMITS[key]);
+    const spread = (Math.max(...per) - Math.min(...per)) / 2 / Math.sqrt(per.length - 1);
+    const err = Math.max(0.1, spread + (m * (1 - seen)) / 2);
+    return { m, err, from, seen_fraction: seen, photos: per.map(r3) };
+  }
+  const full = vals.map((x) => x.v / x.s);
+  const m = clamp(median(full), ...LIMITS[key]);
+  const err = Math.max(0.15, (Math.max(...full) - Math.min(...full)) / 2 + (m * (1 - seen)) / 2);
+  return { m, err, from, seen_fraction: seen };
+}
+
+/**
+ * Width and depth together. A wall measured by hand wins. When only one is measured, the photo's
+ * proportions carry over: the other is scaled by the same factor (the shape is read better than the size).
+ */
+export function planExtents(reading, known = {}) {
+  let W = extentFrom(reading.width, "width", known.width_m);
+  let L = extentFrom(reading.depth, "depth", known.depth_m);
+  const scaleBy = (E, k, key) => ({ ...E, m: clamp(E.m * k, ...LIMITS[key]), err: Math.max(0.1, (E.err * k) / 2), from: [...E.from, `scaled x${r3(k)} by the measured wall`] });
+  if (known.width_m > 0 && !(known.depth_m > 0)) {
+    const raw = extentFrom(reading.width, "width");
+    if (raw.from[0] !== "default") L = scaleBy(L, known.width_m / raw.m, "depth");
+  } else if (known.depth_m > 0 && !(known.width_m > 0)) {
+    const raw = extentFrom(reading.depth, "depth");
+    if (raw.from[0] !== "default") W = scaleBy(W, known.depth_m / raw.m, "width");
+  }
+  return { W, L };
 }
 
 const FACING = { camera: 0, right: 90, away: 180, left: 270 };
@@ -32,8 +66,7 @@ const FACING = { camera: 0, right: 90, away: 180, left: 270 };
  * reading: from read.mjs. opts: { id, name, known: { width_m, depth_m, height_m } } (measured by hand, optional).
  */
 export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)}`, name, known = {} } = {}) {
-  const W = extentFrom(reading.width, "width", known.width_m);
-  const L = extentFrom(reading.depth, "depth", known.depth_m);
+  const { W, L } = planExtents(reading, known);
   const Hh = extentFrom(reading.height, "height", known.height_m);
   const w = W.m, l = L.m, h = Hh.m;
 
@@ -93,4 +126,46 @@ export function roomFromReading(reading, { id = `photo-${Date.now().toString(36)
     style: { tags: reading.style?.tags || [], colors: (reading.style?.colors || []).filter((c) => /^#[0-9a-f]{6}$/i.test(c)) },
     _derived: { width: { ...W, m: r3(w), err: r3(W.err) }, depth: { ...L, m: r3(l), err: r3(L.err) }, height: { ...Hh, m: r3(h), err: r3(Hh.err) }, caveats: reading.caveats || [] },
   };
+}
+
+/**
+ * A room with its size fixed by hand: { width_m?, depth_m?, height_m? } (the plan's x and y extents).
+ * Walls stretch, door and window centres move with them (their widths stay), furniture centres move,
+ * its sizes stay. Any outline, not only boxes. Both walls given -> accuracy 0.05.
+ */
+export function resizeRoom(room, { width_m, depth_m, height_m } = {}) {
+  const out = structuredClone(room);
+  const xs = room.walls.flatMap((w) => [w.a[0], w.b[0]]), ys = room.walls.flatMap((w) => [w.a[1], w.b[1]]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), W = Math.max(...xs) - x0, D = Math.max(...ys) - y0;
+  const kx = width_m > 0 ? width_m / W : 1, ky = depth_m > 0 ? depth_m / D : 1;
+  const P = ([x, y]) => [r3(x0 + (x - x0) * kx), r3(y0 + (y - y0) * ky)];
+  const H = height_m > 0 ? height_m : room.height ?? 2.4;
+  out.walls = room.walls.map((w) => {
+    const a = P(w.a), b = P(w.b);
+    const len0 = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const openings = (w.openings || []).map((o) => {
+      const width = Math.min(o.width, len);
+      const mid = len0 > 0 ? ((o.from + o.width / 2) / len0) * len : len / 2;
+      const op = { ...o, width: r3(width), from: r3(clamp(mid - width / 2, 0, len - width)) };
+      if (o.head != null) op.head = r3(Math.min(o.head, H));
+      return op;
+    });
+    return { ...w, a, b, openings };
+  });
+  const move = (i) => {
+    const rot = ((i.rot ?? 0) % 180 + 180) % 180;
+    const [fx, fy] = rot === 90 ? [i.size[1], i.size[0]] : [i.size[0], i.size[1]];
+    const [x, y] = P(i.at);
+    const nx = x0 + W * kx, ny = y0 + D * ky;
+    const size = i.category === "column" && room.height && i.size[2] >= room.height - 0.01 ? [i.size[0], i.size[1], r3(H)] : i.size;
+    return { ...i, size, at: [r3(clamp(x, x0 + fx / 2, Math.max(x0 + fx / 2, nx - fx / 2))), r3(clamp(y, y0 + fy / 2, Math.max(y0 + fy / 2, ny - fy / 2)))] };
+  };
+  out.furniture = (room.furniture || []).map(move);
+  out.fixtures = (room.fixtures || []).map(move);
+  out.height = r3(H);
+  const both = width_m > 0 && depth_m > 0;
+  if (both) out.accuracy_m = 0.05;
+  else if (width_m > 0 || depth_m > 0) out.accuracy_m = r3(Math.max(0.1, (room.accuracy_m ?? 0.15) / 2));
+  out._derived = { ...(room._derived || {}), resized: { width_m: width_m ?? null, depth_m: depth_m ?? null, height_m: height_m ?? null, from: [r3(W), r3(D)] } };
+  return out;
 }

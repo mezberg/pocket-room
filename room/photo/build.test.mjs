@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { roomFromReading, extentFrom } from "./build.mjs";
+import { roomFromReading, extentFrom, planExtents, resizeRoom } from "./build.mjs";
 import { checkRoom } from "../schema-check.mjs";
 
 // A real gpt-6.1-terra reading of room/venue/venue-chesterfields-2026-11-01.jpg
@@ -68,4 +68,47 @@ test("the venue reading builds a usable room", () => {
   assert.ok(room.walls.some((x) => x.openings.length));
   assert.ok(room.furniture.some((f) => f.category === "sofa" || f.category === "armchair"));
   for (const f of room.furniture) assert.ok(f.at[0] >= 0 && f.at[0] <= W && f.at[1] >= 0 && f.at[1] <= L, f.id);
+});
+
+const p = (photo, ref, multiples, span_fraction = 1) => ({ photo, span_fraction, ref, multiples, note: "" });
+
+test("several photos: each photo gives its own value, the room takes their median", () => {
+  const e = { seen_fraction: 1, measures: [
+    p(1, "door_width", 5), p(1, "chair_width", 9),   // 4.10, 4.05 -> 4.075
+    p(2, "floor_tile", 7),                           // 4.2
+    p(3, "door_width", 2.5, 0.5),                    // 2.05 of half the wall -> 4.1
+  ] };
+  const x = extentFrom(e, "width");
+  assert.deepEqual(x.photos, [4.075, 4.2, 4.1]);
+  assert.equal(x.m, 4.1);
+  assert.ok(x.err >= 0.1 && x.err < 0.15, `err ${x.err}`);   // photos agree within ~6 cm
+  // a photo that disagrees widens the error
+  const off = extentFrom({ seen_fraction: 1, measures: [...e.measures, p(4, "door_width", 7)] }, "width");
+  assert.ok(off.err > x.err);
+});
+
+test("one measured wall scales the other by the photo's proportions", () => {
+  const r = reading({ depth: { seen_fraction: 1, measures: [m("door_width", 6)] } });   // 4.1 x 4.92 read
+  const { W, L } = planExtents(r, { width_m: 3.28 });                                    // the real width is 80%
+  assert.equal(W.m, 3.28);
+  assert.ok(Math.abs(L.m - 4.92 * 0.8) < 1e-9);
+  const both = planExtents(r, { width_m: 3, depth_m: 4 });
+  assert.deepEqual([both.W.m, both.L.m], [3, 4]);
+});
+
+test("resizeRoom stretches walls, keeps opening widths and keeps furniture inside", () => {
+  const room = roomFromReading(reading(), { id: "t" });
+  const out = resizeRoom(room, { width_m: 5, depth_m: 6 });
+  assert.deepEqual(checkRoom(out), []);
+  assert.equal(out.accuracy_m, 0.05);
+  const n = out.walls.find((w) => w.id === "north");
+  assert.deepEqual(n.a, [5, 6]);
+  const d0 = room.walls.find((w) => w.id === "north").openings[0], d1 = n.openings[0];
+  assert.equal(d1.width, d0.width);
+  assert.ok(Math.abs((d1.from + d1.width / 2) / 5 - (d0.from + d0.width / 2) / 4.1) < 0.002);   // same share along
+  for (const f of out.furniture) assert.ok(f.at[0] > 0 && f.at[0] < 5 && f.at[1] > 0 && f.at[1] < 6);
+  const one = resizeRoom(room, { width_m: 5 });
+  assert.equal(one.walls.find((w) => w.id === "north").a[1], room.walls.find((w) => w.id === "north").a[1]);
+  assert.ok(one.accuracy_m < room.accuracy_m);
+  assert.equal(resizeRoom(room, { height_m: 3 }).fixtures[0].size[2], 3);   // columns stay floor to ceiling
 });
