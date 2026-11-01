@@ -79,8 +79,9 @@ used.forEach((f, i) => {
 });
 
 // ---- the Photo view render full size, and the end card (rendered by Chrome, same size as the video)
-const PHOTO_S = 4.5, END_S = 4;
-const browser = await chromium.launch({ channel: "chrome", headless: true });
+const PHOTO_S = 4.5, END_S = process.env.END === "0" ? 0 : 4;   // END=0: no end card (assemble.mjs adds one)
+const CAPS = +(process.env.CAPS ?? 1);                             // caption size, ×
+const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--disable-gpu"] });   // GPU raster splits tall boxes in screenshots
 const pg = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const font = `-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif`;
 const k = phone ? 2 : 1;   // phone video is 2× pixels
@@ -109,7 +110,7 @@ await shot(`<div style="width:100%;height:100%;background:#F1ECE4;color:#1d1a16;
 // caption bars (white on dark, bottom), with a "sped up" badge above them during live waits
 // (phone: at the top, under the header, so the sheet's text stays readable)
 const capHtml = (cap, badge, bottom, top = null) => {
-  const fs = (phone ? 15 : 22) * k, pad = (phone ? 12 : 16) * k;
+  const fs = (phone ? 15 : 22) * k * CAPS, pad = (phone ? 12 : 16) * k * CAPS;
   return `<div style="position:absolute;left:0;right:0;${top != null ? `top:${top}px` : `bottom:${bottom}px`};display:flex;flex-direction:column;align-items:center;gap:${8 * k}px;padding:0 ${16 * k}px">
     ${badge ? `<div style="background:#c8872a;color:#fff;font-size:${fs * 0.72}px;font-weight:600;padding:${4 * k}px ${12 * k}px;border-radius:${20 * k}px">⏩ ${badge}</div>` : ""}
     ${cap ? `<div style="background:rgba(20,18,15,.86);color:#fff;font-size:${fs}px;line-height:1.3;padding:${pad * 0.6}px ${pad}px;border-radius:${10 * k}px;max-width:${phone ? 90 : 70}%;text-align:center">${cap}</div>` : ""}
@@ -129,7 +130,8 @@ if (hasPhoto) {
   list.push(`file '${join(work, "photo.jpg")}'\nduration ${PHOTO_S}`);
 }
 await browser.close();
-list.push(`file '${join(work, "end.jpg")}'\nduration ${END_S}`, `file '${join(work, "end.jpg")}'\nduration 0.04`);
+if (END_S) list.push(`file '${join(work, "end.jpg")}'\nduration ${END_S}`, `file '${join(work, "end.jpg")}'\nduration 0.04`);
+else list.push(list.at(-1).replace(/duration [\d.]+$/, "duration 0.04"));   // the concat demuxer drops the last entry's duration
 writeFileSync(join(work, "list.txt"), "ffconcat version 1.0\n" + list.join("\n") + "\n");
 const total = mainLen + (hasPhoto ? PHOTO_S : 0) + END_S;
 
@@ -152,10 +154,10 @@ if (stillsPrefix) {
   const before = (prefix, d = 0.25) => { const e = capEvents.find((c) => c.text.startsWith(prefix)); return e ? e.t - d : null; };
   const picks = [
     ["room", before("Check my room")],
-    ["findings", before("Add piece")],
-    ["chesterfield", before("Find for me")],
+    ["findings", before("Find for me")],
     ["find", before("Tap one")],
-    ["placed", before("Photo view")],
+    ["chesterfield", before("Tap an issue")],
+    ["fix", before("Apply", 0.3)],
   ];
   for (const [name, t] of picks) if (t) copyFileSync(join(rec, "frames", at(t).name), `${stillsPrefix}-${name}.jpg`);
   if (hasPhoto) copyFileSync(join(work, "photo.jpg"), `${stillsPrefix}-photo-view.jpg`);

@@ -3,8 +3,9 @@
 // live waits. compose.mjs turns that into the video (waits sped up and labelled as such).
 //
 //   PORT=8850 node --env-file=.env server/index.mjs          # in another shell
-//   node scripts/demo/record.mjs desktop  <outDir>          # or: phone
-//   node scripts/demo/compose.mjs <outDir> docs/demo/pocket-room-demo-desktop.mp4
+//   node scripts/demo/record.mjs desktop <outDir>           # the main flow
+//   node scripts/demo/record.mjs phone <outDir>             # the closing scene: in IKEA, phone camera
+//   then compose.mjs / assemble.mjs (scripts/demo/README.md)
 import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -14,6 +15,7 @@ const out = resolve(process.argv[3] ?? `/tmp/pocket-room-demo-${mode}`);
 const base = process.env.DEMO_URL ?? "http://localhost:8850";
 const phone = mode === "phone";
 const sofaPhoto = resolve("furniture/test-images/chesterfield-2-seat-2026-11-01.jpg");
+const shopPhoto = resolve("scripts/demo/ikea-side-table.jpg");   // the IKEA aisle photo, framed on the side table
 mkdirSync(join(out, "frames"), { recursive: true });
 
 const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--enable-gpu", "--use-angle=metal", "--hide-scrollbars"] });
@@ -51,15 +53,6 @@ cdp.on("Page.screencastFrame", async ({ data, metadata, sessionId }) => {
 const vp = page.viewportSize();
 const W = vp.width * (phone ? 2 : 1), H = vp.height * (phone ? 2 : 1);
 
-// The photo route asks for a fresh image-to-3D build (mode is part of POST /api/pieces): otherwise this
-// exact photo matches the library model gpt-6-astra built from it earlier and nothing builds on camera.
-await page.route("**/api/pieces", async (route) => {
-  const req = route.request();
-  if (req.method() !== "POST") return route.continue();
-  const body = JSON.parse(req.postData() || "{}");
-  await route.continue({ postData: JSON.stringify({ ...body, mode: "image_to_3d" }) });
-});
-
 // ---- the flow
 const folded = () => page.evaluate(() => document.getElementById("sheet").classList.contains("folded"));
 async function tab(name) {   // phone: tapping the current tab folds the sheet, so tap again if it folded
@@ -83,6 +76,33 @@ async function tapMarker() {
   if (await m.count()) await m.click({ force: true });
   else await page.locator("#findings li").first().click();
 }
+const verdictIn = () => page.waitForFunction(() => !document.querySelector('[data-screen="verdict"]').hidden && document.getElementById("verdict-chip").textContent.trim(), null, { timeout: 180_000 });
+const findingIndex = (ids) => page.evaluate((ids) => window.pocketRoom.state.findings.findIndex((f) => !f.pass && ids.includes(f.id) && /\bMove\b/.test(f.say)), ids);
+// tap finding i, wait for its fixes (the Decisions pick comes selected), Apply, wait for the room to be checked again
+async function applyFix(i, { look = 0 } = {}) {
+  await page.locator("#findings li").nth(i).click();
+  await page.waitForSelector('.fix [data-act="apply"]:not([disabled]), .fix .fix-none', { timeout: 60_000 });
+  if (!(await page.locator('.fix [data-act="apply"]:not([disabled])').count())) { await page.click(".fix .fix-none ~ .row button"); return false; }
+  await hold(look);
+  await page.click('.fix [data-act="apply"]');
+  await page.waitForFunction(() => window.pocketRoom.state.findings.length > 0 && document.getElementById("findings-busy").hidden, null, { timeout: 120_000 });
+  return true;
+}
+// Off camera: check the room and apply the fixes that make the starting room make sense (the overlapping
+// chair, the blocked way to the sofa), with the app's own Check → Fix → Apply. The room stays as fixed.
+async function tidyRoom() {
+  await tab("room");
+  await page.click("#btn-check");
+  await findingsIn();
+  for (const id of ["path_blocked", "overlap"]) {   // the blocked way first: its fix moves the dining set too
+    const i = await page.evaluate((id) => window.pocketRoom.state.findings.findIndex((f) => !f.pass && f.id === id), id);
+    if (i >= 0) console.log(`tidy ${id}:`, (await applyFix(i)) ? "applied" : "no fix");
+  }
+  await page.waitForSelector("#toast", { state: "hidden", timeout: 15_000 }).catch(() => {});
+  // start the film from a room with no pins up and nothing marked "Fixed" (the fixed room itself stays)
+  await page.evaluate(() => { window.pocketRoom.state.fixed = null; window.pocketRoom.setFindings([]); window.pocketRoom.viewer.home(); });
+  await tab("room");
+}
 async function foldSheetIfPhone() {   // phone: a tap on the current tab folds the sheet so the room shows
   if (!phone || (await folded())) return;
   const cur = page.locator("nav.tabs button[aria-current=page]");
@@ -95,84 +115,13 @@ try {
   await page.evaluate(() => { try { localStorage.clear(); } catch {} });
   await page.goto(`${base}/?room=hoskins-living`);
   await page.waitForSelector(".view.ready", { timeout: 60_000 });
-  await page.waitForTimeout(2500);   // first frames, textures
+  await page.waitForTimeout(2000);   // first frames, textures
+  await tidyRoom();
+  await page.waitForTimeout(1500);
   await cdp.send("Page.startScreencast", { format: "jpeg", quality: 88, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
   await hold(300);
-
-  // 1. the room
   mark("start");
-  caption("Kate's living room, in 3D, from the estate agent's plan");
-  await foldSheetIfPhone();
-  await hold(800);
-  await drag(phone ? 120 : 260, 2600);
-  await hold(1200);
-
-  // 2. check the room
-  caption("Check my room: code rules + OpenAI Decisions API");
-  await hold(600);
-  if (phone) await tab("room");
-  await page.click("#btn-check");
-  await live("Decisions API", findingsIn);
-  await hold(1200);
-  caption("Each finding is a pin in the room. Tap one to read it");
-  await foldSheetIfPhone();
-  await tapMarker();
-  await hold(phone ? 4500 : 3500);
-  await page.click("#btn-home").catch(() => {});
-  await hold(800);
-
-  // 3. add a piece from a photo
-  caption("Add piece: a photo of a sofa seen in a shop");
-  await tab("add");
-  await hold(1000);
-  await page.setInputFiles("#in-upload", sofaPhoto);
-  caption("OpenAI vision reads the photo: the piece, its size and style");
-  await live("vision", () => page.waitForFunction(() => !document.querySelector('[data-screen="verdict"]').hidden && document.getElementById("verdict-chip").textContent.trim(), null, { timeout: 180_000 }));
-  caption("Placed to scale on the best wall, replacing the old sofa");
-  await hold(2500);
-  caption("Verdict computed in code; the Decisions API grades the room with it in");
-  await live("Decisions API", findingsIn);
-  await hold(3000);
-  if (!(await page.locator("#verdict-building").isHidden())) {
-    caption("gpt-6-astra builds the real 3D model from the photo");
-    await live("image → 3D", () => page.waitForFunction(() => document.getElementById("verdict-building").hidden, null, { timeout: 240_000 }));
-  }
-  caption("The real 3D model, in the room");
-  await page.click("#btn-home").catch(() => {});
-  await foldSheetIfPhone();
-  await hold(800);
-  await drag(phone ? -80 : -180, 2200);
-  await hold(1500);
-
-  // 4. find for me
-  caption("Find for me: an agent searches UK shops for one that fits");
-  await tab("find");
-  await hold(900);
-  await page.click('#find-chips [data-q="a sofa for this wall"]');
-  await live("agent search", () => page.waitForSelector("#find-results:not([hidden]) #find-cards li", { timeout: 240_000 }));
-  caption("Three real products, sizes read from each shop's own page");
-  await hold(1500);
-  if (phone) { await page.locator("#find-cards li").nth(1).scrollIntoViewIfNeeded(); await hold(1500); await page.locator("#find-cards li").first().scrollIntoViewIfNeeded(); }
-  await hold(2500);
-  caption("Tap one: it's placed in the room with its verdict");
-  await page.locator("#find-cards li").first().click();
-  await page.waitForFunction(() => !document.querySelector('[data-screen="verdict"]').hidden && document.getElementById("verdict-chip").textContent.trim(), null, { timeout: 60_000 });
-  await live("Decisions API", findingsIn);
-  await hold(3500);
-
-  // 5. photo view
-  caption("Photo view: gpt-image renders this exact view, photoreal");
-  await page.click("#btn-home").catch(() => {});
-  await tab("room");
-  await hold(800);
-  await page.click("#btn-photo");
-  await live("gpt-image", () => page.waitForFunction(() => { const i = document.getElementById("still"); return !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 120_000 }));
-  await page.evaluate(() => document.getElementById("still").scrollIntoView({ block: "center" }));
-  await hold(3000);
-  const src = await page.evaluate(() => document.getElementById("still").src);   // the render itself, shown full size in the cut
-  const buf = src.startsWith("data:") ? Buffer.from(src.split(",")[1], "base64") : Buffer.from(await (await page.request.get(src)).body());
-  writeFileSync(join(out, "photo-view.img"), buf);
-  mark("photo-view", { box: await page.locator("#still").boundingBox() });
+  if (phone) await phoneScene(); else await desktopFlow();
   mark("end");
 } catch (err) {
   mark("error", { text: String(err).slice(0, 300) });
@@ -185,4 +134,119 @@ try {
   writeFileSync(join(out, "timeline.json"), JSON.stringify(timeline, null, 1));
   console.log(`${frames.length} frames, ${errors.length} console errors${errors.length ? ":\n  " + errors.join("\n  ") : ""}`);
   await browser.close();
+}
+
+async function desktopFlow() {
+  // 1. the room
+  caption("Kate's living room in 3D, built from the estate agent's plan");
+  await hold(800);
+  await drag(260, 2600);
+  await hold(1000);
+
+  // 2. check the room
+  caption("Check my room: rules in code + OpenAI's Decisions API");
+  await hold(500);
+  await page.click("#btn-check");
+  await live("Decisions API", findingsIn);
+  await hold(1000);
+  caption("Each issue is a pin in the room. Tap one to read it");
+  await tapMarker();
+  await hold(3200);
+  await page.click("#btn-home").catch(() => {});
+  await hold(700);
+
+  // 3. find for me: a floor lamp (the check said the north-west corner is dark; no armchair fits this room)
+  caption("Find for me: an agent searches UK shops for a floor lamp that fits");
+  await tab("find");
+  await hold(700);
+  await page.click("#find-q");
+  await page.keyboard.type("a floor lamp", { delay: 70 });
+  await hold(400);
+  await page.keyboard.press("Enter");
+  await live("agent search", () => page.waitForSelector("#find-results:not([hidden]) #find-cards li", { timeout: 240_000 }));
+  caption("Three real products, sizes read from each shop's own page");
+  await hold(3500);
+  caption("Tap one: it's placed in the room with its verdict");
+  await page.locator("#find-cards li").first().click();
+  await verdictIn();
+  await live("Decisions API", findingsIn);
+  await hold(3000);
+
+  // 4. add a piece from a photo: the Chesterfield
+  caption("Add piece: a photo of a sofa seen in a shop");
+  await page.click("#btn-home").catch(() => {});
+  await tab("add");
+  await hold(1000);
+  await page.setInputFiles("#in-upload", sofaPhoto);
+  caption("OpenAI vision reads the photo: the piece, its size, its style");
+  await live("vision", verdictIn);
+  const how = await page.evaluate(() => window.pocketRoom.state.piece?.model?.how);
+  console.log("model:", how);
+  caption(how === "db_match" ? "gpt-6-astra's 3D model of this sofa, placed to scale, replacing the old one" : "Placed to scale on the best wall, replacing the old sofa");
+  await hold(2500);
+  caption("Verdict computed in code; the Decisions API checks the room with it in");
+  await live("Decisions API", findingsIn);
+  await hold(2500);
+  if (!(await page.locator("#verdict-building").isHidden())) {
+    caption("gpt-6-astra builds the 3D model from the photo");
+    await live("image → 3D", () => page.waitForFunction(() => document.getElementById("verdict-building").hidden, null, { timeout: 240_000 }));
+  }
+
+  // 5. tap an issue → the Decisions API picks a fix → Apply: the furniture moves
+  let i = await findingIndex(["walkway_tight", "overlap", "path_blocked"]);
+  if (i < 0) i = await findingIndex(["walkway_tight", "overlap", "path_blocked", "flow", "lamps_per_zone"]);
+  if (i >= 0) {
+    caption("Tap an issue: fixes are measured in code, the Decisions API picks one");
+    await page.locator("#findings li").nth(i).click();
+    await live("fixes", () => page.waitForSelector('.fix [data-act="apply"]:not([disabled])', { timeout: 60_000 }));
+    await hold(3500);
+    caption("Apply: the furniture moves and the room is checked again");
+    await page.click('.fix [data-act="apply"]');
+    await live("Decisions API", () => page.waitForFunction(() => window.pocketRoom.state.findings.length > 0 && document.getElementById("findings-busy").hidden, null, { timeout: 120_000 }));
+    await hold(3000);
+  } else console.log("no fixable finding with the piece in");
+
+  // 6. photo view from eye height
+  await page.waitForSelector("#toast", { state: "hidden", timeout: 9_000 }).catch(() => {});
+  caption("Photo view: step into the room at eye height");
+  await tab("room");
+  await page.click("#btn-names");   // names off for the photo
+  // pins off too (the render leaves them out anyway), then the viewer's own fly-to: there's no eye-height
+  // button in the app, so the script moves the camera
+  await page.evaluate(() => {
+    const { viewer } = window.pocketRoom, V = viewer.camera.position.constructor, w = ([x, y, h]) => new V(x, h, -y);
+    window.pocketRoom.setFindings([]);
+    viewer.flyTo(w([3.3, -5.0, 1.65]), w([0.8, -1.4, 0.8]), 2.4);   // standing by the TV, looking north-west at the sofa
+  });
+  await hold(3200);
+  caption("gpt-image renders this exact view, photoreal");
+  await page.click("#btn-photo");
+  await live("gpt-image", () => page.waitForFunction(() => { const i = document.getElementById("still"); return !i.hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 120_000 }));
+  await page.evaluate(() => document.getElementById("still").scrollIntoView({ block: "center" }));
+  await hold(2500);
+  const src = await page.evaluate(() => document.getElementById("still").src);   // the render itself, shown full size in the cut
+  const buf = src.startsWith("data:") ? Buffer.from(src.split(",")[1], "base64") : Buffer.from(await (await page.request.get(src)).body());
+  writeFileSync(join(out, "photo-view.img"), buf);
+}
+
+// the closing scene, on a phone: in IKEA, Camera → the side table → in your room
+async function phoneScene() {
+  caption("In IKEA? Your room is in your pocket");
+  await foldSheetIfPhone();
+  await hold(1200);
+  await drag(90, 1600);
+  await hold(600);
+  caption("Add piece → Camera: snap the side table");
+  await tab("add");
+  await hold(1400);
+  await page.setInputFiles("#in-camera", shopPhoto);
+  caption("Read by OpenAI vision, placed in your room to scale");
+  await live("vision", verdictIn);
+  const v = (await page.locator("#verdict-chip").textContent()).trim();
+  caption(v === "Doesn't fit" ? "Doesn't fit: you know before you buy" : `${v}: you know before you buy`);
+  await hold(2500);
+  await live("Decisions API", findingsIn);
+  await hold(1000);
+  await foldSheetIfPhone();
+  await hold(3000);
 }
