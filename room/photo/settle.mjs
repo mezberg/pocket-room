@@ -70,8 +70,9 @@ const FITTED = new Set(["cupboard", "shelf"]);
 // Cut a fitted run along its length from one end, keeping the other end where it was, until nothing is wrong.
 function trim(room, O, it, w, l) {
   if (!FITTED.has(it.category) || groupOf(room, it).length > 1) return null;
+  // against a wall, or long enough to be a run (a kitchen read a little off its wall is still a run)
   const b = bbox(it);
-  if (!(b[0] <= WALL || b[1] <= WALL || b[2] >= w - WALL || b[3] >= l - WALL)) return null;
+  if (!(b[0] <= WALL || b[1] <= WALL || b[2] >= w - WALL || b[3] >= l - WALL) && it.size[0] < 1.2) return null;
   const t = ((it.rot ?? 0) * Math.PI) / 180, ux = [Math.cos(t), Math.sin(t)];
   // cut a from one end and b from the other, the least in total first
   const cuts = [];
