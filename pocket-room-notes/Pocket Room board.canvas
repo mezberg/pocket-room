@@ -530,7 +530,7 @@
 			"width": 400,
 			"height": 196,
 			"text": "**A · Room** (part 1)\nHoskins → GLB + room.json · live box room from a photo · fire-plan shortcut\n**Build the hackathon room:** on arrival measure + photograph the venue → room.json + GLB; then try the live photo build against it",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_B",
@@ -560,7 +560,7 @@
 			"width": 400,
 			"height": 118,
 			"text": "**D · Rules in code** (parts 4 + 5a)\nPlacement candidates + legal spots · model check: overlaps, doors, paths (A*), walkways",
-			"color": "3"
+			"color": "2"
 		},
 		{
 			"id": "dev_E",
@@ -679,7 +679,7 @@
 			"x": 0,
 			"y": 3396,
 			"width": 1820,
-			"height": 1924
+			"height": 2340
 		},
 		{
 			"id": "prog_head",
@@ -689,7 +689,7 @@
 			"width": 1400,
 			"height": 110,
 			"color": "5",
-			"text": "## Progress · 1 Nov, 13:20\n🟧 done on its branch, not yet tested · 🟨 still working · 🟩 tested and works (after the test pass). Nothing merged into main yet."
+			"text": "## Progress · 1 Nov, 13:40 · all 7 lanes done, test pass running\n🟧 done on its branch, not yet tested · 🟨 still working · 🟩 tested and works (after the test pass). Nothing merged into main yet."
 		},
 		{
 			"id": "prog_B",
@@ -810,19 +810,19 @@
 			"x": 40,
 			"y": 5062,
 			"width": 400,
-			"height": 92,
-			"color": "3",
-			"text": "**A · Room** 🟨 still working\n(pushed: fire-plan shortcut so far)"
+			"height": 326,
+			"color": "2",
+			"text": "**A · Room: your flat exact, venue room from one photo** 🟧\nAll 5 rooms of the flat exported from the 26 Sep build (±4 cm); replaces the fixture.\nVenue from one photo: a 9–11 × 6 × 4.1 m box with windows, Chesterfields and a column in 14–17 s, but ±3 m because one photo shows one wall: take 3–4 corner photos or measure two walls.\nFire-plan shortcut works. 24 tests pass.\nBranch `lane-a-room`"
 		},
 		{
 			"id": "prog_D",
 			"type": "text",
 			"x": 40,
-			"y": 5194,
+			"y": 5428,
 			"width": 400,
-			"height": 66,
-			"color": "3",
-			"text": "**D · Rules** 🟨 still working"
+			"height": 248,
+			"color": "2",
+			"text": "**D · Rules: placement and model check in code** 🟧\nFree-floor grid (4 cm), walkways, legal spots best first, model findings with markers. place ≈ 0.1 s, analyse ≈ 1 s.\n8 tests: tiny, typical, crowded rooms + the fixture sofa.\nBranch `lane-d-rules`"
 		}
 	],
 	"edges": [
