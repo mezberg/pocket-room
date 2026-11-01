@@ -165,3 +165,10 @@ test("POST /api/advice", async () => {
   assert.equal((await post("/advice", { roomId: "nope", findings: [] })).status, 404);
   assert.equal((await post("/advice", { roomId: "hoskins-living", findings: [] })).status, 200);
 });
+
+test("a lone plan's reason is a fact in its favour, never a warning", async () => {
+  const { WARNING } = await import("./pick.mjs");
+  assert.ok(WARNING.test("close to the door (4 cm)") && WARNING.test("a tight walkway (67 cm)") && !WARNING.test("faces the TV from 2.4 m"));
+  const out = await plan(fixtureRoom(), fixtureSofa(), {});
+  if (out.plans.length === 1) assert.ok(!WARNING.test(out.plans[0].reason), out.plans[0].reason);
+});

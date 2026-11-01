@@ -1,0 +1,261 @@
+Pocket Room on http://localhost:8840
+[api] 2026-11-01T15:55:47.778Z GET /api/rooms/hoskins-living 200 24 ms
+[model] 2026-11-01T15:55:53.003Z decisions gpt-6-luna 1476 ms tokens=1678
+[api] 2026-11-01T15:55:53.005Z POST /api/analyse 200 1588 ms
+[model] 2026-11-01T15:55:53.598Z decisions gpt-6-luna 569 ms tokens=650
+[api] 2026-11-01T15:55:53.599Z POST /api/advice 200 571 ms
+[model] 2026-11-01T15:55:55.573Z decisions gpt-6-luna 456 ms tokens=375
+[api] 2026-11-01T15:55:55.575Z POST /api/fixes 200 1969 ms
+[api] 2026-11-01T15:55:56.400Z POST /api/fixes 200 823 ms
+[model] 2026-11-01T15:56:01.097Z responses gpt-6.1-terra 4692 ms tokens=2060
+[api] 2026-11-01T15:56:01.110Z POST /api/pieces 200 4707 ms
+[api] 2026-11-01T15:56:01.820Z POST /api/plan 200 709 ms
+[api] 2026-11-01T15:56:03.343Z GET /api/pieces/8b6006dc 200 2 ms
+[api] 2026-11-01T15:56:04.845Z GET /api/pieces/8b6006dc 304 0 ms
+[api] 2026-11-01T15:56:06.349Z GET /api/pieces/8b6006dc 304 1 ms
+[api] 2026-11-01T15:56:07.859Z GET /api/pieces/8b6006dc 304 0 ms
+[model] 2026-11-01T15:56:07.943Z decisions gpt-6-luna 1324 ms tokens=1938
+[api] 2026-11-01T15:56:07.944Z POST /api/analyse 200 1422 ms
+[model] 2026-11-01T15:56:08.406Z decisions gpt-6-luna 459 ms tokens=689
+[api] 2026-11-01T15:56:08.407Z POST /api/advice 200 460 ms
+[api] 2026-11-01T15:56:09.753Z GET /api/pieces/8b6006dc 304 0 ms
+[model] 2026-11-01T15:56:10.287Z decisions gpt-6-luna 535 ms tokens=378
+[api] 2026-11-01T15:56:10.288Z POST /api/fixes 200 1878 ms
+[api] 2026-11-01T15:56:10.905Z POST /api/fixes 200 615 ms
+[api] 2026-11-01T15:56:11.947Z POST /api/fixes 200 1033 ms
+[api] 2026-11-01T15:56:11.948Z GET /api/pieces/8b6006dc 304 1 ms
+[api] 2026-11-01T15:56:12.663Z POST /api/fixes 200 715 ms
+[api] 2026-11-01T15:56:13.361Z POST /api/fixes 200 697 ms
+[api] 2026-11-01T15:56:13.613Z GET /api/pieces/8b6006dc 304 2 ms
+[model] 2026-11-01T15:56:14.329Z decisions gpt-6-luna 723 ms tokens=411
+[api] 2026-11-01T15:56:18.106Z GET /api/rooms/hoskins-living 200 2 ms
+[model] 2026-11-01T15:56:20.519Z decisions gpt-6-luna 627 ms tokens=1678
+[api] 2026-11-01T15:56:20.519Z POST /api/analyse 200 687 ms
+[model] 2026-11-01T15:56:22.335Z decisions gpt-6-luna 478 ms tokens=650
+[api] 2026-11-01T15:56:22.336Z POST /api/advice 200 479 ms
+[model] 2026-11-01T15:56:23.959Z decisions gpt-6-luna 428 ms tokens=375
+[api] 2026-11-01T15:56:23.960Z POST /api/fixes 200 1412 ms
+[api] 2026-11-01T15:56:25.117Z POST /api/fixes 200 600 ms
+[api] 2026-11-01T15:56:26.121Z POST /api/fixes 200 676 ms
+[api] 2026-11-01T15:56:26.716Z POST /api/fixes 200 590 ms
+[agent] wall east: 1.05 m free, up to 2.69 m deep
+[model] 2026-11-01T15:56:27.205Z decisions gpt-6-luna 389 ms tokens=408
+[api] 2026-11-01T15:56:27.205Z POST /api/fixes 200 484 ms
+[api] 2026-11-01T15:56:27.266Z POST /api/fixes 200 59 ms
+[api] 2026-11-01T15:56:27.268Z POST /api/fixes 200 1 ms
+[api] 2026-11-01T15:56:27.318Z POST /api/fixes 200 49 ms
+[model] 2026-11-01T15:56:30.334Z responses gpt-6.1-terra 3501 ms tokens=506
+[model] 2026-11-01T15:56:34.905Z responses gpt-6-astra 33797 ms tokens=5208
+[model] 2026-11-01T15:56:49.196Z responses gpt-6.1-terra 18862 ms tools=web_search tokens=34649
+[agent] search: 10 product pages
+[model] 2026-11-01T15:56:51.916Z responses gpt-6.1-terra 2410 ms tokens=580
+[model] 2026-11-01T15:56:51.934Z responses gpt-6.1-terra 2384 ms tokens=594
+[model] 2026-11-01T15:56:52.234Z responses gpt-6.1-terra 2540 ms tokens=572
+[model] 2026-11-01T15:56:52.234Z responses gpt-6.1-terra 2490 ms tokens=576
+[model] 2026-11-01T15:56:52.400Z responses gpt-6.1-terra 2834 ms tokens=584
+[model] 2026-11-01T15:56:52.670Z responses gpt-6.1-terra 2970 ms tokens=590
+[model] 2026-11-01T15:56:52.930Z responses gpt-6.1-terra 3065 ms tokens=694
+[model] 2026-11-01T15:56:53.461Z responses gpt-6.1-terra 3340 ms tokens=745
+[model] 2026-11-01T15:56:53.595Z responses gpt-6.1-terra 3820 ms tokens=746
+[model] 2026-11-01T15:56:54.603Z responses gpt-6.1-terra 4653 ms tokens=729
+[agent] ✗ https://www.johnlewis.com/john-lewis-solace-tub-chair/p114199800 — no width stated on the page
+[agent] ✗ https://www.marksandspencer.com/sherwood-light-oak-chenille-accent-chair/p/ftp23079534 — 0.72 m × 0.8 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand in a doorway.
+[agent] ✗ https://www.marksandspencer.com/reliant-ash-linen-armchair/p/ftp23074991 — 0.63 m × 0.82 m doesn't fit: Doesn't fit. The best place, on the east wall, leaves only 48 cm to walk between the balcony door and the desk.
+[agent] ✗ https://www.marksandspencer.com/sven-armchair/p/ftp23081524?color=SILVERGREY — 0.71 m × 0.85 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand against a radiator.
+[agent] ✗ https://www.marksandspencer.com/todd-armchair/p/ftp23081531?color=PINK — 0.8 m × 1.0 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand against a radiator.
+[agent] ✗ https://www.marksandspencer.com/sherwood-dark-oak-armchair/p/ftp23080346 — 0.72 m × 0.8 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand in a doorway.
+[agent] ✗ https://www.marksandspencer.com/osborne-ash-leather-armchair/p/ftp23074978?color=DARKBROWN — 0.8 m × 0.9 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand against a radiator.
+[agent] ✗ https://www.johnlewis.com/desser-opera-rattan-armchair-light-oak-jasper/p6402237 — 0.73 m × 0.96 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand against a radiator.
+[agent] ✗ https://www.johnlewis.com/john-lewis-x-ray-dining-armchair/natural/p6310940 — it is a chair, not a armchair
+[agent] ✗ https://www.habitat.co.uk/product/4656852 — 1.01 m × 0.86 m doesn't fit: Doesn't fit. Everywhere it could go, it would run into other furniture or it would stand against a radiator.
+[api] 2026-11-01T15:56:54.822Z POST /api/agent/find 200 28105 ms
+[api] 2026-11-01T15:57:00.741Z GET /api/rooms/hoskins-living 200 22 ms
+[model] 2026-11-01T15:57:04.812Z decisions gpt-6-luna 856 ms tokens=1678
+[api] 2026-11-01T15:57:04.813Z POST /api/analyse 200 916 ms
+[model] 2026-11-01T15:57:05.184Z decisions gpt-6-luna 363 ms tokens=650
+[api] 2026-11-01T15:57:05.185Z POST /api/advice 200 365 ms
+[agent] wall west: 2.672 m free, up to 2.69 m deep
+[model] 2026-11-01T15:57:07.076Z decisions gpt-6-luna 486 ms tokens=375
+[api] 2026-11-01T15:57:07.076Z POST /api/fixes 200 1861 ms
+[api] 2026-11-01T15:57:07.661Z POST /api/fixes 200 582 ms
+[api] 2026-11-01T15:57:08.234Z POST /api/fixes 200 571 ms
+[api] 2026-11-01T15:57:08.607Z POST /api/fixes 200 372 ms
+[model] 2026-11-01T15:57:09.445Z decisions gpt-6-luna 756 ms tokens=408
+[api] 2026-11-01T15:57:09.446Z POST /api/fixes 200 837 ms
+[api] 2026-11-01T15:57:09.496Z POST /api/fixes 200 49 ms
+[api] 2026-11-01T15:57:09.498Z POST /api/fixes 200 1 ms
+[api] 2026-11-01T15:57:09.523Z POST /api/fixes 200 25 ms
+[model] 2026-11-01T15:57:23.747Z responses gpt-6.1-terra 17139 ms tools=web_search tokens=21814
+[agent] search: 10 product pages
+[model] 2026-11-01T15:57:30.167Z responses gpt-6.1-terra 3508 ms tokens=998
+[model] 2026-11-01T15:57:31.089Z responses gpt-6.1-terra 4242 ms tokens=800
+[model] 2026-11-01T15:57:31.188Z responses gpt-6.1-terra 4320 ms tokens=1002
+[model] 2026-11-01T15:57:31.306Z responses gpt-6.1-terra 4953 ms tokens=735
+[model] 2026-11-01T15:57:31.353Z responses gpt-6.1-terra 4084 ms tokens=1262
+[model] 2026-11-01T15:57:31.643Z responses gpt-6.1-terra 4578 ms tokens=1470
+[model] 2026-11-01T15:57:31.854Z responses gpt-6.1-terra 4300 ms tokens=968
+[model] 2026-11-01T15:57:32.101Z responses gpt-6.1-terra 5337 ms tokens=1501
+[model] 2026-11-01T15:57:32.194Z responses gpt-6.1-terra 5365 ms tokens=978
+[model] 2026-11-01T15:57:35.981Z responses gpt-6.1-terra 3597 ms tokens=951
+[model] 2026-11-01T15:57:42.362Z responses gpt-6.1-terra 5773 ms tokens=1021
+[api] 2026-11-01T15:57:42.366Z POST /api/agent/find 200 35767 ms
+[api] 2026-11-01T15:57:42.838Z POST /api/plan 200 225 ms
+[model] 2026-11-01T15:57:53.862Z decisions gpt-6-luna 4666 ms tokens=2123
+[api] 2026-11-01T15:57:53.865Z POST /api/analyse 200 4743 ms
+[model] 2026-11-01T15:57:54.609Z decisions gpt-6-luna 736 ms tokens=652
+[api] 2026-11-01T15:57:54.610Z POST /api/advice 200 738 ms
+[model] 2026-11-01T15:57:57.133Z decisions gpt-6-luna 668 ms tokens=375
+[api] 2026-11-01T15:57:57.144Z POST /api/fixes 200 2525 ms
+[api] 2026-11-01T15:57:58.381Z POST /api/fixes 200 1231 ms
+[api] 2026-11-01T15:57:58.602Z POST /api/fixes 200 215 ms
+[api] 2026-11-01T15:57:58.655Z POST /api/fixes 200 47 ms
+[api] 2026-11-01T15:57:59.440Z POST /api/fixes 200 783 ms
+[model] 2026-11-01T15:58:00.845Z decisions gpt-6-luna 1095 ms tokens=411
+[api] 2026-11-01T15:58:00.849Z POST /api/fixes 200 1406 ms
+---- restart 2026-11-01T16:25:58Z after 87c64fd ----
+Pocket Room on http://localhost:8840
+[api] 2026-11-01T16:26:13.948Z GET /api/rooms/hoskins-living 200 15 ms
+[api] 2026-11-01T16:26:17.427Z GET /api/rooms 200 1 ms
+[model] 2026-11-01T16:26:17.799Z decisions gpt-6-luna 991 ms tokens=1678
+[api] 2026-11-01T16:26:17.800Z POST /api/analyse 200 1082 ms
+[model] 2026-11-01T16:26:18.472Z decisions gpt-6-luna 404 ms tokens=650
+[api] 2026-11-01T16:26:18.473Z POST /api/advice 200 405 ms
+[model] 2026-11-01T16:26:21.020Z decisions gpt-6-luna 554 ms tokens=375
+[api] 2026-11-01T16:26:21.020Z POST /api/fixes 200 2042 ms
+[api] 2026-11-01T16:26:21.949Z POST /api/fixes 200 927 ms
+[api] 2026-11-01T16:26:22.915Z POST /api/fixes 200 949 ms
+[api] 2026-11-01T16:26:23.410Z POST /api/fixes 200 490 ms
+[model] 2026-11-01T16:26:23.929Z decisions gpt-6-luna 398 ms tokens=408
+[api] 2026-11-01T16:26:23.931Z POST /api/fixes 200 520 ms
+[api] 2026-11-01T16:26:24.056Z POST /api/fixes 200 120 ms
+[api] 2026-11-01T16:26:24.060Z POST /api/fixes 200 0 ms
+[api] 2026-11-01T16:26:24.107Z POST /api/fixes 200 45 ms
+[model] 2026-11-01T16:26:48.321Z responses gpt-6.1-terra 27325 ms tokens=11200
+[api] 2026-11-01T16:26:48.449Z POST /api/rooms/from-photo 200 27440 ms
+[model] 2026-11-01T16:26:50.551Z decisions gpt-6-luna 927 ms tokens=761
+[api] 2026-11-01T16:26:50.552Z POST /api/analyse 200 1074 ms
+[model] 2026-11-01T16:26:50.751Z decisions gpt-6-luna 188 ms tokens=337
+[api] 2026-11-01T16:26:50.752Z POST /api/advice 200 190 ms
+[api] 2026-11-01T16:26:50.837Z POST /api/fixes 200 83 ms
+[model] 2026-11-01T16:26:51.289Z decisions gpt-6-luna 338 ms tokens=375
+[api] 2026-11-01T16:26:51.290Z POST /api/fixes 200 452 ms
+[model] 2026-11-01T16:26:56.901Z responses gpt-6.1-terra 4162 ms tokens=2112
+[api] 2026-11-01T16:26:56.906Z POST /api/pieces 200 4169 ms
+[model] 2026-11-01T16:26:58.245Z decisions gpt-6-luna 565 ms tokens=1083
+[api] 2026-11-01T16:26:58.246Z POST /api/plan 200 1338 ms
+[api] 2026-11-01T16:26:59.759Z GET /api/pieces/3816881e 200 1 ms
+[api] 2026-11-01T16:27:01.271Z GET /api/pieces/3816881e 304 4 ms
+[api] 2026-11-01T16:27:02.810Z GET /api/pieces/3816881e 304 0 ms
+[model] 2026-11-01T16:27:03.979Z decisions gpt-6-luna 1171 ms tokens=1028
+[api] 2026-11-01T16:27:03.992Z POST /api/analyse 200 1263 ms
+[model] 2026-11-01T16:27:04.239Z decisions gpt-6-luna 241 ms tokens=337
+[api] 2026-11-01T16:27:04.239Z POST /api/advice 200 242 ms
+[api] 2026-11-01T16:27:04.280Z POST /api/fixes 200 38 ms
+[api] 2026-11-01T16:27:04.378Z GET /api/pieces/3816881e 304 0 ms
+[model] 2026-11-01T16:27:04.734Z decisions gpt-6-luna 357 ms tokens=379
+[api] 2026-11-01T16:27:04.735Z POST /api/fixes 200 452 ms
+[api] 2026-11-01T16:27:05.885Z GET /api/pieces/3816881e 304 2 ms
+[api] 2026-11-01T16:27:07.394Z GET /api/pieces/3816881e 304 1 ms
+[api] 2026-11-01T16:27:08.901Z GET /api/pieces/3816881e 304 2 ms
+[api] 2026-11-01T16:27:16.088Z GET /api/rooms/photo-mvy1ls4o 200 23 ms
+[model] 2026-11-01T16:27:23.526Z decisions gpt-6-luna 1525 ms tokens=761
+[api] 2026-11-01T16:27:23.542Z POST /api/analyse 200 1854 ms
+[model] 2026-11-01T16:27:24.865Z decisions gpt-6-luna 290 ms tokens=337
+[api] 2026-11-01T16:27:24.867Z POST /api/advice 200 298 ms
+[api] 2026-11-01T16:27:26.974Z POST /api/fixes 200 80 ms
+[model] 2026-11-01T16:27:28.136Z decisions gpt-6-luna 289 ms tokens=375
+[api] 2026-11-01T16:27:28.139Z POST /api/fixes 200 418 ms
+[model] 2026-11-01T16:27:28.409Z responses gpt-6-astra 31505 ms tokens=4952
+[agent] wall south: 4.773 m free, up to 4.01 m deep
+[model] 2026-11-01T16:27:47.675Z responses gpt-6.1-terra 18723 ms tools=web_search tokens=26492
+[agent] search: 10 product pages
+[agent] ✗ https://www.dunelm.com/product/washington-left-hand-fabric-corner-sofa-1000116418 — link does not work (HTTP 404)
+[model] 2026-11-01T16:27:50.600Z responses gpt-6.1-terra 2253 ms tokens=610
+[model] 2026-11-01T16:27:50.613Z responses gpt-6.1-terra 2390 ms tokens=628
+[model] 2026-11-01T16:27:50.653Z responses gpt-6.1-terra 2335 ms tokens=627
+[model] 2026-11-01T16:27:50.702Z responses gpt-6.1-terra 2445 ms tokens=670
+[model] 2026-11-01T16:27:51.076Z responses gpt-6.1-terra 2753 ms tokens=645
+[model] 2026-11-01T16:27:51.115Z responses gpt-6.1-terra 2321 ms tokens=1014
+[model] 2026-11-01T16:27:51.579Z responses gpt-6.1-terra 3235 ms tokens=722
+[model] 2026-11-01T16:27:51.975Z responses gpt-6.1-terra 3695 ms tokens=851
+[model] 2026-11-01T16:27:51.976Z responses gpt-6.1-terra 3577 ms tokens=1092
+[model] 2026-11-01T16:28:00.555Z responses gpt-6.1-terra 4650 ms tokens=877
+[api] 2026-11-01T16:28:00.561Z POST /api/agent/find 200 31615 ms
+[api] 2026-11-01T16:28:02.620Z POST /api/plan 200 631 ms
+[model] 2026-11-01T16:28:09.508Z decisions gpt-6-luna 2254 ms tokens=1533
+[api] 2026-11-01T16:28:09.510Z POST /api/analyse 200 2365 ms
+[model] 2026-11-01T16:28:10.177Z decisions gpt-6-luna 380 ms tokens=387
+[api] 2026-11-01T16:28:10.178Z POST /api/advice 200 381 ms
+[api] 2026-11-01T16:28:10.288Z POST /api/fixes 200 104 ms
+[model] 2026-11-01T16:28:10.784Z decisions gpt-6-luna 374 ms tokens=378
+[api] 2026-11-01T16:28:10.786Z POST /api/fixes 200 496 ms
+[api] 2026-11-01T16:28:10.865Z POST /api/fixes 200 76 ms
+[api] 2026-11-01T16:28:21.008Z GET /api/rooms/hoskins-living 200 18 ms
+[model] 2026-11-01T16:28:24.711Z decisions gpt-6-luna 924 ms tokens=1678
+[api] 2026-11-01T16:28:24.712Z POST /api/analyse 200 1055 ms
+[api] 2026-11-01T16:28:25.199Z GET /api/rooms 200 2 ms
+[model] 2026-11-01T16:28:25.602Z decisions gpt-6-luna 367 ms tokens=650
+[api] 2026-11-01T16:28:25.603Z POST /api/advice 200 369 ms
+[model] 2026-11-01T16:28:29.706Z decisions gpt-6-luna 579 ms tokens=375
+[api] 2026-11-01T16:28:29.707Z POST /api/fixes 200 2031 ms
+[api] 2026-11-01T16:28:30.511Z POST /api/fixes 200 802 ms
+[api] 2026-11-01T16:28:31.006Z POST /api/fixes 200 492 ms
+[api] 2026-11-01T16:28:31.420Z POST /api/fixes 200 413 ms
+[model] 2026-11-01T16:28:33.324Z decisions gpt-6-luna 473 ms tokens=408
+[api] 2026-11-01T16:28:33.325Z POST /api/fixes 200 637 ms
+[api] 2026-11-01T16:28:33.405Z POST /api/fixes 200 78 ms
+[api] 2026-11-01T16:28:33.408Z POST /api/fixes 200 1 ms
+[api] 2026-11-01T16:28:33.451Z POST /api/fixes 200 42 ms
+[model] 2026-11-01T16:28:50.095Z responses gpt-6.1-terra 20965 ms tokens=5668
+[api] 2026-11-01T16:28:50.101Z POST /api/rooms/from-photo 200 20971 ms
+[model] 2026-11-01T16:28:51.026Z decisions gpt-6-luna 460 ms tokens=718
+[api] 2026-11-01T16:28:51.027Z POST /api/analyse 200 464 ms
+[api] 2026-11-01T16:28:52.119Z POST /api/advice 200 1 ms
+[api] 2026-11-01T16:28:52.121Z POST /api/fixes 200 1 ms
+[model] 2026-11-01T16:28:58.656Z responses gpt-6.1-terra 2503 ms tokens=1042
+[api] 2026-11-01T16:28:59.157Z POST /api/pieces/from-link 200 4309 ms
+[api] 2026-11-01T16:28:59.221Z POST /api/plan 200 61 ms
+[api] 2026-11-01T16:29:01.501Z GET /api/pieces/f3f47446 200 1 ms
+[api] 2026-11-01T16:29:03.013Z GET /api/pieces/f3f47446 304 1 ms
+[model] 2026-11-01T16:29:03.282Z decisions gpt-6-luna 637 ms tokens=947
+[api] 2026-11-01T16:29:03.283Z POST /api/analyse 200 640 ms
+[api] 2026-11-01T16:29:04.713Z POST /api/advice 200 1 ms
+[api] 2026-11-01T16:29:04.714Z GET /api/pieces/f3f47446 304 1 ms
+[api] 2026-11-01T16:29:04.716Z POST /api/fixes 200 1 ms
+[api] 2026-11-01T16:29:06.223Z GET /api/pieces/f3f47446 304 1 ms
+[api] 2026-11-01T16:29:07.737Z GET /api/pieces/f3f47446 304 0 ms
+[model] 2026-11-01T16:29:17.899Z responses gpt-6-astra 18743 ms tokens=4739
+---- restart 2026-11-01T16:30:33Z phone run ----
+Pocket Room on http://localhost:8840
+Pocket Room on http://localhost:8840
+[api] 2026-11-01T16:30:50.601Z GET /api/rooms/hoskins-living 200 14 ms
+[model] 2026-11-01T16:30:53.726Z decisions gpt-6-luna 897 ms tokens=1678
+[api] 2026-11-01T16:30:53.730Z POST /api/analyse 200 979 ms
+[model] 2026-11-01T16:30:56.561Z decisions gpt-6-luna 414 ms tokens=650
+[api] 2026-11-01T16:30:56.563Z POST /api/advice 200 417 ms
+[model] 2026-11-01T16:30:59.087Z decisions gpt-6-luna 397 ms tokens=375
+[api] 2026-11-01T16:30:59.093Z POST /api/fixes 200 2004 ms
+[api] 2026-11-01T16:31:00.766Z POST /api/fixes 200 783 ms
+[api] 2026-11-01T16:31:03.495Z POST /api/fixes 200 809 ms
+[api] 2026-11-01T16:31:04.215Z POST /api/fixes 200 709 ms
+[model] 2026-11-01T16:31:06.018Z decisions gpt-6-luna 1647 ms tokens=408
+[api] 2026-11-01T16:31:06.020Z POST /api/fixes 200 1804 ms
+[model] 2026-11-01T16:31:11.212Z responses gpt-6.1-terra 4716 ms tokens=1853
+[api] 2026-11-01T16:31:11.216Z POST /api/pieces 200 4722 ms
+[api] 2026-11-01T16:31:12.255Z POST /api/plan 200 1037 ms
+[api] 2026-11-01T16:31:14.013Z GET /api/pieces/71495497 200 10 ms
+[api] 2026-11-01T16:31:15.520Z GET /api/pieces/71495497 304 1 ms
+[api] 2026-11-01T16:31:17.029Z GET /api/pieces/71495497 304 1 ms
+[model] 2026-11-01T16:31:18.202Z decisions gpt-6-luna 1185 ms tokens=1936
+[api] 2026-11-01T16:31:18.203Z POST /api/analyse 200 1260 ms
+[api] 2026-11-01T16:31:18.853Z GET /api/pieces/71495497 304 1 ms
+[model] 2026-11-01T16:31:19.422Z decisions gpt-6-luna 564 ms tokens=689
+[api] 2026-11-01T16:31:19.424Z POST /api/advice 200 565 ms
+[api] 2026-11-01T16:31:20.844Z GET /api/pieces/71495497 304 1 ms
+[model] 2026-11-01T16:31:21.246Z decisions gpt-6-luna 408 ms tokens=378
+[api] 2026-11-01T16:31:21.247Z POST /api/fixes 200 1818 ms
+[api] 2026-11-01T16:31:22.569Z POST /api/fixes 200 592 ms
+[api] 2026-11-01T16:31:22.570Z GET /api/pieces/71495497 304 0 ms
+[api] 2026-11-01T16:31:23.917Z POST /api/fixes 200 1346 ms
+[api] 2026-11-01T16:31:24.763Z POST /api/fixes 200 843 ms
+[api] 2026-11-01T16:31:24.765Z GET /api/pieces/71495497 304 1 ms

@@ -4,6 +4,8 @@ import { decide, messages } from "../decisions/client.mjs";
 import { spotFacts, reasonsFor } from "../decisions/best-spot.mjs";
 import { cm } from "../rules/geom.mjs";
 
+// reasonsFor() sentences that count against a spot
+export const WARNING = /^(close to the door|a tight walkway|stands across|covers the radiator|turned \d+° away|\d+ cm from the radiator)/;
 const nice = (id) => String(id).replace(/[_-]+/g, " ").replace(/:front$/, "");
 
 // What is true of each plan, in plain words: what it costs (moves, the old piece out) first, then the spot.
@@ -29,8 +31,11 @@ export async function pickPlan(plans, { room, piece }) {
   if (!plans.length) return { by: "rules", choice: null };
   const measured = planReasons(plans, room, piece);
   plans.forEach((p, i) => { p.reasons = measured[i].reasons; });
-  // one plan: nothing to choose; its reason is the first measured fact about the spot
-  if (plans.length === 1) return { by: "rules", choice: plans[0].id, reasons: { [plans[0].id]: measured[0].spot[0] } };
+  // one plan: nothing to choose; its reason is the first measured fact in its favour (not a warning)
+  if (plans.length === 1) {
+    const good = measured[0].spot.find((r) => !WARNING.test(r)) ?? measured[0].spot[0];
+    return { by: "rules", choice: plans[0].id, reasons: { [plans[0].id]: good } };
+  }
   const what = `${piece.name ?? piece.category} (${piece.category}, ${piece.size.map((v) => Math.round(v * 100) / 100).join(" × ")} m)`;
   const questions = [
     { name: "plan", type: "choice", instructions: `You are an interior designer bringing a new ${what} into this room. Which plan would you recommend? Weigh how the room will be lived in and how much has to change, not only the clearance.`,
